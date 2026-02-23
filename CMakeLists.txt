@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.21.2)
+
+project(RaphEngine2)
+
+add_executable(RapEngineUI)
+
+set_target_properties(RapEngineUI PROPERTIES CXX_STANDARD 20)
+target_compile_options(RapEngineUI PRIVATE -Wall -Wextra -Werror -pedantic -Wold-style-cast)
+
+add_subdirectory("src/")
+target_include_directories(RapEngineUI PUBLIC "include/")

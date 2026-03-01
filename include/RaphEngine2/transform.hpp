@@ -2,7 +2,9 @@
 
 #include <glm/glm.hpp>
 
-class Transform
+#include "export.hpp"
+
+class RAPHENGINE_API Transform
 {
 public:
     glm::vec3& get_position();
@@ -18,3 +20,4 @@ private:
 
     glm::mat4 model_matrix_;
 };
+

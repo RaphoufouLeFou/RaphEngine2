@@ -4,6 +4,7 @@ project(RaphEngine2 VERSION 1.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+include(FetchContent)
 
 file(GLOB RaphEngine2_SRC
      "src/*.cpp"
@@ -12,16 +13,20 @@ file(GLOB RaphEngine2_SRC
 
 add_library(RaphEngine2 SHARED ${RaphEngine2_SRC})
 
+target_compile_definitions(RaphEngine2
+    PRIVATE
+        RAPHENGINE_EXPORTS
+)
+
 target_compile_features(RaphEngine2 PUBLIC cxx_std_20)
 
-target_compile_options(RaphEngine2
-    PRIVATE
-        -Wall
-        -Wextra
-        -Werror
-        -pedantic
-        -Wold-style-cast
-)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+if(WIN32)
+    target_compile_options(RaphEngine2 PRIVATE /W4 /permissive- /wd4251)
+else()
+    target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -Wold-style-cast)
+endif()
 
 target_include_directories(RaphEngine2
     PUBLIC
@@ -33,6 +38,29 @@ set_target_properties(RaphEngine2 PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION 1
 )
+
+
+# =========================
+# dependencies
+# =========================
+
+find_package(glm QUIET)
+
+if(NOT glm_FOUND)
+    FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG 0af55ccecd98d4e5a8d1fad7de25ba429d60e863
+    )
+    FetchContent_MakeAvailable(glm)
+endif()
+
+target_link_libraries(RaphEngine2 PRIVATE glm::glm)
+
+# =========================
+# Install
+# =========================
+
 
 install(TARGETS RaphEngine2
     EXPORT RaphEngine2Targets
@@ -70,4 +98,4 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/RaphEngine2
 )
 
-add_subdirectory(editor)
+#add_subdirectory(editor)

@@ -1,6 +1,8 @@
 #pragma once
 
-class Renderable
+#include "export.hpp"
+
+class RAPHENGINE_API Renderable
 {
     virtual void render() const = 0;
 };

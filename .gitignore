@@ -1,4 +1,6 @@
 [Bb]uild
+.cache
+.vscode
 
 # Prerequisites
 *.d

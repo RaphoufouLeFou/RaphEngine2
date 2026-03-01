@@ -1,9 +1,10 @@
 #include <iostream>
 
-#include "transform.hpp"
+#include "RaphEngine2/transform.hpp"
+#include "RaphEngine2/game_object.hpp"
 
 int start()
 {
-    std::cout << "Hello world" << std::endl;
+    std::cout << "Hello world from RaphEngine2!" << std::endl;
     return EXIT_SUCCESS;
 }

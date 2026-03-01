@@ -98,4 +98,4 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/RaphEngine2
 )
 
-#add_subdirectory(editor)
+add_subdirectory(editor)

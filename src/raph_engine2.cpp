@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "RaphEngine2/transform.hpp"
 #include "RaphEngine2/game_object.hpp"
+#include "RaphEngine2/transform.hpp"
 
 int start()
 {

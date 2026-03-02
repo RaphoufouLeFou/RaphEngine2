@@ -1,8 +1,11 @@
 #pragma once
 
-#include "export.hpp"
+#include <RaphEngine2/export.hpp>
 
-class RAPHENGINE_API Renderable
+namespace raphEngine::objects
 {
-    virtual void render() const = 0;
-};
+    class RAPHENGINE_API Renderable
+    {
+        virtual void render() = 0;
+    };
+}

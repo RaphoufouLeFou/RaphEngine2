@@ -4,9 +4,11 @@
 #include <string>
 #include <vector>
 
-#include "export.hpp"
+#include <RaphEngine2/export.hpp>
+#include <RaphEngine2/renderable.hpp>
+#include "shader.hpp"
 
-namespace raphEngine
+namespace raphEngine::objects
 {
     struct RAPHENGINE_API Vertex
     {
@@ -15,6 +17,9 @@ namespace raphEngine
         glm::vec2 tex_coords;
         glm::vec3 tangent;
         glm::vec3 bitangent;
+
+        Vertex() = default;
+        Vertex(glm::vec3 position_) : position {position_} {}
     };
 
     struct RAPHENGINE_API Texture
@@ -26,9 +31,15 @@ namespace raphEngine
 
     class RAPHENGINE_API Mesh
     {
-    private:
+    public:
+        virtual void render() = 0;
+        inline const std::vector<Vertex>& get_vertices() const;
+    protected:
         std::vector<Vertex> vertices_;
         std::vector<unsigned int> indices_;
         std::vector<Texture> textures_;
+
+        bool outline_;
+        bool cast_shadows_;
     };
 } // namespace raphEngine

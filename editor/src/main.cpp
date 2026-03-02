@@ -5,7 +5,7 @@
 int main()
 {
     raphEngine::Core::Init();
-    raphEngine::GameObject go{};
+    raphEngine::objects::GameObject go{};
     go.greed();
     
     std::cout << "Engine build" << std::endl;

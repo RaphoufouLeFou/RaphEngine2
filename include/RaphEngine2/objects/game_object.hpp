@@ -1,31 +1,30 @@
 #pragma once
 
 #include <string>
-
-#include "RaphEngine2/renderable.hpp"
-#include "transform.hpp"
+#include <vector>
 #include <RaphEngine2/export.hpp>
+
+#include "../renderable.hpp"
+#include "transform.hpp"
+#include "object_mesh.hpp"
 
 namespace raphEngine::objects
 {
+    class RAPHENGINE_API GameObject : private Renderable
+    {
+    public:
+        void greed();
+        GameObject();
+        GameObject(std::string name);
+        GameObject(GameObject& other);
+        ~GameObject() = default;
 
-class RAPHENGINE_API GameObject : private Renderable
-{
-public:
-    void greed();
-    GameObject();
-    GameObject(std::string name)
-        : name_ {name}
-    {}
-    GameObject(GameObject& other) = default;
-    ~GameObject() = default;
+        virtual void Start() {}
+        virtual void Update() {}
 
-    virtual void render();
-
-private:
-    std::string name_;
-    Transform transform_;
-    
-};
-
+    private:
+        void render();
+        std::string name_;
+        Transform transform_;
+    };
 }

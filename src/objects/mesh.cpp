@@ -1,4 +1,4 @@
-#include "RaphEngine2/objects/mesh.hpp"
+#include "objects/mesh.hpp"
 
 namespace raphEngine::objects
 {

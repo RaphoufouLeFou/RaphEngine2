@@ -1,4 +1,4 @@
-#include "RaphEngine2/objects/box.hpp"
+#include "objects/box.hpp"
 #include <glm/common.hpp>
 #include <glm/ext/vector_float3.hpp>
 
@@ -6,13 +6,15 @@ namespace raphEngine::objects
 {
     void Box::render()
     {
+        if (modified_)
+            calculate_vertexs_();
         
     }
 
-    void Box::calculate_vertexs()
+    void Box::calculate_vertexs_()
     {
         vertices_.reserve(8);
-        indices_.reserve(12*3);
+        indices_.reserve(6 * 6);
 
         /*
         
@@ -26,17 +28,26 @@ namespace raphEngine::objects
         
         */
 
-        vertices_.push_back(Vertex{glm::vec3{lower_bounds_.x, lower_bounds_.y, lower_bounds_.z}});
-        vertices_.push_back(Vertex{glm::vec3{higher_bounds_.x, lower_bounds_.y, lower_bounds_.z}});
-        vertices_.push_back(Vertex{glm::vec3{lower_bounds_.x, higher_bounds_.y, lower_bounds_.z}});
-        vertices_.push_back(Vertex{glm::vec3{higher_bounds_.x, higher_bounds_.y, lower_bounds_.z}});
+        vertices_ = {
+            Vertex{glm::vec3{lower_bounds_.x, lower_bounds_.y, lower_bounds_.z}},
+            Vertex{glm::vec3{higher_bounds_.x, lower_bounds_.y, lower_bounds_.z}},
+            Vertex{glm::vec3{lower_bounds_.x, higher_bounds_.y, lower_bounds_.z}},
+            Vertex{glm::vec3{higher_bounds_.x, higher_bounds_.y, lower_bounds_.z}},
+            Vertex{glm::vec3{lower_bounds_.x, lower_bounds_.y, higher_bounds_.z}},
+            Vertex{glm::vec3{higher_bounds_.x, lower_bounds_.y, higher_bounds_.z}},
+            Vertex{glm::vec3{lower_bounds_.x, higher_bounds_.y, higher_bounds_.z}},
+            Vertex{glm::vec3{higher_bounds_.x, higher_bounds_.y, higher_bounds_.z}},
+        };
 
-        vertices_.push_back(Vertex{glm::vec3{lower_bounds_.x, lower_bounds_.y, higher_bounds_.z}});
-        vertices_.push_back(Vertex{glm::vec3{higher_bounds_.x, lower_bounds_.y, higher_bounds_.z}});
-        vertices_.push_back(Vertex{glm::vec3{lower_bounds_.x, higher_bounds_.y, higher_bounds_.z}});
-        vertices_.push_back(Vertex{glm::vec3{higher_bounds_.x, higher_bounds_.y, higher_bounds_.z}});
-
-        constexpr int triangles = 0;
+        indices_ = {
+            0, 1, 4,    4, 1, 5,
+            6, 7, 4,    4, 7, 5,
+            0, 2, 3,    0, 3, 1,
+            2, 3, 6,    6, 3, 7,
+            5, 7, 3,    5, 3, 1,
+            4, 6, 2,    4, 2, 0,
+        };
+        modified_ = false;
     }
 
     void Box::create_bounding_box(const Mesh& mesh)
@@ -67,6 +78,6 @@ namespace raphEngine::objects
             if (lower_bounds_.z > v.position.z)
                 lower_bounds_.z = v.position.z; 
         }
-        calculate_vertexs();
+        calculate_vertexs_();
     }
 }

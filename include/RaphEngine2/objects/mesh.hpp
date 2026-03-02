@@ -33,7 +33,7 @@ namespace raphEngine::objects
     {
     public:
         virtual void render() = 0;
-        inline const std::vector<Vertex>& get_vertices() const;
+        const std::vector<Vertex>& get_vertices() const;
     protected:
         std::vector<Vertex> vertices_;
         std::vector<unsigned int> indices_;

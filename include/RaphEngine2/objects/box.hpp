@@ -11,11 +11,12 @@ namespace raphEngine::objects
     class RAPHENGINE_API Box : public Renderable, public Mesh
     {
         void render() override;
-    private:
-        void calculate_vertexs();
+        void create_bounding_box(const Mesh& mesh);
 
         glm::vec3* get_lower_bounds();
         glm::vec3* get_higher_bounds();
+    private:
+        void calculate_vertexs_();
 
         bool modified_;
         glm::vec3 lower_bounds_;

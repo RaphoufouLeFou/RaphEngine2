@@ -31,6 +31,7 @@ endif()
 target_include_directories(RaphEngine2
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/RaphEngine2>
         $<INSTALL_INTERFACE:include>
 )
 

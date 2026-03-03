@@ -58,6 +58,9 @@ endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glm::glm)
 
+find_package(GLEW)
+target_link_libraries(RaphEngine2 PRIVATE GLEW::GLEW)
+
 # =========================
 # Install
 # =========================

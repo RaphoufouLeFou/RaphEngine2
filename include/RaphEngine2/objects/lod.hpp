@@ -1,13 +1,11 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <string>
 #include <vector>
 #include <memory>
 
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>
-#include "shader.hpp"
 #include "object_mesh.hpp"
 #include "mesh_info.hpp"
 

@@ -6,7 +6,6 @@
 
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>
-#include "shader.hpp"
 
 namespace raphEngine::objects
 {

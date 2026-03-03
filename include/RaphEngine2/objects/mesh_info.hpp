@@ -12,15 +12,17 @@
 
 namespace raphEngine::objects
 {
-    class RAPHENGINE_API MeshInfo
+    struct RAPHENGINE_API MeshInfo
     {
-        MeshInfo(const std::string& mesh_path, std::unique_ptr<Shader> shader)
-            : mesh_path_ {mesh_path}
-            , shader_ {std::move(shader)}
+        
+        MeshInfo(const std::string& mesh_path_, std::unique_ptr<Shader> shader_, bool bilinear_)
+            : mesh_path {mesh_path_}
+            , shader {std::move(shader_)}
+            , bilinear {bilinear_}
         {}
 
-    private:
-        std::string mesh_path_;
-        std::unique_ptr<Shader> shader_;
+        std::string mesh_path;
+        std::unique_ptr<Shader> shader;
+        bool bilinear;
     };
 }

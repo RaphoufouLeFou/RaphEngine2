@@ -5,7 +5,6 @@
 #include <memory>
 
 #include <RaphEngine2/export.hpp>
-#include <RaphEngine2/renderable.hpp>
 #include "object_mesh.hpp"
 #include "mesh_info.hpp"
 

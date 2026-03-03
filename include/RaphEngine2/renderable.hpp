@@ -2,7 +2,7 @@
 
 #include <RaphEngine2/export.hpp>
 #include <vector>
-#include <memory>
+
 
 namespace raphEngine
 {
@@ -12,6 +12,6 @@ namespace raphEngine
         Renderable();
         virtual void render() = 0;
     private:
-        static std::vector<Renderable *> render_list_;
+        static std::vector<Renderable*> render_list_;
     };
 }

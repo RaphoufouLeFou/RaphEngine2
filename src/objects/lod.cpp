@@ -24,7 +24,8 @@ namespace raphEngine::objects
         lod_meshes_.reserve(meshes.size());
         for (const auto& info: meshes)
         {
-            lod_meshes_.push_back(std::make_unique<ObjectMesh>(info));
+            (void) info;
+            // lod_meshes_.push_back(std::make_unique<ObjectMesh>(info));
         }
     }
 }

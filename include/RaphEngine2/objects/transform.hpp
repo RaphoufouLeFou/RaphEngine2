@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 
 #include <RaphEngine2/export.hpp>
-#include <RaphEngine2/renderable.hpp>
 
 namespace raphEngine::objects
 {

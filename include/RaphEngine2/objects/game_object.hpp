@@ -1,12 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <string>
-#include <vector>
 #include <RaphEngine2/export.hpp>
 
 #include "../renderable.hpp"
 #include "transform.hpp"
-#include "object_mesh.hpp"
+#include "lod.hpp"
 
 namespace raphEngine::objects
 {
@@ -26,5 +26,6 @@ namespace raphEngine::objects
         void render();
         std::string name_;
         Transform transform_;
+        std::unique_ptr<Lod> lods_; 
     };
 }

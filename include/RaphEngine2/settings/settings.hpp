@@ -4,6 +4,7 @@
 #include <string>
 #include <type_traits>
 #include "serializable.hpp"
+#include <nlohmann/json.hpp>
 
 namespace raphEngine::settings {
 
@@ -33,8 +34,8 @@ namespace raphEngine::settings {
             , value(default_)
         {}
 
-        std::string serialize() override;
-        bool deserialize(const std::string& input) override;
+        nlohmann::json serialize() const override;
+        bool deserialize(const nlohmann::json& input) override;
 
         const std::string name;
         T value;

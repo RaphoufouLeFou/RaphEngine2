@@ -1,8 +1,9 @@
 #include "RaphEngine2/settings/graphics.hpp"
+
 #include "settings/settings.hpp"
 
-namespace raphEngine::settings {
-
+namespace raphEngine::settings
+{
 
     void Graphics::set_api(Api api_mode)
     {
@@ -22,4 +23,4 @@ namespace raphEngine::settings {
     {
         return shadow_;
     }
-}
+} // namespace raphEngine::settings

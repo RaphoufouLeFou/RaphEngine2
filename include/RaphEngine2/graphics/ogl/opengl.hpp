@@ -6,6 +6,7 @@
 namespace raphEngine::graphics::ogl {
     class RAPHENGINE_API OpenGL : GraphicApi
     {
-        void Init(const settings::Graphics& graphics_settings) override;
+        void Init(const settings::Graphics& graphics_settings, const std::string& window_name) override;
+        void Render(const Renderable& renderable) override;
     };
 }

@@ -12,6 +12,7 @@ namespace raphEngine::objects
 {
     class RAPHENGINE_API Lod
     {
+    public:
         Lod(std::initializer_list<MeshInfo> meshes);
         const ObjectMesh* get_lod(size_t level) const;
         size_t get_lod_count() const;

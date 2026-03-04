@@ -10,6 +10,6 @@ namespace raphEngine::component {
         virtual void Start() {}
         virtual void Update() {}
 
-        virtual const std::string get_name() const;
+        virtual const std::string get_name() const = 0;
     };
 }

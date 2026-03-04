@@ -6,6 +6,8 @@
 
 namespace raphEngine::objects
 {
+    std::vector<std::weak_ptr<GameObject>> GameObject::spawned_game_objects_;
+
     void GameObject::greed()
     {
         std::cout << "Hello, my name is \"" << name_ << "\"\n";
@@ -30,8 +32,9 @@ namespace raphEngine::objects
 
     component::Component* GameObject::get_component(const std::string& name)
     {
-        for (const auto& c : components_) {
-            if(c.get()->get_name() == name)
+        for (const auto& c : components_)
+        {
+            if (c.get()->get_name() == name)
             {
                 return c.get();
             }
@@ -42,16 +45,19 @@ namespace raphEngine::objects
     void GameObject::remove_component(size_t index)
     {
         if (index >= components_.size())
-            throw std::range_error(std::string("can't remove component at index ") + std::to_string(index));
+            throw std::range_error(
+                std::string("can't remove component at index ")
+                + std::to_string(index));
         auto it = components_.begin();
-        it+=index;
+        it += index;
         components_.erase(it);
     }
 
     void GameObject::remove_component(const std::string& name)
     {
-        for (auto it = components_.begin(); it != components_.end(); it++) {
-            if((*it).get()->get_name() == name)
+        for (auto it = components_.begin(); it != components_.end(); it++)
+        {
+            if ((*it).get()->get_name() == name)
                 it = components_.erase(it);
         }
     }
@@ -73,8 +79,13 @@ namespace raphEngine::objects
         return name_;
     }
 
-    GameObject& GameObject::find(const std::string& name)
+    GameObject* GameObject::find(const std::string& name)
     {
-
+        for (auto& go : spawned_game_objects_)
+        {
+            if (go.lock()->name_ == name)
+                return go.lock().get();
+        }
+        return nullptr;
     }
-}
+} // namespace raphEngine::objects

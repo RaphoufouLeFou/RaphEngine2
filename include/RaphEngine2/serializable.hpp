@@ -1,12 +1,15 @@
 #pragma once
 
-#include "export.hpp"
 #include <string>
 
-namespace raphEngine {
+#include "export.hpp"
+#include <nlohmann/json.hpp>
+
+namespace raphEngine
+{
     class RAPHENGINE_API Serializable
     {
-        virtual std::string serialize() = 0;
-        virtual bool deserialize(const std::string& input) = 0;
+        virtual nlohmann::json serialize() const = 0;
+        virtual bool deserialize(const nlohmann::json& input) = 0;
     };
-}
+} // namespace raphEngine

@@ -1,9 +1,9 @@
 #include "objects/lod.hpp"
-#include "objects/object_mesh.hpp"
-#include "objects/object_mesh.hpp"
-#include "objects/mesh_info.hpp"
 
 #include <vector>
+
+#include "objects/mesh_info.hpp"
+#include "objects/object_mesh.hpp"
 
 namespace raphEngine::objects
 {
@@ -20,10 +20,10 @@ namespace raphEngine::objects
     Lod::Lod(std::initializer_list<MeshInfo> meshes)
     {
         lod_meshes_.reserve(meshes.size());
-        for (const auto& info: meshes)
+        for (const auto& info : meshes)
         {
-            (void) info;
+            (void)info;
             // lod_meshes_.push_back(std::make_unique<ObjectMesh>(info));
         }
     }
-}
+} // namespace raphEngine::objects

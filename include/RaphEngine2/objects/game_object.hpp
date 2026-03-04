@@ -8,6 +8,7 @@
 
 #include "component/component.hpp"
 #include "transform.hpp"
+#include "core.hpp"
 
 namespace raphEngine::objects
 {
@@ -19,7 +20,8 @@ namespace raphEngine::objects
         ~GameObject() = default;
 
         void greed();
-
+        
+        virtual void Awake() {}
         virtual void Start() {}
         virtual void Update() {}
 
@@ -47,13 +49,17 @@ namespace raphEngine::objects
         void start_components();
         void update_components();
 
-        static GameObject& find(const std::string& name);
+        static GameObject* find(const std::string& name);
 
     private:
+
+        friend raphEngine::Core;
 
         std::string name_;
         objects::Transform transform_;
         std::vector<std::unique_ptr<component::Component>> components_;
+
+        static std::vector<std::weak_ptr<GameObject>> spawned_game_objects_;
     };
 }
 

@@ -59,7 +59,24 @@ endif()
 target_link_libraries(RaphEngine2 PRIVATE glm::glm)
 
 find_package(GLEW)
+
 target_link_libraries(RaphEngine2 PRIVATE GLEW::GLEW)
+
+
+find_package(nlohmann_json QUIET)
+
+if(NOT nlohmann_json_FOUND)
+    FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.3
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE nlohmann_json::nlohmann_json
+)
 
 # =========================
 # Install

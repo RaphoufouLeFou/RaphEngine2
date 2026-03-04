@@ -4,6 +4,7 @@
 #include "settings.hpp"
 #include "settings/save_settings.hpp"
 #include "graphics/resolution.hpp"
+#include <nlohmann/json.hpp>
 
 namespace raphEngine::settings {
 
@@ -18,7 +19,8 @@ namespace raphEngine::settings {
             // DX11/12 ?
         };
 
-    std::string serialize() override;
+    nlohmann::json serialize() const override;
+    bool deserialize(const nlohmann::json& input) override;
 
     constexpr std::string get_settings_name() const override
     {

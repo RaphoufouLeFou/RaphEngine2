@@ -6,6 +6,7 @@
 
 #include "renderable.hpp"
 #include "objects/lod.hpp"
+#include "objects/mesh_info.hpp"
 
 #include "component.hpp"
 
@@ -14,7 +15,7 @@ namespace raphEngine::component
     class RAPHENGINE_API MeshComponent : public Component,  public Renderable
     {
     public:
-        MeshComponent() : Renderable() {}
+        MeshComponent(std::initializer_list<objects::MeshInfo> meshes);
         const std::string component_name = "Render mesh";
 
         

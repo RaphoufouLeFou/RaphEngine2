@@ -6,4 +6,4 @@ namespace raphEngine::objects
     {
         return vertices_;
     }
-}
+} // namespace raphEngine::objects

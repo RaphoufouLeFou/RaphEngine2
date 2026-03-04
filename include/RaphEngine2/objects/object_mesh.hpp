@@ -14,9 +14,6 @@ namespace raphEngine::objects
     class RAPHENGINE_API ObjectMesh
     {
     private:
-
-        friend static std::unique_ptr<ObjectMesh> MeshLoader::loadMesh(const MeshInfo& mesh_info);
-
         ObjectMesh();
         std::shared_ptr<Shader> shader_;
         std::vector<std::unique_ptr<Mesh>> meshes_;

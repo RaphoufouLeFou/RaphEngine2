@@ -10,11 +10,10 @@
 
 namespace raphEngine::objects
 {
+    class ObjectMesh;
     class RAPHENGINE_API MeshLoader
     {
         public:
-        class ObjectMesh;
         static std::unique_ptr<ObjectMesh> loadMesh(const MeshInfo& mesh_info);
-
     };
 }

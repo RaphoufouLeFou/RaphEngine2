@@ -3,6 +3,7 @@
 #include <RaphEngine2/export.hpp>
 #include <string>
 #include <type_traits>
+#include "Serializable.hpp"
 
 namespace raphEngine::settings {
 
@@ -17,10 +18,11 @@ namespace raphEngine::settings {
     concept SettingsValue = requires (T value) {
         std::is_default_constructible<T>();
         std::is_move_constructible<T>();
+        std::is_convertible<T, Serializable>();
     };
     
     template<SettingsValue T>
-    struct RAPHENGINE_API Settings
+    struct RAPHENGINE_API Settings : public Serializable
     {
         Settings(const std::string& name_)
             : name(name_)
@@ -30,6 +32,9 @@ namespace raphEngine::settings {
             : name(name_)
             , value(default_)
         {}
+
+        std::string serialize() override;
+        bool deserialize(const std::string& input) override;
 
         const std::string name;
         T value;

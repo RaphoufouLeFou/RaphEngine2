@@ -1,7 +1,6 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
-#include "Serializable.hpp"
 #include "settings.hpp"
 #include "settings/save_settings.hpp"
 #include "graphics/resolution.hpp"
@@ -37,5 +36,6 @@ namespace raphEngine::settings {
         Settings<Graphics::Api> api_ = Settings<Graphics::Api>("Graphics API", Api::OPENGL);
         Settings<Quality> shadow_ = Settings<Quality>("Shadow quality", Quality::HIGH);
         Settings<graphics::Resolution> resolution_ = Settings<graphics::Resolution>("Resolution");
+        Settings<bool> fullscreen_ = Settings<bool>("Fullscreen mode", true);
     };
 }

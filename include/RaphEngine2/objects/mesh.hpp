@@ -23,8 +23,16 @@ namespace raphEngine::objects
 
     struct RAPHENGINE_API Texture
     {
+        enum TextureType
+        {
+            DIFFUSE,
+            SPECULAR,
+            NORMAL,
+            HEIGHT,
+        };
+
         unsigned int id;
-        std::string type;
+        TextureType type;
         std::string path;
     };
 

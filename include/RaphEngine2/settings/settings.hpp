@@ -3,7 +3,7 @@
 #include <RaphEngine2/export.hpp>
 #include <string>
 #include <type_traits>
-#include "Serializable.hpp"
+#include "serializable.hpp"
 
 namespace raphEngine::settings {
 

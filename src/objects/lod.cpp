@@ -1,10 +1,8 @@
 #include "objects/lod.hpp"
 #include "objects/object_mesh.hpp"
-#include "objects/shader.hpp"
 #include "objects/object_mesh.hpp"
 #include "objects/mesh_info.hpp"
 
-#include <string>
 #include <vector>
 
 namespace raphEngine::objects

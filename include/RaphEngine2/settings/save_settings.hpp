@@ -4,8 +4,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
-#include "Serializable.hpp"
-#include "settings.hpp"
+#include "serializable.hpp"
 
 namespace raphEngine::settings {
 

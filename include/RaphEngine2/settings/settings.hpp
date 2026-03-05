@@ -17,31 +17,16 @@ namespace raphEngine::settings {
         MEDIUM,
         LOW,
     };
-
-    enum class SettingType
-    {
-        STRING,
-        BOOL,
-        INT,
-        QUALITY,
-        API,
-    };
     
     class RAPHENGINE_API Settings
     {
     public:
-        Settings(const std::string& name, const std::string& json_name = "", const std::string& value = "null", SettingType type = SettingType::STRING)
-            : type_ {type}
-            , json_name_ {json_name}
-            , pretty_name_ {name}
-            , value_ {value}
-        {}
+        virtual const std::string get_pretty_name() const = 0;
+
+        virtual void add_to_json(nlohmann::json& parent_node);
+        
+
         static std::vector<std::unique_ptr<Settings>> parse_settings(nlohmann::json parent_node);
-        static std::vector<std::unique_ptr<Settings>> parse_settings(nlohmann::json parent_node);
-    private:
-        SettingType type_;
-        std::string json_name_;
-        std::string pretty_name_;
-        std::string value_;
+
     };
 }

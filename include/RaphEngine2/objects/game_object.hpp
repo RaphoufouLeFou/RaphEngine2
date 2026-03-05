@@ -27,6 +27,8 @@ namespace raphEngine::objects
 
         std::string& get_name();
 
+        std::shared_ptr<GameObject> instanciate();
+
         void add_component(component::Component component);
         component::Component* get_component(size_t index);
         component::Component* get_component(const std::string& name);

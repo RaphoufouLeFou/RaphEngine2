@@ -1,6 +1,8 @@
 #include "RaphEngine2/settings/graphics.hpp"
 
+#include "nlohmann/json_fwd.hpp"
 #include "settings/settings.hpp"
+#include <nlohmann/json.hpp>
 
 namespace raphEngine::settings
 {
@@ -13,7 +15,16 @@ namespace raphEngine::settings
     {
         shadow_.value = shadow_quality;
     }
-
+    
+    void Graphics::set_resolution(graphics::Resolution resolution)
+    {
+        resolution_.value = resolution;
+    }
+    void Graphics::set_fullscreen(bool fullscreen)
+    {
+        fullscreen_.value = fullscreen;
+    }
+    
     Settings<Graphics::Api>& Graphics::get_api_mode()
     {
         return api_;
@@ -22,5 +33,32 @@ namespace raphEngine::settings
     Settings<Quality>& Graphics::get_shadow_quality()
     {
         return shadow_;
+    }
+
+    Settings<graphics::Resolution>& Graphics::get_resolution()
+    {
+        return resolution_;
+    }
+
+    Settings<bool>& Graphics::get_fullscreen()
+    {
+        return fullscreen_;
+    }
+
+    nlohmann::json Graphics::serialize() const
+    {
+        nlohmann::json arr = nlohmann::json::array();
+
+        arr.push_back(api_.serialize());
+        arr.push_back(shadow_.serialize());
+        arr.push_back(resolution_.serialize());
+        arr.push_back(fullscreen_.serialize());
+
+        return arr;
+    }
+    bool Graphics::deserialize(const nlohmann::json& input)
+    {
+        (void) input;
+        return true;
     }
 } // namespace raphEngine::settings

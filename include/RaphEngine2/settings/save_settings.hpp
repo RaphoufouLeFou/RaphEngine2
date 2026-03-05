@@ -19,6 +19,7 @@ namespace raphEngine::settings {
 
     class RAPHENGINE_API SettingsSaver
     {
+        public:
         static void save_settings(std::vector<SavableSetting*>& settings, std::filesystem::path path);
         static std::vector<std::unique_ptr<SavableSetting>> load_settings(std::filesystem::path path);
     };

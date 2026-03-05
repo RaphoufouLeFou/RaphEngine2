@@ -29,10 +29,14 @@ namespace raphEngine::settings {
 
     void set_api(Api api_mode);
     void set_shadow(Quality shadow_quality);
+    void set_resolution(graphics::Resolution resolution);
+    void set_fullscreen(bool fullscreen);
     
 
     Settings<Api>& get_api_mode();
     Settings<Quality>& get_shadow_quality();
+    Settings<graphics::Resolution>& get_resolution();
+    Settings<bool>& get_fullscreen();
     
     private:
         Settings<Graphics::Api> api_ = Settings<Graphics::Api>("Graphics API", Api::OPENGL);

@@ -1,10 +1,13 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
+#include <memory>
 #include <string>
 #include <type_traits>
+#include "nlohmann/json_fwd.hpp"
 #include "serializable.hpp"
 #include <nlohmann/json.hpp>
+#include <vector>
 
 namespace raphEngine::settings {
 
@@ -15,29 +18,30 @@ namespace raphEngine::settings {
         LOW,
     };
 
-    template<typename T>
-    concept SettingsValue = requires (T value) {
-        std::is_default_constructible<T>();
-        std::is_move_constructible<T>();
-        std::is_convertible<T, Serializable>();
+    enum class SettingType
+    {
+        STRING,
+        BOOL,
+        INT,
+        QUALITY,
+        API,
     };
     
-    template<SettingsValue T>
-    struct RAPHENGINE_API Settings : public Serializable
+    class RAPHENGINE_API Settings
     {
-        Settings(const std::string& name_)
-            : name(name_)
+    public:
+        Settings(const std::string& name, const std::string& json_name = "", const std::string& value = "null", SettingType type = SettingType::STRING)
+            : type_ {type}
+            , json_name_ {json_name}
+            , pretty_name_ {name}
+            , value_ {value}
         {}
-
-        Settings(const std::string& name_, T default_)
-            : name(name_)
-            , value(default_)
-        {}
-
-        nlohmann::json serialize() const override;
-        bool deserialize(const nlohmann::json& input) override;
-
-        const std::string name;
-        T value;
+        static std::vector<std::unique_ptr<Settings>> parse_settings(nlohmann::json parent_node);
+        static std::vector<std::unique_ptr<Settings>> parse_settings(nlohmann::json parent_node);
+    private:
+        SettingType type_;
+        std::string json_name_;
+        std::string pretty_name_;
+        std::string value_;
     };
 }

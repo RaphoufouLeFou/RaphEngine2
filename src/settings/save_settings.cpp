@@ -29,7 +29,6 @@ namespace raphEngine::settings
     std::vector<std::unique_ptr<SavableSetting>> SettingsSaver::load_settings(std::filesystem::path path)
     {
         std::vector<std::unique_ptr<SavableSetting>> res;
-        res.push_back(std::make_unique<Graphics>());
         (void) path;
         return res;
     }

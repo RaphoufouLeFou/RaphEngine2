@@ -2,6 +2,8 @@
 
 namespace raphEngine::settings
 {
+    Settings::~Settings() = default;
+    
     std::unordered_map<std::string, Settings::Factory>& Settings::registry()
     {
         static std::unordered_map<std::string, Factory> instance;

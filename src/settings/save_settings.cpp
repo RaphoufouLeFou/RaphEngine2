@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 #include "settings/graphics.hpp"
+#include "settings/settings.hpp"
 
 namespace raphEngine::settings
 {
@@ -26,10 +27,22 @@ namespace raphEngine::settings
         ofs << arr.dump(4);
     }
 
-    std::vector<std::unique_ptr<SavableSetting>> SettingsSaver::load_settings(std::filesystem::path path)
+    std::vector<std::unique_ptr<SavableSetting>> load_default()
     {
         std::vector<std::unique_ptr<SavableSetting>> res;
-        (void) path;
+        res.push_back(std::make_unique<Graphics>());
         return res;
+    }
+
+    std::vector<std::unique_ptr<SavableSetting>> SettingsSaver::load_settings(std::filesystem::path path)
+    {
+        std::ifstream ifs(path);
+
+        if(!ifs.is_open() || true)
+            return load_default();
+
+        nlohmann::json parent;
+        ifs >> parent;
+        return load_default();
     }
 }

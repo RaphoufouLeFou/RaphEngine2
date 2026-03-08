@@ -9,10 +9,10 @@
 
 namespace raphEngine::settings {
 
-
     class RAPHENGINE_API Graphics : public SavableSetting
     {
     public:
+        
 
         nlohmann::json serialize() const override;
         bool deserialize(const nlohmann::json& input) override;
@@ -25,6 +25,7 @@ namespace raphEngine::settings {
     private:
         ApiSetting api_;
         ShadowSetting shadow_;
+        FullscreenSetting fullscreen_;
+        ResolutionSetting resolution_;
     };
-
 }

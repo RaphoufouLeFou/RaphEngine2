@@ -16,10 +16,11 @@ namespace raphEngine
         std::vector<settings::SavableSetting*> test;
         for (auto &s : sett) {
             test.push_back(s.get());
+            std::cout << "test\n";
         }
         
         settings::SettingsSaver::save_settings(test, "text.json");
-
+        Run();
     }
 
     void Core::Run()

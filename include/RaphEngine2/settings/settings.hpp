@@ -14,12 +14,12 @@ namespace raphEngine::settings {
     class RAPHENGINE_API Settings
     {
     public:
-        virtual ~Settings() = default;
+        virtual ~Settings();
 
         virtual const std::string get_pretty_name() const = 0;
 
-        virtual void add_to_json(nlohmann::json& parent_node);
-        virtual void from_json(nlohmann::json& parent_node);
+        virtual void add_to_json(nlohmann::json& parent_node) = 0;
+        virtual void from_json(nlohmann::json& parent_node) = 0;
 
         using Factory = std::function<std::unique_ptr<Settings>()>;
         static void register_setting(const std::string& name, Factory factory);

@@ -9,6 +9,7 @@ include(FetchContent)
 file(GLOB RaphEngine2_SRC
      "src/*.cpp"
      "src/*/*.cpp"
+     "src/*/*/*.cpp"
 )
 
 add_library(RaphEngine2 SHARED ${RaphEngine2_SRC})
@@ -77,6 +78,12 @@ endif()
 target_link_libraries(${PROJECT_NAME}
     PRIVATE nlohmann_json::nlohmann_json
 )
+
+
+
+find_package(glfw)
+
+target_link_libraries(RaphEngine2 PRIVATE GLFW::GLFW)
 
 # =========================
 # Install

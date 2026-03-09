@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace raphEngine::settings {
@@ -23,7 +24,6 @@ namespace raphEngine::settings {
             return "Graphics";
         }
 
-    private:
 
         enum class Api{
         
@@ -67,7 +67,19 @@ namespace raphEngine::settings {
             "High",
             "Medium",
             "Low",
-        }; 
+        };
+    
+        Api getApi() const;
+        Quality getShadowQuality() const;
+        bool getFullScreen() const;
+        std::pair<unsigned short, unsigned short> getResolution() const;
+
+        void setApi(Api new_api);
+        void setShadowQuality(Quality new_shadow);
+        void setFullSceen(bool new_fullscreen);
+        void setResolution(unsigned short new_x, unsigned short new_y);
+
+    private:
 
         EnumSetting<Api, 3> api_ = EnumSetting<Api, 3>("Api", api_names);
         EnumSetting<Quality, 3> shadow_ = EnumSetting<Quality, 3>("Shadow", quality_names);

@@ -2,7 +2,9 @@
 
 #include <iostream>
 
+#include "graphics/ogl/opengl.hpp"
 #include "objects/game_object.hpp"
+#include "settings/graphics.hpp"
 #include "settings/save_settings.hpp"
 
 namespace raphEngine
@@ -20,6 +22,9 @@ namespace raphEngine
         }
         
         settings::SettingsSaver::save_settings(test, "text.json");
+        
+        graphics::ogl::OpenGL renderer{};
+        renderer.Init(settings::Graphics(), "test");
         Run();
     }
 

@@ -3,7 +3,6 @@
 #include <RaphEngine2/export.hpp>
 #include "settings.hpp"
 #include "settings/save_settings.hpp"
-#include "graphics/resolution.hpp"
 #include <array>
 #include <cstddef>
 #include <nlohmann/json.hpp>

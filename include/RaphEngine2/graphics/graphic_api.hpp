@@ -7,6 +7,7 @@
 namespace raphEngine::graphics {
     class RAPHENGINE_API GraphicApi
     {
+    public:
         virtual void Init(const settings::Graphics& graphics_settings, const std::string& window_name) = 0;
         virtual void Render(const Renderable& renderable) = 0;
     };

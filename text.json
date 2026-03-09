@@ -1,1 +1,10 @@
-[]
+[
+    {
+        "Graphics": {
+            "Api": "openGL",
+            "Fullscreen": true,
+            "Resolution": "3840x2160",
+            "Shadow": "High"
+        }
+    }
+]

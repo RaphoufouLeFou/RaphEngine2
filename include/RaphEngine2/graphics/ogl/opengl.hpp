@@ -9,5 +9,6 @@ namespace raphEngine::graphics::ogl {
     public:
         void Init(const settings::Graphics& graphics_settings, const std::string& window_name) override;
         void Render(const Renderable& renderable) override;
+        void Refresh() override;
     };
 }

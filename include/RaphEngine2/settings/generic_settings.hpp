@@ -15,7 +15,7 @@ namespace raphEngine::settings {
     class RAPHENGINE_API EnumSetting : public Settings
     {
     public:
-        EnumSetting(const std::string& setting_name, const std::array<std::string, size> names, int default_value_index = 0)
+        EnumSetting(const std::string& setting_name, const std::array<std::string_view, size> names, int default_value_index = 0)
             : Settings {setting_name}
             , value { static_cast<T>(default_value_index)}
             , names_ { names }
@@ -23,11 +23,12 @@ namespace raphEngine::settings {
 
         void add_to_json(nlohmann::json& parent_node)const override;
         void from_json(const nlohmann::json& parent_node) override;
+        const std::string getCurrentAsString() const;
 
         T value;
 
     protected:
-        std::array<std::string, size> names_;
+        std::array<std::string_view, size> names_;
     };
 
     class RAPHENGINE_API BooleanSetting : public Settings

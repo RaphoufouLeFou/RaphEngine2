@@ -53,6 +53,10 @@ namespace raphEngine::objects
 
         static GameObject* find(const std::string& name);
 
+        GameObject(const GameObject&) = delete;
+        GameObject& operator=(const GameObject&) = delete;
+        GameObject& operator=(GameObject&&) = default;
+
     private:
 
         friend raphEngine::Core;

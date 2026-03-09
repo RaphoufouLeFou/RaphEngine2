@@ -2,8 +2,8 @@
     {
         "Graphics": {
             "Api": "openGL",
-            "Fullscreen": true,
-            "Resolution": "3840x2160",
+            "Fullscreen": false,
+            "Resolution": "1920x1080",
             "Shadow": "High"
         }
     }

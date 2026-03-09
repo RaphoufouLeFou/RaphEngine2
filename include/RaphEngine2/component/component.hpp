@@ -7,6 +7,10 @@ namespace raphEngine::component {
     class RAPHENGINE_API Component
     {
     public:
+
+
+        virtual ~Component() = default;
+
         virtual void Start() {}
         virtual void Update() {}
 

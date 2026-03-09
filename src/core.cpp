@@ -9,6 +9,9 @@
 
 namespace raphEngine
 {
+    
+    graphics::ogl::OpenGL renderer{};
+
     void Core::Init(const std::string& title)
     {
         (void)title;
@@ -23,7 +26,8 @@ namespace raphEngine
         
         settings::SettingsSaver::save_settings(test, "text.json");
         
-        graphics::ogl::OpenGL renderer{};
+        
+        std::cout << "Heree" << std::endl;
         renderer.Init(settings::Graphics(), "test");
         Run();
     }
@@ -39,6 +43,7 @@ namespace raphEngine
         {
             execute_updates();
             execute_components_updates();
+            renderer.Refresh();
         }
     }
 

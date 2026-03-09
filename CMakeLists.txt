@@ -46,6 +46,7 @@ set_target_properties(RaphEngine2 PROPERTIES
 # dependencies
 # =========================
 
+# glm
 find_package(glm QUIET)
 
 if(NOT glm_FOUND)
@@ -59,11 +60,8 @@ endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glm::glm)
 
-find_package(GLEW)
 
-target_link_libraries(RaphEngine2 PRIVATE GLEW::GLEW)
-
-
+# nlohmann json
 find_package(nlohmann_json QUIET)
 
 if(NOT nlohmann_json_FOUND)
@@ -75,15 +73,34 @@ if(NOT nlohmann_json_FOUND)
     FetchContent_MakeAvailable(nlohmann_json)
 endif()
 
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE nlohmann_json::nlohmann_json
+target_link_libraries(RaphEngine2 PRIVATE nlohmann_json::nlohmann_json)
+
+
+# GLEW
+
+FetchContent_Declare(
+    glew
+    GIT_REPOSITORY https://github.com/Perlmint/glew-cmake.git
+    GIT_TAG glew-cmake-2.2.0
 )
 
+FetchContent_MakeAvailable(glew)
 
+target_link_libraries(RaphEngine2 PRIVATE libglew_static)
 
-find_package(glfw)
+# GLFW
+find_package(glfw3 QUIET)
 
-target_link_libraries(RaphEngine2 PRIVATE GLFW::GLFW)
+if(NOT glfw3_FOUND)
+    FetchContent_Declare(
+        glfw3
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG 3.3.9
+    )
+    FetchContent_MakeAvailable(glfw3)
+endif()
+
+target_link_libraries(RaphEngine2 PRIVATE glfw)
 
 # =========================
 # Install

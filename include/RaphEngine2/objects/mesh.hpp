@@ -38,7 +38,10 @@ namespace raphEngine::objects
 
     class RAPHENGINE_API Mesh
     {
-    public:
+    public:   
+
+        virtual ~Mesh() = default;
+
         virtual void render() = 0;
         const std::vector<Vertex>& get_vertices() const;
     protected:

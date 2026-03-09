@@ -8,7 +8,7 @@ namespace raphEngine::settings
     template<typename T, size_t size>
     void EnumSetting<T, size>::add_to_json(nlohmann::json& parent_node)const
     {
-        parent_node[get_pretty_name()] = names_[static_cast<int>(value)];
+        parent_node[get_pretty_name()] = getCurrentAsString();
     }
 
     template<typename T, size_t size>
@@ -21,5 +21,10 @@ namespace raphEngine::settings
                 value = static_cast<T>(i);
             }
         }
+    }
+    template<typename T, size_t size>
+    const std::string EnumSetting<T, size>::getCurrentAsString() const
+    {
+        return std::string(names_[static_cast<int>(value)]);
     }
 }

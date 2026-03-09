@@ -15,7 +15,7 @@ namespace raphEngine::settings
     {
         std::ofstream ofs(path);
         if(!ofs.is_open())
-            throw std::invalid_argument(std::string("can't open file \"") + path.c_str() + "\"");
+            throw std::invalid_argument(std::string("can't open file \"") + path.string() + "\"");
         std::cout << "saving " << settings.size() << " setting(s) to " << path << "\n";
         nlohmann::json arr = nlohmann::json::array();
         for (auto& setting : settings)
@@ -56,5 +56,4 @@ namespace raphEngine::settings
     {
         registry()[name] = factory;
     }
-
 }

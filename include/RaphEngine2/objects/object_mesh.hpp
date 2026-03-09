@@ -13,9 +13,16 @@ namespace raphEngine::objects
 {
     class RAPHENGINE_API ObjectMesh
     {
-    private:
+    public:
         ObjectMesh();
+    
+        ObjectMesh(const ObjectMesh&) = delete;
+        ObjectMesh& operator=(const ObjectMesh&) = delete;
+        ObjectMesh& operator=(ObjectMesh&&) = default;
+
+    private:
         std::shared_ptr<Shader> shader_;
+
         std::vector<std::unique_ptr<Mesh>> meshes_;
     };
 } // namespace raphEngine

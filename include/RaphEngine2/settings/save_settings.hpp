@@ -14,7 +14,7 @@ namespace raphEngine::settings {
     public:
         virtual nlohmann::json serialize() const override = 0;
         virtual bool deserialize(const nlohmann::json& input) override = 0;
-        virtual constexpr std::string get_settings_name() const = 0;
+        virtual const std::string get_settings_name() const = 0;
 
     };
 

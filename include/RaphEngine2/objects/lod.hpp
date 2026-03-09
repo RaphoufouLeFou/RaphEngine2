@@ -17,7 +17,9 @@ namespace raphEngine::objects
         const ObjectMesh* get_lod(size_t level) const;
         size_t get_lod_count() const;
 
+        Lod(const Lod&) = delete;
         Lod& operator=(std::initializer_list<MeshInfo> meshes);
+        Lod& operator=(const Lod&) = delete;
 
     private:
         std::vector<std::unique_ptr<ObjectMesh>> lod_meshes_;

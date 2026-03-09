@@ -45,4 +45,16 @@ namespace raphEngine::settings
         ifs >> parent;
         return load_default();
     }
+
+    std::unordered_map<std::string, SettingsSaver::Factory>& SettingsSaver::registry()
+    {
+        static std::unordered_map<std::string, Factory> instance;
+        return instance;
+    }
+
+    void SettingsSaver::register_setting(const std::string& name, Factory factory)
+    {
+        registry()[name] = factory;
+    }
+
 }

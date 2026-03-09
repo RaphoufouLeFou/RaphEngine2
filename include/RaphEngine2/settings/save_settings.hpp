@@ -15,6 +15,7 @@ namespace raphEngine::settings {
         virtual nlohmann::json serialize() const override = 0;
         virtual bool deserialize(const nlohmann::json& input) override = 0;
         virtual constexpr std::string get_settings_name() const = 0;
+
     };
 
     class RAPHENGINE_API SettingsSaver
@@ -22,5 +23,12 @@ namespace raphEngine::settings {
         public:
         static void save_settings(std::vector<SavableSetting*>& settings, std::filesystem::path path);
         static std::vector<std::unique_ptr<SavableSetting>> load_settings(std::filesystem::path path);
+
+        
+        
+        using Factory = std::function<std::unique_ptr<SavableSetting>()>;
+        static void register_setting(const std::string& name, Factory factory);
+    private:
+        static std::unordered_map<std::string, Factory>& registry();
     };
 }

@@ -10,7 +10,7 @@ set_target_properties(RaphEditor PROPERTIES CXX_STANDARD 20)
 if(WIN32)
     target_compile_options(RaphEditor PRIVATE /W4 /permissive- /wd4251)
 else()
-    target_compile_options(RaphEditor PRIVATE -Wall -Wextra -Werror -pedantic -Wold-style-cast)
+    target_compile_options(RaphEditor PRIVATE -Wall -Wextra -Werror -pedantic -Wold-style-cast -fPIC)
 endif()
 
 # Copies the DLL into the same folder as the executable for win builds
@@ -22,9 +22,9 @@ if(WIN32)
     )
 endif()
 
-# =========================
+# ========================
 # dependencies
-# =========================
+# ========================
 
 find_package(glm QUIET)
 

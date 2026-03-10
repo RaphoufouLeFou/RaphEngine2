@@ -26,7 +26,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 if(WIN32)
     target_compile_options(RaphEngine2 PRIVATE /W4 /permissive- /wd4251)
 else()
-    target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -Wold-style-cast)
+    target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -Wold-style-cast -fPIC)
 endif()
 
 target_include_directories(RaphEngine2
@@ -42,9 +42,9 @@ set_target_properties(RaphEngine2 PROPERTIES
 )
 
 
-# =========================
+# ========================
 # dependencies
-# =========================
+# ========================
 
 # glm
 find_package(glm QUIET)
@@ -77,6 +77,7 @@ target_link_libraries(RaphEngine2 PRIVATE nlohmann_json::nlohmann_json)
 
 
 # GLEW
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 FetchContent_Declare(
     glew
@@ -102,9 +103,9 @@ endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glfw)
 
-# =========================
+# ========================
 # Install
-# =========================
+# ========================
 
 
 install(TARGETS RaphEngine2

@@ -3,7 +3,7 @@ A home-made game engine in c++
 
 # Project status
 
-The project is currently in developement. ETA: in a fe
+The project is currently in developement. ETA: in a few years
 
 # How to build
 

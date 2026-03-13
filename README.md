@@ -1,9 +1,9 @@
 # RaphEngine2
 A home-made game engine in c++
 
-# State og the project
+# Project status
 
-The project is currently in heavy developement. It will probably slow down during the year 2026.
+The project is currently in developement. ETA: in a fe
 
 # How to build
 

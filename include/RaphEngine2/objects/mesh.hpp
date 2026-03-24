@@ -1,11 +1,18 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>
+#include <RaphEngine2/graphics/mesh_renderer.hpp>
+
+namespace raphEngine::graphics
+{
+    class MeshRenderer;
+}
 
 namespace raphEngine::objects
 {
@@ -38,8 +45,8 @@ namespace raphEngine::objects
 
     class RAPHENGINE_API Mesh
     {
-    public:   
-
+    public:
+        Mesh();
         virtual ~Mesh() = default;
 
         virtual void render() = 0;
@@ -51,5 +58,7 @@ namespace raphEngine::objects
 
         bool outline_;
         bool cast_shadows_;
+
+        std::shared_ptr<graphics::MeshRenderer> mesh_renderer_;
     };
 } // namespace raphEngine

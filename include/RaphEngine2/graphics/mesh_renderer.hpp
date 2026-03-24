@@ -1,13 +1,24 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
+#include <memory>
 #include "renderer.hpp"
+#include "objects/mesh.hpp"
 #include "settings/graphics.hpp"
 
+
+
+namespace raphEngine::objects 
+{
+    class Mesh;
+}
+
 namespace raphEngine::graphics {
+    
     class RAPHENGINE_API MeshRenderer : public Renderer
     {
     public:
         virtual void render() override = 0;
+        static std::shared_ptr<MeshRenderer> createMeshRender(raphEngine::objects::Mesh* mesh);
     };
 }

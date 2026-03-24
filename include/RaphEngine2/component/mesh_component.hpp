@@ -12,7 +12,7 @@
 
 namespace raphEngine::component
 {
-    class RAPHENGINE_API MeshComponent : public Component,  public Renderable
+    class RAPHENGINE_API MeshComponent : public Component, public Renderable
     {
     public:
         MeshComponent(std::initializer_list<objects::MeshInfo> meshes);

@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
+#include <RaphEngine2/renderable.hpp>
 #include <iostream>
 
 namespace raphEngine::graphics::ogl {
@@ -74,11 +75,16 @@ namespace raphEngine::graphics::ogl {
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
-    void OpenGL::Render(const Renderable& renderable)
+
+    void OpenGL::Render()
     {
-        (void) renderable;
+
     }
 
+    void OpenGL::AddToRenderPool(const Renderable& renderable)
+    {
+        render_pool.push_back(&renderable);
+    }
     
     void OpenGL::Refresh()
     {

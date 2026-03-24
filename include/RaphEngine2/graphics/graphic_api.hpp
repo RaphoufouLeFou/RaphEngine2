@@ -9,7 +9,8 @@ namespace raphEngine::graphics {
     {
     public:
         virtual void Init(const settings::Graphics& graphics_settings, const std::string& window_name) = 0;
-        virtual void Render(const Renderable& renderable) = 0;
+        virtual void Render() = 0;
+        virtual void AddToRenderPool(const Renderable& renderable) = 0;
         virtual void Refresh() = 0;
     };
 }

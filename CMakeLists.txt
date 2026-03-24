@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.21.2)
 
 project(RaphEngine2 VERSION 1.0.0 LANGUAGES CXX)
 
@@ -60,21 +60,25 @@ endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glm::glm)
 
-
 # nlohmann json
 find_package(nlohmann_json QUIET)
 
-if(NOT nlohmann_json_FOUND)
+if(nlohmann_json_FOUND)
+    target_link_libraries(RaphEngine2 PUBLIC nlohmann_json::nlohmann_json)
+else()
     FetchContent_Declare(
         nlohmann_json
         GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.11.3
+        GIT_TAG v3.12.0
     )
     FetchContent_MakeAvailable(nlohmann_json)
+
+    target_link_libraries(RaphEngine2 PRIVATE nlohmann_json::nlohmann_json)
+
+    target_include_directories(RaphEngine2 PUBLIC
+        $<BUILD_INTERFACE:${nlohmann_json_SOURCE_DIR}/include>
+    )
 endif()
-
-target_link_libraries(RaphEngine2 PRIVATE nlohmann_json::nlohmann_json)
-
 
 # GLEW
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -102,6 +106,31 @@ if(NOT glfw3_FOUND)
 endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glfw)
+
+# stb_image
+FetchContent_Declare(
+    stb_image
+    GIT_REPOSITORY https://github.com/nothings/stb.git
+    GIT_TAG master
+)
+
+FetchContent_MakeAvailable(stb_image)
+
+target_include_directories(RaphEngine2 PRIVATE ${stb_image_SOURCE_DIR})
+
+# assimp
+find_package(assimp QUIET)
+
+if(NOT assimp_FOUND)
+    FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG v5.2.5
+    )
+    FetchContent_MakeAvailable(assimp)
+endif()
+
+target_link_libraries(RaphEngine2 PRIVATE assimp::assimp)
 
 # ========================
 # Install

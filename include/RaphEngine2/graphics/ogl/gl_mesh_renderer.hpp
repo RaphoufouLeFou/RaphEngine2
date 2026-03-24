@@ -9,15 +9,14 @@ namespace raphEngine::graphics {
     class RAPHENGINE_API GLMeshRenderer : public MeshRenderer
     {
     public:
-        GLMeshRenderer(objects::Mesh * mesh)
-        {
-            // TODO: implement
-            (void) mesh;
-        }
+        GLMeshRenderer(objects::Mesh * mesh);
+        void render() override;
+        void render_shadows() override;
+    private:
+        void GenerateBuffers();
 
-        inline void render() override
-        {
-            // TODO: implement
-        }
+        unsigned int vao_;
+        unsigned int vbo_;
+        unsigned int ebo_;
     };
 }

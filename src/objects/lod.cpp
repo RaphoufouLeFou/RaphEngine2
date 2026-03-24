@@ -23,7 +23,7 @@ namespace raphEngine::objects
         for (const auto& info : meshes)
         {
             (void)info;
-            // lod_meshes_.push_back(std::make_unique<ObjectMesh>(info));
+            lod_meshes_.push_back(std::make_unique<ObjectMesh>(info));
         }
     }
 } // namespace raphEngine::objects

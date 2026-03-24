@@ -4,8 +4,8 @@
 #include <string>
 #include <memory>
 
-#include <RaphEngine2/export.hpp>
-#include <RaphEngine2/renderable.hpp>
+#include "export.hpp"
+#include "renderable.hpp"
 #include "shader.hpp"
 
 namespace raphEngine::objects

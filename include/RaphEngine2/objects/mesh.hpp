@@ -25,7 +25,7 @@ namespace raphEngine::objects
         glm::vec3 bitangent;
 
         Vertex() = default;
-        Vertex(glm::vec3 position_) : position {position_} {}
+        Vertex(glm::vec3 position_) : position(position_) {}
     };
 
     struct RAPHENGINE_API Texture
@@ -49,8 +49,19 @@ namespace raphEngine::objects
         Mesh();
         virtual ~Mesh() = default;
 
-        virtual void render() = 0;
+        virtual void render();
+
         const std::vector<Vertex>& get_vertices() const;
+        std::vector<Vertex>& get_vertices();
+
+        const std::vector<unsigned int>& get_indices() const;
+        std::vector<unsigned int>& get_indices();
+
+        const std::vector<Texture>& get_textures() const;
+        std::vector<Texture>& get_textures();
+
+        void set_model_matrix(const glm::mat4& model_matrix);
+
     protected:
         std::vector<Vertex> vertices_;
         std::vector<unsigned int> indices_;
@@ -58,6 +69,8 @@ namespace raphEngine::objects
 
         bool outline_;
         bool cast_shadows_;
+
+        glm::mat4 model_matrix_;
 
         std::shared_ptr<graphics::MeshRenderer> mesh_renderer_;
     };

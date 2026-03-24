@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 #include <type_traits>
-#include "nlohmann/json_fwd.hpp"
 #include "serializable.hpp"
 #include "settings/save_settings.hpp"
 #include <nlohmann/json.hpp>

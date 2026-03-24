@@ -19,6 +19,10 @@ namespace raphEngine::graphics {
     {
     public:
         virtual void render() override = 0;
+        virtual void render_shadows() = 0;
         static std::shared_ptr<MeshRenderer> createMeshRender(raphEngine::objects::Mesh* mesh);
+    protected:
+        MeshRenderer(objects::Mesh* mesh);
+        const objects::Mesh* mesh_;
     };
 }

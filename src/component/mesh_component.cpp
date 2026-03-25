@@ -18,7 +18,7 @@ namespace raphEngine::component
     }
     void MeshComponent::Update()
     {
-        std::cout << "updateing me !!\n";
+        std::cout << "updating me !!\n";
     }
     void MeshComponent::render()
     {

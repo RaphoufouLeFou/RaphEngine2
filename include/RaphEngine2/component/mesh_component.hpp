@@ -15,9 +15,8 @@ namespace raphEngine::component
     class RAPHENGINE_API MeshComponent : public Component, public Renderable
     {
     public:
-        MeshComponent(std::initializer_list<objects::MeshInfo> meshes);
+        MeshComponent(std::initializer_list<objects::MeshInfo> mesh_lods);
         const std::string component_name = "Render mesh";
-
         
         inline const std::string get_name() const override
         {

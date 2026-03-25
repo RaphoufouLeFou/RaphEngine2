@@ -23,7 +23,7 @@ namespace raphEngine::objects
         std::string filename = std::string(path);
         if(directory != "")
             filename = directory + '/' + filename;
-        int index = filename.find("Assets");
+        int index = filename.find("assets");
         if (index != -1)
             filename = filename.substr(index);
         unsigned int textureID;

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include <RaphEngine2/export.hpp>
 
@@ -12,7 +13,10 @@ namespace raphEngine::objects
 class RAPHENGINE_API Shader
 {
 public:
+    static std::shared_ptr<Shader> create_shader(const std::string& vShaderCode, const std::string& fShaderCode, const std::string& gShaderCode = "");
+    
     Shader(const std::string& vShaderCode, const std::string& fShaderCode, const std::string& gShaderCode = "");
+    
     void use();
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;
@@ -31,7 +35,7 @@ public:
     void setMat3(const std::string& name, const glm::mat3& mat) const;
     void setMat4(const std::string& name, const glm::mat4& mat) const;
     void setModel(const glm::mat4& mat, int index) const;
-
+    
 private:
 
     static std::vector<Shader*> loadedShaders_;

@@ -29,7 +29,6 @@ namespace raphEngine
         
         std::cout << "Heree" << std::endl;
         renderer.Init(settings::Graphics(), "test");
-        Run();
     }
 
     void Core::Run()
@@ -51,12 +50,12 @@ namespace raphEngine
     {
         for (auto& go : objects::GameObject::spawned_game_objects_)
         {
-            go.lock()->Awake();
+            go->Awake();
         }
 
         for (auto& go : objects::GameObject::spawned_game_objects_)
         {
-            go.lock()->Start();
+            go->Start();
         }
     }
 
@@ -64,7 +63,7 @@ namespace raphEngine
     {
         for (auto& go : objects::GameObject::spawned_game_objects_)
         {
-            go.lock()->Update();
+            go->Update();
         }
     }
 
@@ -72,7 +71,7 @@ namespace raphEngine
     {
         for (auto& go : objects::GameObject::spawned_game_objects_)
         {
-            go.lock()->update_components();
+            go->update_components();
         }
     }
 } // namespace raphEngine

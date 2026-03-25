@@ -7,4 +7,6 @@
 #include "objects/mesh.hpp"
 #include "objects/object_mesh.hpp"
 #include "objects/transform.hpp"
+#include "component/mesh_component.hpp"
+#include "component/component.hpp"
 #include "renderable.hpp"

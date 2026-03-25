@@ -6,7 +6,7 @@
 
 namespace raphEngine::objects
 {
-    std::vector<std::weak_ptr<GameObject>> GameObject::spawned_game_objects_;
+    std::vector<GameObject*> GameObject::spawned_game_objects_;
 
     void GameObject::greed()
     {
@@ -17,12 +17,20 @@ namespace raphEngine::objects
     {
         name_ = name;
         transform_ = Transform();
+        spawned_game_objects_.push_back(this);
     }
 
     GameObject::GameObject(GameObject& other)
     {
         name_ = other.name_;
         transform_ = other.transform_;
+        spawned_game_objects_.push_back(this);
+    }
+
+    void GameObject::add_component(std::unique_ptr<component::Component> component)
+    {
+        std::cout << "adding " << component->get_name() << "\n";
+        components_.push_back(std::move(component));
     }
 
     component::Component* GameObject::get_component(size_t index)
@@ -83,8 +91,8 @@ namespace raphEngine::objects
     {
         for (auto& go : spawned_game_objects_)
         {
-            if (go.lock()->name_ == name)
-                return go.lock().get();
+            if (go->name_ == name)
+                return go;
         }
         return nullptr;
     }

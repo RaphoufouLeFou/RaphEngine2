@@ -14,7 +14,7 @@ namespace raphEngine::objects
     {
         MeshInfo(const std::string& mesh_path_, std::shared_ptr<Shader> shader_, bool bilinear_ = true)
             : mesh_path {mesh_path_}
-            , shader {std::move(shader_)}
+            , shader {shader_}
             , bilinear {bilinear_}
         {}
 

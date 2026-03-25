@@ -29,7 +29,7 @@ namespace raphEngine::objects
 
         std::shared_ptr<GameObject> instanciate();
 
-        void add_component(component::Component component);
+        void add_component(std::unique_ptr<component::Component> component);
         component::Component* get_component(size_t index);
         component::Component* get_component(const std::string& name);
         
@@ -65,7 +65,7 @@ namespace raphEngine::objects
         objects::Transform transform_;
         std::vector<std::unique_ptr<component::Component>> components_;
 
-        static std::vector<std::weak_ptr<GameObject>> spawned_game_objects_;
+        static std::vector<GameObject*> spawned_game_objects_;
     };
 }
 

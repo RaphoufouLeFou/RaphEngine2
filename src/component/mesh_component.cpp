@@ -2,6 +2,7 @@
 #include "component/mesh_component.hpp"
 #include <memory>
 #include "objects/lod.hpp"
+#include <iostream>
 
 namespace raphEngine::component
 {
@@ -17,7 +18,7 @@ namespace raphEngine::component
     }
     void MeshComponent::Update()
     {
-        
+        std::cout << "updateing me !!\n";
     }
     void MeshComponent::render()
     {

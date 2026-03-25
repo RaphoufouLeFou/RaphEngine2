@@ -16,10 +16,6 @@ namespace raphEngine::objects
     
         ObjectMesh() = default;
         ObjectMesh(const MeshInfo& info);
-    
-        ObjectMesh(const ObjectMesh&) = delete;
-        ObjectMesh& operator=(const ObjectMesh&) = delete;
-        ObjectMesh& operator=(ObjectMesh&&) = default;
         
         static std::vector<Texture> textures_loaded_;
         void add_mesh(std::unique_ptr<Mesh> mesh);

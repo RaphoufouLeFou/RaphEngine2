@@ -1,13 +1,12 @@
 #pragma once
 
+#include <RaphEngine2/export.hpp>
+#include <RaphEngine2/graphics/mesh_renderer.hpp>
+#include <RaphEngine2/renderable.hpp>
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include <RaphEngine2/export.hpp>
-#include <RaphEngine2/renderable.hpp>
-#include <RaphEngine2/graphics/mesh_renderer.hpp>
 
 namespace raphEngine::graphics
 {
@@ -25,7 +24,9 @@ namespace raphEngine::objects
         glm::vec3 bitangent;
 
         Vertex() = default;
-        Vertex(glm::vec3 position_) : position(position_) {}
+        Vertex(glm::vec3 position_)
+            : position(position_)
+        {}
     };
 
     struct RAPHENGINE_API Texture
@@ -74,4 +75,4 @@ namespace raphEngine::objects
 
         std::shared_ptr<graphics::MeshRenderer> mesh_renderer_;
     };
-} // namespace raphEngine
+} // namespace raphEngine::objects

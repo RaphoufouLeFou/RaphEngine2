@@ -1,22 +1,27 @@
 
 #include "settings/save_settings.hpp"
+
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <stdexcept>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 #include <vector>
+
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 
 namespace raphEngine::settings
 {
-    void SettingsSaver::save_settings(std::vector<SavableSetting*>& settings, std::filesystem::path path)
+    void SettingsSaver::save_settings(std::vector<SavableSetting*>& settings,
+                                      std::filesystem::path path)
     {
         std::ofstream ofs(path);
-        if(!ofs.is_open())
-            throw std::invalid_argument(std::string("can't open file \"") + path.string() + "\"");
-        std::cout << "saving " << settings.size() << " setting(s) to " << path << "\n";
+        if (!ofs.is_open())
+            throw std::invalid_argument(std::string("can't open file \"")
+                                        + path.string() + "\"");
+        std::cout << "saving " << settings.size() << " setting(s) to " << path
+                  << "\n";
         nlohmann::json arr = nlohmann::json::array();
         for (auto& setting : settings)
         {
@@ -34,11 +39,12 @@ namespace raphEngine::settings
         return res;
     }
 
-    std::vector<std::unique_ptr<SavableSetting>> SettingsSaver::load_settings(std::filesystem::path path)
+    std::vector<std::unique_ptr<SavableSetting>>
+    SettingsSaver::load_settings(std::filesystem::path path)
     {
         std::ifstream ifs(path);
 
-        if(!ifs.is_open() || true)
+        if (!ifs.is_open() || true)
             return load_default();
 
         nlohmann::json parent;
@@ -46,14 +52,16 @@ namespace raphEngine::settings
         return load_default();
     }
 
-    std::unordered_map<std::string, SettingsSaver::Factory>& SettingsSaver::registry()
+    std::unordered_map<std::string, SettingsSaver::Factory>&
+    SettingsSaver::registry()
     {
         static std::unordered_map<std::string, Factory> instance;
         return instance;
     }
 
-    void SettingsSaver::register_setting(const std::string& name, Factory factory)
+    void SettingsSaver::register_setting(const std::string& name,
+                                         Factory factory)
     {
         registry()[name] = factory;
     }
-}
+} // namespace raphEngine::settings

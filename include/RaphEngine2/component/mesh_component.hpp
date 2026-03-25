@@ -1,23 +1,24 @@
 #pragma once
 
-#include <memory>
 #include <RaphEngine2/export.hpp>
+#include <memory>
 #include <string>
 
-#include "renderable.hpp"
+#include "component.hpp"
 #include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
-
-#include "component.hpp"
+#include "renderable.hpp"
 
 namespace raphEngine::component
 {
-    class RAPHENGINE_API MeshComponent : public Component, public Renderable
+    class RAPHENGINE_API MeshComponent
+        : public Component
+        , public Renderable
     {
     public:
         MeshComponent(std::initializer_list<objects::MeshInfo> mesh_lods);
         const std::string component_name = "Render mesh";
-        
+
         inline const std::string get_name() const override
         {
             return component_name;
@@ -27,8 +28,9 @@ namespace raphEngine::component
         void Update() override;
 
     protected:
-        std::unique_ptr<objects::Lod> lods_; 
+        std::unique_ptr<objects::Lod> lods_;
+
     private:
         void render() override;
     };
-}
+} // namespace raphEngine::component

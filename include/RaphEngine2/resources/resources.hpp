@@ -4,10 +4,10 @@
 #include "export.hpp"
 
 namespace raphEngine::resources
-{ 
+{
     class RAPHENGINE_API Resources
     {
     public:
         Resources(const std::string& path);
     };
-}
+} // namespace raphEngine::resources

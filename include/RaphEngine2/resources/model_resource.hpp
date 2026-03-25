@@ -11,4 +11,4 @@ namespace raphEngine::resources
     public:
         ModelResource(const std::string& path);
     };
-}
+} // namespace raphEngine::resources

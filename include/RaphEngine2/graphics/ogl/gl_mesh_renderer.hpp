@@ -2,16 +2,19 @@
 
 #include <RaphEngine2/export.hpp>
 #include <memory>
+
 #include "graphics/mesh_renderer.hpp"
 #include "settings/graphics.hpp"
 
-namespace raphEngine::graphics {
+namespace raphEngine::graphics
+{
     class RAPHENGINE_API GLMeshRenderer : public MeshRenderer
     {
     public:
-        GLMeshRenderer(objects::Mesh * mesh);
+        GLMeshRenderer(objects::Mesh* mesh);
         void render() override;
         void render_shadows() override;
+
     private:
         void GenerateBuffers();
 
@@ -19,4 +22,4 @@ namespace raphEngine::graphics {
         unsigned int vbo_;
         unsigned int ebo_;
     };
-}
+} // namespace raphEngine::graphics

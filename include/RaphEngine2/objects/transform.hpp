@@ -1,8 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
-
 #include <RaphEngine2/export.hpp>
+#include <glm/glm.hpp>
 
 namespace raphEngine::objects
 {
@@ -22,4 +21,4 @@ namespace raphEngine::objects
 
         glm::mat4 model_matrix_;
     };
-}
+} // namespace raphEngine::objects

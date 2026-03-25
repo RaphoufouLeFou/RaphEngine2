@@ -1,12 +1,12 @@
 #pragma once
 
-#include <glm/glm.hpp>
-#include <vector>
-#include <memory>
-
 #include <RaphEngine2/export.hpp>
-#include "object_mesh.hpp"
+#include <glm/glm.hpp>
+#include <memory>
+#include <vector>
+
 #include "mesh_info.hpp"
+#include "object_mesh.hpp"
 
 namespace raphEngine::objects
 {
@@ -24,4 +24,4 @@ namespace raphEngine::objects
     private:
         std::vector<std::unique_ptr<ObjectMesh>> lod_meshes_;
     };
-}
+} // namespace raphEngine::objects

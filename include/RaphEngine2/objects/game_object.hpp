@@ -1,14 +1,14 @@
 #pragma once
 
+#include <RaphEngine2/export.hpp>
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <RaphEngine2/export.hpp>
 #include <vector>
 
 #include "component/component.hpp"
-#include "transform.hpp"
 #include "core.hpp"
+#include "transform.hpp"
 
 namespace raphEngine::objects
 {
@@ -20,10 +20,13 @@ namespace raphEngine::objects
         ~GameObject() = default;
 
         void greed();
-        
-        virtual void Awake() {}
-        virtual void Start() {}
-        virtual void Update() {}
+
+        virtual void Awake()
+        {}
+        virtual void Start()
+        {}
+        virtual void Update()
+        {}
 
         std::string& get_name();
 
@@ -32,10 +35,10 @@ namespace raphEngine::objects
         void add_component(std::unique_ptr<component::Component> component);
         component::Component* get_component(size_t index);
         component::Component* get_component(const std::string& name);
-        
+
         template <class T>
         std::vector<T*> get_all_component_of_type();
-        
+
         template <class T>
         T* get_first_component_of_type();
 
@@ -47,7 +50,7 @@ namespace raphEngine::objects
 
         template <class T>
         void remove_first_component_of_type();
-        
+
         void start_components();
         void update_components();
 
@@ -58,7 +61,6 @@ namespace raphEngine::objects
         GameObject& operator=(GameObject&&) = default;
 
     private:
-
         friend raphEngine::Core;
 
         std::string name_;
@@ -67,6 +69,6 @@ namespace raphEngine::objects
 
         static std::vector<GameObject*> spawned_game_objects_;
     };
-}
+} // namespace raphEngine::objects
 
 #include "game_object.hxx"

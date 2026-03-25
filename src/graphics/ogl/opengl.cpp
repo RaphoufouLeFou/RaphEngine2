@@ -1,49 +1,56 @@
-#include <RaphEngine2/export.hpp>
 #include "graphics/ogl/opengl.hpp"
+
+#include <GL/gl.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <GL/gl.h>
+#include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>
 #include <iostream>
 
-namespace raphEngine::graphics::ogl {
+namespace raphEngine::graphics::ogl
+{
 
     GLFWwindow* window;
-    void OpenGL::Init(const settings::Graphics& graphics_settings, const std::string& window_name)
+    void OpenGL::Init(const settings::Graphics& graphics_settings,
+                      const std::string& window_name)
     {
-        
-        if (!glfwInit()) {
+        if (!glfwInit())
+        {
             std::cerr << "Failed to initialize GLFW" << std::endl;
             exit(EXIT_FAILURE);
-	    }
+        }
 
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
-
         auto [ResX, ResY] = graphics_settings.getResolution();
 
-        std::cout << "starting with a resolution of " << ResX << 'x' << ResY << std::endl;
+        std::cout << "starting with a resolution of " << ResX << 'x' << ResY
+                  << std::endl;
 
-        window = glfwCreateWindow(ResX, ResY, window_name.c_str(), graphics_settings.getFullScreen() ? monitor : NULL, NULL);
+        window = glfwCreateWindow(
+            ResX, ResY, window_name.c_str(),
+            graphics_settings.getFullScreen() ? monitor : NULL, NULL);
 
-        if (!window) {
+        if (!window)
+        {
             std::cerr << "Failed to create window (skill issue)" << std::endl;
             // display the error message
             const char* description;
             int code = glfwGetError(&description);
-            std::cerr << "Error code: " << code << ", description: " << description << std::endl;
+            std::cerr << "Error code: " << code
+                      << ", description: " << description << std::endl;
             glfwTerminate();
             exit(EXIT_FAILURE);
         }
 
-
         // glfwGetWindowSize(window, &ResX, &ResY);
         glfwMakeContextCurrent(window); // Initialize GLEW
 
-        //glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+        // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
         glewExperimental = true; // Needed in core profile
-        if (glewInit() != GLEW_OK) {
+        if (glewInit() != GLEW_OK)
+        {
             std::cerr << "Failed to initialize GLEW" << std::endl;
             exit(EXIT_FAILURE);
             return;
@@ -58,7 +65,7 @@ namespace raphEngine::graphics::ogl {
 
         // Set the mouse at the center of the screen
         glfwPollEvents();
-        //glfwSetCursorPos(window, ResX / 2, ResY / 2);
+        // glfwSetCursorPos(window, ResX / 2, ResY / 2);
 
         // Dark blue background
         glClearColor(0.36f, 0.74f, 0.89f, 0.0f);
@@ -77,19 +84,17 @@ namespace raphEngine::graphics::ogl {
     }
 
     void OpenGL::Render()
-    {
-
-    }
+    {}
 
     void OpenGL::AddToRenderPool(const Renderable& renderable)
     {
         render_pool.push_back(&renderable);
     }
-    
+
     void OpenGL::Refresh()
     {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-}
+} // namespace raphEngine::graphics::ogl

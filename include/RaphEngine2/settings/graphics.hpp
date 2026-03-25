@@ -1,9 +1,6 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
-#include "settings.hpp"
-#include "settings/save_settings.hpp"
-#include "generic_settings.hpp"
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -11,7 +8,12 @@
 #include <utility>
 #include <vector>
 
-namespace raphEngine::settings {
+#include "generic_settings.hpp"
+#include "settings.hpp"
+#include "settings/save_settings.hpp"
+
+namespace raphEngine::settings
+{
 
     class RAPHENGINE_API Graphics : public SavableSetting
     {
@@ -24,16 +26,15 @@ namespace raphEngine::settings {
             return "Graphics";
         }
 
+        enum class Api
+        {
 
-        enum class Api{
-        
             OPENGL = 0,
             VULAKAN,
             DX11,
         };
-        
-        constexpr static std::array<std::string_view, 3> api_names = 
-        {
+
+        constexpr static std::array<std::string_view, 3> api_names = {
             "openGL",
             "Vulkan",
             "DX11",
@@ -46,13 +47,12 @@ namespace raphEngine::settings {
             LOW,
         };
 
-        constexpr static std::array<std::string_view, 3> quality_names = 
-        {
+        constexpr static std::array<std::string_view, 3> quality_names = {
             "High",
             "Medium",
             "Low",
         };
-    
+
         Api getApi() const;
         Quality getShadowQuality() const;
         bool getFullScreen() const;
@@ -64,14 +64,13 @@ namespace raphEngine::settings {
         void setResolution(unsigned short new_x, unsigned short new_y);
 
     private:
-
         EnumSetting<Api, 3> api_ = EnumSetting<Api, 3>("Api", api_names);
-        EnumSetting<Quality, 3> shadow_ = EnumSetting<Quality, 3>("Shadow", quality_names);
+        EnumSetting<Quality, 3> shadow_ =
+            EnumSetting<Quality, 3>("Shadow", quality_names);
         BooleanSetting fullscreen_ = BooleanSetting("Fullscreen", false);
-        StringSetting resolution_  = StringSetting("Resolution", "1920x1080");
-        
-        std::vector<Settings*> graphics_settings = 
-        {
+        StringSetting resolution_ = StringSetting("Resolution", "1920x1080");
+
+        std::vector<Settings*> graphics_settings = {
             &api_,
             &shadow_,
             &fullscreen_,
@@ -80,4 +79,4 @@ namespace raphEngine::settings {
 
         static bool registered;
     };
-}
+} // namespace raphEngine::settings

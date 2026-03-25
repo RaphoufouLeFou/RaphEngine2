@@ -1,24 +1,26 @@
 #include "objects/shader.hpp"
 
-#include <GL/glew.h>
 #include <GL/gl.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
+
 #include "default_shaders.hpp"
 
 namespace raphEngine::objects
 {
     std::vector<Shader*> Shader::loadedShaders_ = std::vector<Shader*>();
 
-    std::shared_ptr<Shader> Shader::create_shader(const std::string& vShaderCode, const std::string& fShaderCode, const std::string& gShaderCode)
+    std::shared_ptr<Shader>
+    Shader::create_shader(const std::string& vShaderCode,
+                          const std::string& fShaderCode,
+                          const std::string& gShaderCode)
     {
         return std::make_shared<Shader>(
             vShaderCode.empty() ? default_vs_shader : vShaderCode,
-            fShaderCode.empty() ? default_fs_shader : fShaderCode,
-            gShaderCode
-        );
+            fShaderCode.empty() ? default_fs_shader : fShaderCode, gShaderCode);
     }
 
     Shader::Shader(const std::string& vShaderCode,

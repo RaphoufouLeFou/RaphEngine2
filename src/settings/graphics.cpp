@@ -1,17 +1,18 @@
 #include "RaphEngine2/settings/graphics.hpp"
 
-#include "nlohmann/json_fwd.hpp"
-#include "settings/settings.hpp"
 #include <nlohmann/json.hpp>
 #include <sstream>
 
+#include "nlohmann/json_fwd.hpp"
+#include "settings/settings.hpp"
+
 namespace raphEngine::settings
 {
-    
+
     bool Graphics::registered =
-    (SettingsSaver::register_setting("Graphics", [](){
-        return std::make_unique<Graphics>();
-    }), true);
+        (SettingsSaver::register_setting(
+             "Graphics", []() { return std::make_unique<Graphics>(); }),
+         true);
 
     nlohmann::json Graphics::serialize() const
     {
@@ -30,7 +31,7 @@ namespace raphEngine::settings
             {
                 s->from_json(input);
             }
-            catch(...)
+            catch (...)
             {
                 return false;
             }
@@ -55,7 +56,7 @@ namespace raphEngine::settings
         const std::string res = resolution_.value;
         size_t index = res.find('x');
         if (index == std::string::npos)
-            return std::pair<unsigned short, unsigned short>{1920, 1080};
+            return std::pair<unsigned short, unsigned short>{ 1920, 1080 };
 
         std::string res_x = res.substr(0, index);
         std::string res_y = res.substr(index + 1);
@@ -63,7 +64,7 @@ namespace raphEngine::settings
         unsigned short int_x = std::stoi(res_x);
         unsigned short int_y = std::stoi(res_y);
 
-        return std::pair<unsigned short, unsigned short>{int_x, int_y};
+        return std::pair<unsigned short, unsigned short>{ int_x, int_y };
     }
 
     void Graphics::setApi(Api new_api)

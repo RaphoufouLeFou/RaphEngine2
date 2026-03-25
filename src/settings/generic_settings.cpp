@@ -1,12 +1,14 @@
 #include "RaphEngine2/settings/generic_settings.hpp"
-#include "nlohmann/json_fwd.hpp"
-#include "settings/settings.hpp"
+
 #include <nlohmann/json.hpp>
 #include <string>
 
+#include "nlohmann/json_fwd.hpp"
+#include "settings/settings.hpp"
+
 namespace raphEngine::settings
 {
-    void BooleanSetting::add_to_json(nlohmann::json& parent_node)const
+    void BooleanSetting::add_to_json(nlohmann::json& parent_node) const
     {
         parent_node[get_pretty_name()] = value;
     }
@@ -16,7 +18,7 @@ namespace raphEngine::settings
         value = parent_node.at(get_pretty_name()).get<bool>();
     }
 
-    void IntegerSetting::add_to_json(nlohmann::json& parent_node)const
+    void IntegerSetting::add_to_json(nlohmann::json& parent_node) const
     {
         parent_node[get_pretty_name()] = value;
     }
@@ -26,7 +28,7 @@ namespace raphEngine::settings
         value = parent_node.at(get_pretty_name()).get<int>();
     }
 
-    void StringSetting::add_to_json(nlohmann::json& parent_node)const
+    void StringSetting::add_to_json(nlohmann::json& parent_node) const
     {
         parent_node[get_pretty_name()] = value;
     }

@@ -1,4 +1,5 @@
 #include "objects/mesh.hpp"
+
 #include "graphics/mesh_renderer.hpp"
 
 namespace raphEngine::objects
@@ -47,6 +48,5 @@ namespace raphEngine::objects
     {
         mesh_renderer_->render();
     }
-
 
 } // namespace raphEngine::objects

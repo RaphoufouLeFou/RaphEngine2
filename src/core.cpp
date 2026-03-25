@@ -9,7 +9,7 @@
 
 namespace raphEngine
 {
-    
+
     graphics::ogl::OpenGL renderer{};
 
     void Core::Init(const std::string& title)
@@ -17,16 +17,17 @@ namespace raphEngine
         (void)title;
         std::cout << "Hello world from RaphEngine2!" << std::endl;
 
-        std::vector<std::unique_ptr<settings::SavableSetting>> sett = settings::SettingsSaver::load_settings("test.json");
+        std::vector<std::unique_ptr<settings::SavableSetting>> sett =
+            settings::SettingsSaver::load_settings("test.json");
         std::vector<settings::SavableSetting*> test;
-        for (auto &s : sett) {
+        for (auto& s : sett)
+        {
             test.push_back(s.get());
             std::cout << "test\n";
         }
-        
+
         settings::SettingsSaver::save_settings(test, "text.json");
-        
-        
+
         std::cout << "Heree" << std::endl;
         renderer.Init(settings::Graphics(), "test");
     }
@@ -36,7 +37,6 @@ namespace raphEngine
         std::cout << "running now from RaphEngine2!" << std::endl;
 
         execute_starts();
-
 
         while (1)
         {

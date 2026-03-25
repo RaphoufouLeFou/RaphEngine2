@@ -1,9 +1,9 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <string>
 
 #include "export.hpp"
-#include <nlohmann/json.hpp>
 
 namespace raphEngine
 {

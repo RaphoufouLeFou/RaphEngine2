@@ -4,17 +4,14 @@
 
 #include "RaphEngine2.hpp"
 #include "export.hpp"
-#include "resources.hpp"
+#include "resource.hpp"
 #include "resources_manager.hpp"
 
 namespace raphEngine::resources
 {
 
-    std::map<std::string, std::unique_ptr<Resources>>
-        ResourcesManager::loaded_resources;
-
     template <IsResource T>
-    Resources* ResourcesManager::load_shared_resource(const std::string& path)
+    Resource* ResourcesManager::load_shared_resource(const std::string& path)
     {
         try
         {
@@ -30,7 +27,7 @@ namespace raphEngine::resources
     }
 
     template <IsResource T>
-    std::unique_ptr<Resources>
+    std::unique_ptr<Resource>
     ResourcesManager::load_unique_resource(const std::string& path)
     {
         return std::make_unique<T>(path);

@@ -5,9 +5,9 @@
 
 namespace raphEngine::resources
 {
-    class RAPHENGINE_API Resources
+    class RAPHENGINE_API Resource
     {
     public:
-        Resources(const std::string& path);
+        Resource(const std::string& path);
     };
 } // namespace raphEngine::resources

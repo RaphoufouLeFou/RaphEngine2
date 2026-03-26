@@ -7,6 +7,7 @@
 #include "mesh.hpp"
 #include "mesh_info.hpp"
 #include "renderable.hpp"
+#include "resources/model_resource.hpp"
 
 namespace raphEngine::objects
 {
@@ -21,6 +22,6 @@ namespace raphEngine::objects
 
     private:
         std::shared_ptr<Shader> shader_;
-        std::vector<std::unique_ptr<Mesh>> meshes_;
+        resources::Resource* meshes_resource_;
     };
 } // namespace raphEngine::objects

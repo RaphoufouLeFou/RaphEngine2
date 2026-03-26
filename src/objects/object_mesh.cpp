@@ -1,8 +1,8 @@
 #include "objects/object_mesh.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <GL/gl.h>
 #include <GL/glew.h>
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>

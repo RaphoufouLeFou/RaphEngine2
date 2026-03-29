@@ -7,6 +7,7 @@
 
 namespace raphEngine::objects
 {
+
     const ObjectMesh* Lod::get_lod(size_t level) const
     {
         return lod_meshes_.at(level).get();

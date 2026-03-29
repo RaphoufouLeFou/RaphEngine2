@@ -21,7 +21,6 @@ namespace raphEngine::objects
         void add_mesh(std::unique_ptr<Mesh> mesh);
 
     private:
-        std::shared_ptr<Shader> shader_;
         resources::Resource* meshes_resource_;
     };
 } // namespace raphEngine::objects

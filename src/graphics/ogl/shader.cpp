@@ -1,4 +1,4 @@
-#include "objects/shader.hpp"
+#include "graphics/ogl/shader.hpp"
 
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -9,7 +9,7 @@
 
 #include "default_shaders.hpp"
 
-namespace raphEngine::objects
+namespace raphEngine::graphics
 {
     std::vector<Shader*> Shader::loadedShaders_ = std::vector<Shader*>();
 

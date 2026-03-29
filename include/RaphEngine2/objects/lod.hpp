@@ -10,6 +10,8 @@
 
 namespace raphEngine::objects
 {
+    class ObjectMesh;
+
     class RAPHENGINE_API Lod
     {
     public:

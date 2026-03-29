@@ -10,8 +10,8 @@ namespace raphEngine::resources
 {
     template <class T>
     concept IsResource = requires() {
-        std::convertible_to<T, Resource>;
-        !std::same_as<T, Resource>;
+        requires std::convertible_to<T, Resource>;
+        requires !std::same_as<T, Resource>;
     };
 
     class RAPHENGINE_API ResourcesManager

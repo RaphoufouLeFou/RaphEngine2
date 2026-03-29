@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
+#include "resources/model_resource.hpp"
 
 #include "objects/mesh.hpp"
 #include "stb_image.h"
@@ -253,12 +254,12 @@ namespace raphEngine::objects
 
     ObjectMesh::ObjectMesh(const MeshInfo& info)
     {
-        shader_ = info.shader;
+        // shader_ = info.shader;
         loadModel(this, info.mesh_path, info.bilinear);
     }
 
     void ObjectMesh::add_mesh(std::unique_ptr<Mesh> mesh)
     {
-        meshes_.push_back(std::move(mesh));
+        dynamic_cast<resources::ModelResource*>(meshes_resource_)->meshes_.push_back(std::move(mesh));
     }
 } // namespace raphEngine::objects

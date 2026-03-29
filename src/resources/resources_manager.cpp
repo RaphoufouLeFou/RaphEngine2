@@ -2,8 +2,8 @@
 
 #include "RaphEngine2.hpp"
 #include "export.hpp"
-#include "resource.hpp"
-#include "resources_manager.hpp"
+#include "resources/resource.hpp"
+#include "resources/resources_manager.hpp"
 
 namespace raphEngine::resources
 {

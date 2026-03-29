@@ -5,12 +5,18 @@
 #include <string>
 
 #include "component.hpp"
-#include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
 #include "renderable.hpp"
+#include "objects/lod.hpp"
+
+namespace raphEngine::objects
+{
+    class Lod;
+}
 
 namespace raphEngine::component
 {
+
     class RAPHENGINE_API MeshComponent
         : public Component
         , public Renderable

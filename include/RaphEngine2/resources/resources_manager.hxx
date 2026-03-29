@@ -20,7 +20,7 @@ namespace raphEngine::resources
         catch (const std::out_of_range& e)
         {
             std::unique_ptr<T> resource = std::make_unique<T>(path);
-            Resources* res = resource.get();
+            Resource* res = resource.get();
             loaded_resources[path] = std::move(resource);
             return res;
         }

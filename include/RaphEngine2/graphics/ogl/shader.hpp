@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace raphEngine::objects
+namespace raphEngine::graphics
 {
     class RAPHENGINE_API Shader
     {

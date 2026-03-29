@@ -9,5 +9,6 @@ namespace raphEngine::resources
     {
     public:
         Resource(const std::string& path);
+        virtual void TODO () = 0;
     };
 } // namespace raphEngine::resources

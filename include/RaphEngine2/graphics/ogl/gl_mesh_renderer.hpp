@@ -5,7 +5,7 @@
 
 #include "graphics/mesh_renderer.hpp"
 #include "settings/graphics.hpp"
-#include "shader.hpp"
+#include "gl_shader.hpp"
 
 namespace raphEngine::graphics
 {
@@ -23,6 +23,6 @@ namespace raphEngine::graphics
         unsigned int vbo_;
         unsigned int ebo_;
 
-        std::shared_ptr<Shader> shader_;
+        std::shared_ptr<GlShader> shader_;
     };
 } // namespace raphEngine::graphics

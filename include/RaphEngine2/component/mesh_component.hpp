@@ -8,6 +8,7 @@
 #include "objects/mesh_info.hpp"
 #include "renderable.hpp"
 #include "objects/lod.hpp"
+#include "graphics/shader.hpp"
 
 namespace raphEngine::objects
 {
@@ -22,7 +23,7 @@ namespace raphEngine::component
         , public Renderable
     {
     public:
-        MeshComponent(std::initializer_list<objects::MeshInfo> mesh_lods);
+        MeshComponent(std::initializer_list<objects::MeshInfo> mesh_lods, std::shared_ptr<graphics::Shader> shader);
         const std::string component_name = "Render mesh";
 
         inline const std::string get_name() const override
@@ -35,6 +36,7 @@ namespace raphEngine::component
 
     protected:
         std::unique_ptr<objects::Lod> lods_;
+        std::shared_ptr<graphics::Shader> shader_;
 
     private:
         void render() override;

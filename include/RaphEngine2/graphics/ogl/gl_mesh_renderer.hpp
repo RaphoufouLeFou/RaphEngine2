@@ -23,6 +23,6 @@ namespace raphEngine::graphics
         unsigned int vbo_;
         unsigned int ebo_;
 
-        std::shared_ptr<GlShader> shader_;
+        GlShader* shader_;
     };
 } // namespace raphEngine::graphics

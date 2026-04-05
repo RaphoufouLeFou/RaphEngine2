@@ -9,8 +9,10 @@
 namespace raphEngine::component
 {
     MeshComponent::MeshComponent(
-        std::initializer_list<objects::MeshInfo> meshes)
+        std::initializer_list<objects::MeshInfo> meshes,
+        std::shared_ptr<graphics::Shader> shader)
     {
+        shader_ = shader;
         lods_ = std::make_unique<objects::Lod>(meshes);
         Start();
     }

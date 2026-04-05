@@ -74,5 +74,6 @@ namespace raphEngine::objects
         glm::mat4 model_matrix_;
 
         std::shared_ptr<graphics::MeshRenderer> mesh_renderer_;
+        graphics::Shader* shader_;
     };
 } // namespace raphEngine::objects

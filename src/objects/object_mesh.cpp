@@ -252,9 +252,9 @@ namespace raphEngine::objects
         processNode(object_mesh, scene->mRootNode, scene, filter);
     }
 
-    ObjectMesh::ObjectMesh(const MeshInfo& info)
+    ObjectMesh::ObjectMesh(const MeshInfo& info, graphics::Shader* shader)
     {
-        // shader_ = info.shader;
+        shader_ = shader;
         loadModel(this, info.mesh_path, info.bilinear);
     }
 

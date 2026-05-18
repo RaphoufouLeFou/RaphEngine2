@@ -2,6 +2,7 @@
 
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/graphics/mesh_renderer.hpp>
+#include <RaphEngine2/graphics/shader.hpp>
 #include <RaphEngine2/renderable.hpp>
 #include <glm/glm.hpp>
 #include <memory>

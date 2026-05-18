@@ -1,11 +1,10 @@
-#pragma once
-
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
 #include <vector>
-#include "ogl/gl_shader.hpp"
+#include <graphics/shader.hpp>
+#include <graphics/ogl/gl_shader.hpp>
 
 namespace raphEngine::graphics
 {
@@ -13,7 +12,7 @@ namespace raphEngine::graphics
         std::shared_ptr<Shader> Shader::loadShader(
             const std::string& vShaderCode,
             const std::string& fShaderCode,
-            const std::string& gShaderCode = ""
+            const std::string& gShaderCode
         )
         {
             // TODO: select the right api

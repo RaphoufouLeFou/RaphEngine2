@@ -5,7 +5,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "ogl/gl_shader.hpp"
 
 namespace raphEngine::graphics
 {

@@ -17,17 +17,20 @@ namespace raphEngine
         (void)title;
         std::cout << "Hello world from RaphEngine2!" << std::endl;
 
+        /*
         std::vector<std::unique_ptr<settings::SavableSetting>> sett =
             settings::SettingsSaver::load_settings("test.json");
+            
         std::vector<settings::SavableSetting*> test;
+
         for (auto& s : sett)
         {
             test.push_back(s.get());
             std::cout << "test\n";
         }
 
-        settings::SettingsSaver::save_settings(test, "text.json");
-
+        settings::SettingsSaver::save_settings(test, "test.json");
+*/
         std::cout << "Heree" << std::endl;
         renderer.Init(settings::Graphics(), "test");
     }

@@ -45,7 +45,11 @@ namespace raphEngine::settings
         std::ifstream ifs(path);
 
         if (!ifs.is_open() || true)
+        {
+            std::cout << "No settings file found, loading default settings!" << std::endl;
             return load_default();
+        }
+
 
         nlohmann::json parent;
         ifs >> parent;

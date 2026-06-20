@@ -6,7 +6,6 @@ namespace raphEngine::objects
 {
     Mesh::Mesh()
     {
-        mesh_renderer_ = graphics::MeshRenderer::createMeshRender(this);
     }
 
     const std::vector<Vertex>& Mesh::get_vertices() const
@@ -46,7 +45,7 @@ namespace raphEngine::objects
 
     void Mesh::render()
     {
-        mesh_renderer_->render();
+        graphics::MeshRenderer::getInstance()->render(this);
     }
 
 } // namespace raphEngine::objects

@@ -1,4 +1,4 @@
-#include "objects/object_mesh.hpp"
+#include <ostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <GL/glew.h>
@@ -197,7 +197,7 @@ namespace raphEngine::objects
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         final_mesh->set_model_matrix(ModelMat);
-
+        std::cout << final_mesh << std::endl;
         return final_mesh;
     }
 
@@ -260,6 +260,19 @@ namespace raphEngine::objects
 
     void ObjectMesh::add_mesh(std::unique_ptr<Mesh> mesh)
     {
-        dynamic_cast<resources::ModelResource*>(meshes_resource_)->meshes_.push_back(std::move(mesh));
+        //auto* truc = dynamic_cast<resources::ModelResource*>(meshes_resource_);
+        //truc->meshes_.push_back(std::move(mesh));
+
+        meshes_.push_back(std::move(mesh));
     }
+
+    void ObjectMesh::render() const
+    {
+        std::cout << "rendering this mesh\n";
+        for (size_t i = 0; i < meshes_.size(); i++)
+        {
+            meshes_[i].get()->render();
+        }
+    }
+
 } // namespace raphEngine::objects

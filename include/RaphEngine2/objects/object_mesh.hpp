@@ -21,8 +21,13 @@ namespace raphEngine::objects
         static std::vector<Texture> textures_loaded_;
         void add_mesh(std::unique_ptr<Mesh> mesh);
 
+        void render() const;
+
     private:
-        resources::Resource* meshes_resource_;
+        // TODO: replace the vec by the recource system
+        // resources::Resource* meshes_resource_;
+        
+        std::vector<std::unique_ptr<objects::Mesh>> meshes_;
         graphics::Shader* shader_;
     };
 } // namespace raphEngine::objects

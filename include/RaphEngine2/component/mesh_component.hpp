@@ -23,7 +23,8 @@ namespace raphEngine::component
         , public Renderable
     {
     public:
-        MeshComponent(std::initializer_list<objects::MeshInfo> mesh_lods, std::shared_ptr<graphics::Shader> shader);
+        MeshComponent(std::initializer_list<objects::MeshInfo> mesh_lods, std::shared_ptr<graphics::Shader> shader = nullptr);
+        MeshComponent(objects::MeshInfo mesh, std::shared_ptr<graphics::Shader> shader = nullptr);
         const std::string component_name = "Render mesh";
 
         inline const std::string get_name() const override

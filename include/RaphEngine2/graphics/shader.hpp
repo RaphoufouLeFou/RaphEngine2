@@ -29,9 +29,9 @@ namespace raphEngine::graphics
         virtual void setValueArray(const std::string& name, size_t count, const glm::vec2* array) const = 0;
         virtual void setValueArray(const std::string& name, size_t count, const glm::vec3* array) const = 0;
 
-        std::shared_ptr<Shader> loadShader(
-            const std::string& vShaderCode,
-            const std::string& fShaderCode,
+        static std::shared_ptr<Shader> loadShader(
+            const std::string& vShaderCode = "",
+            const std::string& fShaderCode = "",
             const std::string& gShaderCode = ""
         );
     };

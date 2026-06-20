@@ -1,10 +1,9 @@
 #pragma once
 
-#include <RaphEngine2/export.hpp>
+#include "RaphEngine2/export.hpp"
 #include <memory>
 
 #include "RaphEngine2/objects/mesh.hpp"
-#include "renderer.hpp"
 #include "RaphEngine2/settings/graphics.hpp"
 
 namespace raphEngine::objects
@@ -15,16 +14,15 @@ namespace raphEngine::objects
 namespace raphEngine::graphics
 {
 
-    class RAPHENGINE_API MeshRenderer : public Renderer
+    class RAPHENGINE_API MeshRenderer
     {
     public:
-        virtual void render() override = 0;
-        virtual void render_shadows() = 0;
-        static std::shared_ptr<MeshRenderer>
-        createMeshRender(raphEngine::objects::Mesh* mesh);
+        virtual void render(raphEngine::objects::Mesh* mesh) = 0;
+        virtual void render_shadows(raphEngine::objects::Mesh* mesh) = 0;
+        static MeshRenderer* getInstance();
 
-    protected:
-        MeshRenderer(objects::Mesh* mesh);
-        const objects::Mesh* mesh_;
+    private:
+        static std::unique_ptr<MeshRenderer> instance_;
+        
     };
 } // namespace raphEngine::graphics

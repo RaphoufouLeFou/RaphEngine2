@@ -6,9 +6,9 @@
 
 #include "mesh.hpp"
 #include "mesh_info.hpp"
-#include "renderable.hpp"
-#include "resources/model_resource.hpp"
-#include "graphics/shader.hpp"
+#include "RaphEngine2/renderable.hpp"
+#include "RaphEngine2/resources/model_resource.hpp"
+#include "RaphEngine2/graphics/shader.hpp"
 
 namespace raphEngine::objects
 {

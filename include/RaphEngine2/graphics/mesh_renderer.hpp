@@ -3,9 +3,9 @@
 #include <RaphEngine2/export.hpp>
 #include <memory>
 
-#include "objects/mesh.hpp"
+#include "RaphEngine2/objects/mesh.hpp"
 #include "renderer.hpp"
-#include "settings/graphics.hpp"
+#include "RaphEngine2/settings/graphics.hpp"
 
 namespace raphEngine::objects
 {

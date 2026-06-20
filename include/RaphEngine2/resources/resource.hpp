@@ -1,7 +1,7 @@
 #pragma once
 
-#include "RaphEngine2.hpp"
-#include "export.hpp"
+#include "RaphEngine2/RaphEngine2.hpp"
+#include "RaphEngine2/export.hpp"
 
 namespace raphEngine::resources
 {

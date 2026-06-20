@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-#include "export.hpp"
+#include "RaphEngine2/export.hpp"
 
 namespace raphEngine::component
 {

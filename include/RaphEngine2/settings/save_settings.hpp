@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "serializable.hpp"
+#include "RaphEngine2/serializable.hpp"
 
 namespace raphEngine::settings
 {

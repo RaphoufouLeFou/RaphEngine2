@@ -2,7 +2,7 @@
 
 #include <RaphEngine2/export.hpp>
 
-#include "settings/graphics.hpp"
+#include "RaphEngine2/settings/graphics.hpp"
 
 namespace raphEngine::graphics
 {

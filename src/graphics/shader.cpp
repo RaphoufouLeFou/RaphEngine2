@@ -9,6 +9,12 @@
 namespace raphEngine::graphics
 {
 
+        Shader::Shader()
+        {
+            // base class constructor - nothing to do
+        }
+
+
         std::shared_ptr<Shader> Shader::loadShader(
             const std::string& vShaderCode,
             const std::string& fShaderCode,

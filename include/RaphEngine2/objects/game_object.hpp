@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "component/component.hpp"
-#include "core.hpp"
+#include "RaphEngine2/component/component.hpp"
+#include "RaphEngine2/core.hpp"
 #include "transform.hpp"
 
 namespace raphEngine::objects

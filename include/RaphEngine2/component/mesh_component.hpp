@@ -1,14 +1,14 @@
 #pragma once
 
-#include <RaphEngine2/export.hpp>
+#include "RaphEngine2/export.hpp"
 #include <memory>
 #include <string>
 
 #include "component.hpp"
-#include "objects/mesh_info.hpp"
-#include "renderable.hpp"
-#include "objects/lod.hpp"
-#include "graphics/shader.hpp"
+#include "RaphEngine2/objects/mesh_info.hpp"
+#include "RaphEngine2/renderable.hpp"
+#include "RaphEngine2/objects/lod.hpp"
+#include "RaphEngine2/graphics/shader.hpp"
 
 namespace raphEngine::objects
 {

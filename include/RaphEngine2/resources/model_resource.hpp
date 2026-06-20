@@ -1,9 +1,9 @@
 #pragma once
 
-#include "RaphEngine2.hpp"
-#include "export.hpp"
+#include "RaphEngine2/RaphEngine2.hpp"
+#include "RaphEngine2/export.hpp"
 #include "resource.hpp"
-#include "objects/mesh.hpp"
+#include "RaphEngine2/objects/mesh.hpp"
 
 namespace raphEngine::resources
 {

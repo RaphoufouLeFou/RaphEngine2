@@ -2,13 +2,10 @@
 
 #include <RaphEngine2/export.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <memory>
 #include <string>
 
 #include "component.hpp"
-#include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
-#include "renderable.hpp"
 
 namespace raphEngine::component
 {

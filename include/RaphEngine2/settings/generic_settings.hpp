@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "settings.hpp"
-#include "settings/save_settings.hpp"
+#include "save_settings.hpp"
 
 namespace raphEngine::settings
 {

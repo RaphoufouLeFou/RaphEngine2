@@ -7,8 +7,8 @@
 #include <type_traits>
 #include <vector>
 
-#include "serializable.hpp"
-#include "settings/save_settings.hpp"
+#include "RaphEngine2/serializable.hpp"
+#include "save_settings.hpp"
 
 namespace raphEngine::settings
 {

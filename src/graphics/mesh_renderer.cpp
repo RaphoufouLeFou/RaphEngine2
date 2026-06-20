@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "graphics/ogl/gl_mesh_renderer.hpp"
-#include "objects/mesh.hpp"
+#include "RaphEngine2/objects/mesh.hpp"
 #include "settings/graphics.hpp"
 
 namespace raphEngine::graphics

@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "RaphEngine2.hpp"
-#include "export.hpp"
+#include "RaphEngine2/RaphEngine2.hpp"
+#include "RaphEngine2/export.hpp"
 #include "resource.hpp"
 
 namespace raphEngine::resources

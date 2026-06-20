@@ -1,3 +1,3 @@
 cmake -B build -DCMAKE_INSTALL_PREFIX=/usr/local
-cmake --build build
-mv build/editor/RaphEditor editor/
+sudo cmake --build build --target install -j${nproc}
+sudo ldconfig

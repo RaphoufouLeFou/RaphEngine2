@@ -16,5 +16,13 @@ namespace raphEngine::graphics::ogl
         void Render() override;
         bool Refresh() override;
 
+        bool IsKeyPressed(int key) const override;
+
+        glm::vec2 GetCursorPos() const override;
+        void SetCursorPos(double x, double y) const override;
+        bool GetMouseButtonPressed(int button) const override;
+        void SetMouseVisibility(bool visible) const override;
+        bool IsWindowFocused() const override;
+
     };
 } // namespace raphEngine::graphics::ogl

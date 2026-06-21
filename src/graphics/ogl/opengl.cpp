@@ -29,6 +29,8 @@ namespace raphEngine::graphics::ogl
             exit(EXIT_FAILURE);
         }
 
+        instance_ = this;
+
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
         auto [ResX, ResY] = graphics_settings.getResolution();
@@ -102,7 +104,6 @@ namespace raphEngine::graphics::ogl
         }
     }
 
-
     bool OpenGL::Refresh()
     {
         render_pool.clear();
@@ -112,5 +113,41 @@ namespace raphEngine::graphics::ogl
         return glfwWindowShouldClose(window) == 0 &&
             glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS;
     }
+
+    bool OpenGL::IsKeyPressed(int key) const
+    {
+        return glfwGetKey(window, (int)key) == GLFW_PRESS;
+    };
+
+    glm::vec2 OpenGL::GetCursorPos() const
+    {
+        double x, y;
+        glfwGetCursorPos(window, &x, &y);
+        return glm::vec2(x, y);
+    }
+
+    void OpenGL::SetCursorPos(double x, double y) const
+    {
+        glfwSetCursorPos(window, x, y);
+    }
+
+    bool OpenGL::GetMouseButtonPressed(int button) const
+    {
+        return glfwGetMouseButton(window, button);
+    }
+
+    void OpenGL::SetMouseVisibility(bool visible) const
+    {
+        if(visible)
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        else
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    }
+
+    bool OpenGL::IsWindowFocused() const
+    {
+        return glfwGetWindowAttrib(window, GLFW_FOCUSED);
+    }
+
 
 } // namespace raphEngine::graphics::ogl

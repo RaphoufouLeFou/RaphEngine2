@@ -66,7 +66,7 @@ namespace raphEngine::objects
         GameObject& operator=(const GameObject&) = delete;
         GameObject& operator=(GameObject&&) = default;
 
-    private:
+    protected:
         friend raphEngine::Core;
 
         std::string name_;

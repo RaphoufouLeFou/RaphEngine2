@@ -11,12 +11,14 @@ namespace raphEngine::graphics
     public:
         GLMeshBuffers(raphEngine::objects::Mesh* mesh);
 
-    private:
-        void GenerateBuffers(raphEngine::objects::Mesh* mesh);
-        
         unsigned int vao_;
         unsigned int vbo_;
         unsigned int ebo_;
+        
+    private:
+        void GenerateBuffers(raphEngine::objects::Mesh* mesh) override;
+        
+  
     };
 
 } // namespace raphEngine::graphics

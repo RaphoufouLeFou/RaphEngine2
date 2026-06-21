@@ -16,6 +16,7 @@ namespace raphEngine::objects
     {
     public:
         Lod(objects::GameObject* parent_object, std::initializer_list<MeshInfo> meshes, std::shared_ptr<graphics::Shader> shader);
+        Lod(objects::GameObject* parent_object, std::vector<MeshInfo>& meshes, std::shared_ptr<graphics::Shader> shader);
         Lod(objects::GameObject* parent_object, MeshInfo mesh, std::shared_ptr<graphics::Shader> shader);
         const ObjectMesh* get_lod(size_t level) const;
         size_t get_lod_count() const;

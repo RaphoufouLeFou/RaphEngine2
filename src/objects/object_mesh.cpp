@@ -198,7 +198,6 @@ namespace raphEngine::objects
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         final_mesh->set_model_matrix(ModelMat);
-        std::cout << final_mesh << std::endl;
         return final_mesh;
     }
 
@@ -266,6 +265,7 @@ namespace raphEngine::objects
         //truc->meshes_.push_back(std::move(mesh));
 
         mesh->set_shader(shader_);
+        
         mesh->parent_object = this->parent_object;
         mesh->generate_mesh_buffers();
         meshes_.push_back(std::move(mesh));

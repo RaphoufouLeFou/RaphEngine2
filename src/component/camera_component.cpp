@@ -26,6 +26,7 @@ namespace raphEngine::component
 
     CameraComponent::CameraComponent()
     {
+        std::cout << "creating camera\n";
         if (!active_camera)
         {
             set_as_active_camera();
@@ -40,7 +41,6 @@ namespace raphEngine::component
 
     void CameraComponent::calculate_matrices()
     {
-
         objects::Transform& camera_transform = parent_object->get_transform();
 
         projection_matrix_ = glm::perspective(

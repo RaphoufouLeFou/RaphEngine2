@@ -38,8 +38,10 @@ namespace raphEngine::component
     protected:
         std::unique_ptr<objects::Lod> lods_;
         std::shared_ptr<graphics::Shader> shader_;
-
+        std::vector<objects::MeshInfo> meshes_;
+        
     private:
         void render() const override;
+        
     };
 } // namespace raphEngine::component

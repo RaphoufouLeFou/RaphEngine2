@@ -70,6 +70,8 @@ namespace raphEngine::objects
         void set_shader(graphics::Shader* shader);
         const graphics::Shader* get_shader() const;
 
+        const graphics::MeshBuffers* get_buffers() const;
+
         void generate_mesh_buffers();
 
         objects::GameObject* parent_object;

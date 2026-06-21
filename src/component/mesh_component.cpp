@@ -22,7 +22,7 @@ namespace raphEngine::component
             shader = graphics::Shader::loadShader();
         }
         shader_ = shader;
-        lods_ = std::make_unique<objects::Lod>(parent_object, meshes, shader);
+        meshes_ = meshes;
         Start();
     }
 
@@ -34,11 +34,15 @@ namespace raphEngine::component
         }
         shader_ = shader;
         lods_ = std::make_unique<objects::Lod>(parent_object, mesh, shader);
+        meshes_ = {mesh};
         Start();
     }
 
     void MeshComponent::Start()
-    {}
+    {
+        lods_ = std::make_unique<objects::Lod>(parent_object, meshes_, shader_);
+    }
+
     void MeshComponent::Update()
     {
         std::cout << "updating me !!\n";

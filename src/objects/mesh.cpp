@@ -58,6 +58,11 @@ namespace raphEngine::objects
         return shader_;
     }
 
+    const graphics::MeshBuffers* Mesh::get_buffers() const
+    {
+        return buffers_.get();
+    }
+
     void Mesh::generate_mesh_buffers()
     {
         buffers_ = graphics::MeshBuffers::getMeshBuffer(this);

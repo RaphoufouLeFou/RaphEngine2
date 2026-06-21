@@ -7,7 +7,7 @@
 #include <string>
 
 #include "component.hpp"
-#include "objects/mesh_info.hpp"
+#include "RaphEngine2/objects/mesh_info.hpp"
 
 namespace raphEngine::component
 {

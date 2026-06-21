@@ -31,7 +31,7 @@ namespace raphEngine
 
         settings::SettingsSaver::save_settings(test, "test.json");
 */
-        std::cout << "Heree" << std::endl;
+        // std::cout << "Heree" << std::endl;
         renderer.Init(settings::Graphics(), "test");
     }
 
@@ -67,6 +67,7 @@ namespace raphEngine
         for (auto& go : objects::GameObject::spawned_game_objects_)
         {
             go->Start();
+            go->start_components();
         }
     }
 

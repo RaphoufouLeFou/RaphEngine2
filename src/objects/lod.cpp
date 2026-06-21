@@ -27,8 +27,18 @@ namespace raphEngine::objects
         }
     }
 
+    Lod::Lod(objects::GameObject* parent_object, std::vector<MeshInfo>& meshes, std::shared_ptr<graphics::Shader> shader)
+    {
+        lod_meshes_.reserve(meshes.size());
+        for (const auto& info : meshes)
+        {
+            lod_meshes_.push_back(std::make_unique<ObjectMesh>(parent_object, info, shader.get()));
+        }
+    }
+
     Lod::Lod(objects::GameObject* parent_object, MeshInfo mesh, std::shared_ptr<graphics::Shader> shader)
     {
+        
         lod_meshes_.push_back(std::make_unique<ObjectMesh>(parent_object, mesh, shader.get()));
     }
 

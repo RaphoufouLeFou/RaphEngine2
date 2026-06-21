@@ -6,6 +6,7 @@
 #include "objects/game_object.hpp"
 #include "settings/graphics.hpp"
 #include "settings/save_settings.hpp"
+#include "RaphEngine2/time_utils.hpp"
 
 namespace raphEngine
 {
@@ -43,6 +44,7 @@ namespace raphEngine
 
         while (1)
         {
+            double start = Time::GetTime();
             execute_updates();
             execute_components_updates();
             renderer.Render();
@@ -52,6 +54,7 @@ namespace raphEngine
             {
                 break;
             }
+            Time::deltaTime = (Time::GetTime() - start) / 1000.0;
         }
 
         std::cout << "exiting now!" << std::endl;

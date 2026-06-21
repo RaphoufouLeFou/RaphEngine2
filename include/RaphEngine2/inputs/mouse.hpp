@@ -8,15 +8,17 @@
 
 namespace raphEngine::inputs
 {
-    enum class MouseButton
-    {
-        LEFT = 0,
-        MIDDLE = 2,
-        RIGHT = 1,
-    };
 
     class RAPHENGINE_API Mouse
     {
+    public:
+        enum class MouseButton
+        {
+            LEFT = 0,
+            MIDDLE = 2,
+            RIGHT = 1,
+        };
+
         static bool IsMouseButtonPressed(MouseButton button);
         static glm::vec2 GetMousePos();
         static double GetMouseScroll();

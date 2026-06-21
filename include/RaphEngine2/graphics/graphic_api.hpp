@@ -2,7 +2,7 @@
 
 #include <RaphEngine2/export.hpp>
 
-#include "renderable.hpp"
+#include "RaphEngine2/renderable.hpp"
 #include "RaphEngine2/settings/graphics.hpp"
 #include "RaphEngine2/objects/mesh.hpp"
 

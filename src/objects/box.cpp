@@ -5,10 +5,13 @@
 
 namespace raphEngine::objects
 {
-    void Box::render()
+    void Box::render() const
     {
-        if (modified_)
+        // TODO jsp quoi faire de ca
+        /* if (modified_)
             calculate_vertexs_();
+        */
+        Mesh::render();
     }
 
     void Box::calculate_vertexs_()

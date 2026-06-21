@@ -45,8 +45,16 @@ namespace raphEngine
         {
             execute_updates();
             execute_components_updates();
-            renderer.Refresh();
+            renderer.Render();
+            bool still_alive = renderer.Refresh();
+
+            if(!still_alive)
+            {
+                break;
+            }
         }
+
+        std::cout << "exiting now!" << std::endl;
     }
 
     void Core::execute_starts()

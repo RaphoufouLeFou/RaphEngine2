@@ -1,9 +1,10 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
-#include <RaphEngine2/graphics/mesh_renderer.hpp>
 #include <RaphEngine2/graphics/shader.hpp>
 #include <RaphEngine2/renderable.hpp>
+#include <RaphEngine2/graphics/mesh_buffers.hpp>
+#include <RaphEngine2/objects/game_object.hpp>
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
@@ -12,6 +13,7 @@
 namespace raphEngine::graphics
 {
     class MeshRenderer;
+    class MeshBuffers;
 }
 
 namespace raphEngine::objects
@@ -45,13 +47,13 @@ namespace raphEngine::objects
         std::string path;
     };
 
-    class RAPHENGINE_API Mesh
+    class RAPHENGINE_API Mesh : public Renderable
     {
     public:
         Mesh();
         virtual ~Mesh() = default;
 
-        virtual void render();
+        virtual void render() const override;
 
         const std::vector<Vertex>& get_vertices() const;
         std::vector<Vertex>& get_vertices();
@@ -63,6 +65,14 @@ namespace raphEngine::objects
         std::vector<Texture>& get_textures();
 
         void set_model_matrix(const glm::mat4& model_matrix);
+        const glm::mat4& get_model_matrix() const;
+
+        void set_shader(graphics::Shader* shader);
+        const graphics::Shader* get_shader() const;
+
+        void generate_mesh_buffers();
+
+        objects::GameObject* parent_object;
 
     protected:
         std::vector<Vertex> vertices_;
@@ -74,6 +84,7 @@ namespace raphEngine::objects
 
         glm::mat4 model_matrix_;
 
+        std::unique_ptr<graphics::MeshBuffers> buffers_;
         graphics::Shader* shader_;
     };
 } // namespace raphEngine::objects

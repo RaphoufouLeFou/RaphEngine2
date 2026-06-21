@@ -9,7 +9,7 @@ namespace raphEngine
     {
     public:
         Renderable();
-        virtual void render() = 0;
+        virtual void render() const = 0;
 
     private:
         static std::vector<Renderable*> render_list_;

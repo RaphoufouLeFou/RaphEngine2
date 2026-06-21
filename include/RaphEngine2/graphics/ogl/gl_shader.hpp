@@ -20,7 +20,7 @@ namespace raphEngine::graphics
         GlShader(const std::string& vShaderCode, const std::string& fShaderCode,
                const std::string& gShaderCode = "");
 
-        void use() override;
+        void use() const override;
 
         void setValue(const std::string& name, bool value) const override;
         void setValue(const std::string& name, int value) const override;

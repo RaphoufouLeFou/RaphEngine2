@@ -66,7 +66,7 @@ namespace raphEngine::graphics
         GlShader::loadedShaders_.push_back(this);
     }
 
-    void GlShader::use()
+    void GlShader::use() const
     {
         glUseProgram(id_);
     }

@@ -10,6 +10,15 @@
 namespace raphEngine::graphics::ogl
 {
 
+    void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+    {
+        // make sure the viewport matches the new window dimensions
+        (void) window;
+        glViewport(0, 0, width, height);
+        graphics::GraphicApi::res_x = width;
+        graphics::GraphicApi::res_y = height;
+    }
+
     GLFWwindow* window;
     void OpenGL::Init(const settings::Graphics& graphics_settings,
                       const std::string& window_name)
@@ -23,6 +32,8 @@ namespace raphEngine::graphics::ogl
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
         auto [ResX, ResY] = graphics_settings.getResolution();
+        res_x = ResX;
+        res_y = ResY;
 
         std::cout << "starting with a resolution of " << ResX << 'x' << ResY
                   << std::endl;
@@ -46,7 +57,7 @@ namespace raphEngine::graphics::ogl
         // glfwGetWindowSize(window, &ResX, &ResY);
         glfwMakeContextCurrent(window); // Initialize GLEW
 
-        // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+        glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
         glewExperimental = true; // Needed in core profile
         if (glewInit() != GLEW_OK)
@@ -84,17 +95,22 @@ namespace raphEngine::graphics::ogl
     }
 
     void OpenGL::Render()
-    {}
-
-    void OpenGL::AddToRenderPool(const Renderable& renderable)
     {
-        render_pool.push_back(&renderable);
+        for (auto* object : render_pool)
+        {
+            object->render();
+        }
     }
 
-    void OpenGL::Refresh()
+
+    bool OpenGL::Refresh()
     {
+        render_pool.clear();
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        return glfwWindowShouldClose(window) == 0 &&
+            glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS;
     }
 
 } // namespace raphEngine::graphics::ogl

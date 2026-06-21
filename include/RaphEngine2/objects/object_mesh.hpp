@@ -16,7 +16,7 @@ namespace raphEngine::objects
     {
     public:
         ObjectMesh() = default;
-        ObjectMesh(const MeshInfo& info, graphics::Shader* shader);
+        ObjectMesh(objects::GameObject* parent_object, const MeshInfo& info, graphics::Shader* shader);
 
         static std::vector<Texture> textures_loaded_;
         void add_mesh(std::unique_ptr<Mesh> mesh);
@@ -29,5 +29,6 @@ namespace raphEngine::objects
         
         std::vector<std::unique_ptr<objects::Mesh>> meshes_;
         graphics::Shader* shader_;
+        objects::GameObject* parent_object;
     };
 } // namespace raphEngine::objects

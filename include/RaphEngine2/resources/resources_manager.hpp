@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <map>
 
 #include "RaphEngine2/RaphEngine2.hpp"
 #include "RaphEngine2/export.hpp"

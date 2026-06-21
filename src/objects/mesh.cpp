@@ -42,8 +42,28 @@ namespace raphEngine::objects
     {
         model_matrix_ = model_matrix;
     }
+    
+    const glm::mat4& Mesh::get_model_matrix() const
+    {
+        return model_matrix_;
+    }
 
-    void Mesh::render()
+    void Mesh::set_shader(graphics::Shader* shader)
+    {
+        shader_ = shader;
+    }
+
+    const graphics::Shader* Mesh::get_shader() const
+    {
+        return shader_;
+    }
+
+    void Mesh::generate_mesh_buffers()
+    {
+        buffers_ = graphics::MeshBuffers::getMeshBuffer(this);
+    }
+
+    void Mesh::render() const
     {
         graphics::MeshRenderer::getInstance()->render(this);
     }

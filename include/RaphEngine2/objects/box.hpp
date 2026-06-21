@@ -8,11 +8,9 @@
 
 namespace raphEngine::objects
 {
-    class RAPHENGINE_API Box
-        : public Renderable
-        , public Mesh
+    class RAPHENGINE_API Box : public Mesh
     {
-        void render() override;
+        void render() const override;
         void create_bounding_box(const Mesh& mesh);
 
         glm::vec3* get_lower_bounds();

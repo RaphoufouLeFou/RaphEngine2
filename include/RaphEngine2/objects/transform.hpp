@@ -9,8 +9,15 @@ namespace raphEngine::objects
     {
     public:
         glm::vec3& get_position();
+        const glm::vec3& get_position() const;
+
         glm::vec3& get_rotation();
+        const glm::vec3& get_rotation() const;
+        
         glm::vec3& get_scale();
+        const glm::vec3& get_scale() const;
+
+        const glm::mat4 get_model_matrix();
 
     private:
         void calculate_matrix();
@@ -20,5 +27,7 @@ namespace raphEngine::objects
         glm::vec3 scale_;
 
         glm::mat4 model_matrix_;
+
+        bool can_have_moved;
     };
 } // namespace raphEngine::objects

@@ -10,6 +10,11 @@
 #include "RaphEngine2/core.hpp"
 #include "transform.hpp"
 
+namespace raphEngine::component
+{
+    class Component;
+}
+
 namespace raphEngine::objects
 {
     class RAPHENGINE_API GameObject
@@ -29,6 +34,7 @@ namespace raphEngine::objects
         {}
 
         std::string& get_name();
+        objects::Transform& get_transform();
 
         std::shared_ptr<GameObject> instanciate();
 

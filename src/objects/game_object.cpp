@@ -31,6 +31,7 @@ namespace raphEngine::objects
     GameObject::add_component(std::unique_ptr<component::Component> component)
     {
         std::cout << "adding " << component->get_name() << "\n";
+        component->parent_object = this;
         components_.push_back(std::move(component));
     }
 
@@ -86,6 +87,11 @@ namespace raphEngine::objects
     std::string& GameObject::get_name()
     {
         return name_;
+    }
+
+    objects::Transform& GameObject::get_transform()
+    {
+        return transform_;
     }
 
     GameObject* GameObject::find(const std::string& name)

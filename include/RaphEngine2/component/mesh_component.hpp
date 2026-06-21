@@ -40,6 +40,6 @@ namespace raphEngine::component
         std::shared_ptr<graphics::Shader> shader_;
 
     private:
-        void render() override;
+        void render() const override;
     };
 } // namespace raphEngine::component

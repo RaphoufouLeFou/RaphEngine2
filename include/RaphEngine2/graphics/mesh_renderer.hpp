@@ -17,8 +17,8 @@ namespace raphEngine::graphics
     class RAPHENGINE_API MeshRenderer
     {
     public:
-        virtual void render(raphEngine::objects::Mesh* mesh) = 0;
-        virtual void render_shadows(raphEngine::objects::Mesh* mesh) = 0;
+        virtual void render(const raphEngine::objects::Mesh* mesh) const = 0;
+        virtual void render_shadows(const raphEngine::objects::Mesh* mesh) const = 0;
         static MeshRenderer* getInstance();
 
     private:

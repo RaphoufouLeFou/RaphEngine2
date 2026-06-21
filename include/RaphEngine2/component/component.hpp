@@ -4,6 +4,12 @@
 #include <string>
 
 #include "RaphEngine2/export.hpp"
+#include "RaphEngine2/objects/game_object.hpp"
+
+namespace raphEngine::objects
+{
+    class GameObject;
+}
 
 namespace raphEngine::component
 {
@@ -23,5 +29,7 @@ namespace raphEngine::component
         {
             return "Empty component";
         };
+
+        objects::GameObject* parent_object;
     };
 } // namespace raphEngine::component

@@ -13,7 +13,7 @@ namespace raphEngine::graphics
     public:
         Shader();
 
-        virtual void use() = 0;
+        virtual void use() const = 0;
 
         virtual void setValue(const std::string& name, bool value) const = 0;
         virtual void setValue(const std::string& name, int value) const = 0;

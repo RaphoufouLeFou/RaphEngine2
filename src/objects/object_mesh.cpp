@@ -12,6 +12,7 @@
 #include <memory>
 #include "resources/model_resource.hpp"
 
+#include "RaphEngine2/graphics/graphic_api.hpp"
 #include "objects/mesh.hpp"
 #include "stb_image.h"
 
@@ -252,8 +253,9 @@ namespace raphEngine::objects
         processNode(object_mesh, scene->mRootNode, scene, filter);
     }
 
-    ObjectMesh::ObjectMesh(const MeshInfo& info, graphics::Shader* shader)
+    ObjectMesh::ObjectMesh(objects::GameObject* parent_object, const MeshInfo& info, graphics::Shader* shader)
     {
+        this->parent_object = parent_object;
         shader_ = shader;
         loadModel(this, info.mesh_path, info.bilinear);
     }
@@ -263,6 +265,9 @@ namespace raphEngine::objects
         //auto* truc = dynamic_cast<resources::ModelResource*>(meshes_resource_);
         //truc->meshes_.push_back(std::move(mesh));
 
+        mesh->set_shader(shader_);
+        mesh->parent_object = this->parent_object;
+        mesh->generate_mesh_buffers();
         meshes_.push_back(std::move(mesh));
     }
 
@@ -271,7 +276,8 @@ namespace raphEngine::objects
         std::cout << "rendering this mesh\n";
         for (size_t i = 0; i < meshes_.size(); i++)
         {
-            meshes_[i].get()->render();
+            graphics::GraphicApi::AddToRenderPool(meshes_[i].get());
+            // meshes_[i].get()->render();
         }
     }
 

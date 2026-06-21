@@ -1,4 +1,3 @@
-
 #include "component/mesh_component.hpp"
 
 #include <RaphEngine2/graphics/shader.hpp>
@@ -23,7 +22,7 @@ namespace raphEngine::component
             shader = graphics::Shader::loadShader();
         }
         shader_ = shader;
-        lods_ = std::make_unique<objects::Lod>(meshes, shader);
+        lods_ = std::make_unique<objects::Lod>(parent_object, meshes, shader);
         Start();
     }
 
@@ -34,7 +33,7 @@ namespace raphEngine::component
             shader = graphics::Shader::loadShader();
         }
         shader_ = shader;
-        lods_ = std::make_unique<objects::Lod>(mesh, shader);
+        lods_ = std::make_unique<objects::Lod>(parent_object, mesh, shader);
         Start();
     }
 
@@ -45,7 +44,7 @@ namespace raphEngine::component
         std::cout << "updating me !!\n";
         render();
     }
-    void MeshComponent::render()
+    void MeshComponent::render() const
     {
         lods_->get_lod(0)->render();
     }

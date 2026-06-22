@@ -14,10 +14,11 @@ namespace raphEngine::graphics
         unsigned int vao_;
         unsigned int vbo_;
         unsigned int ebo_;
-        
+
+        void GenerateBuffers() override;
+
     private:
-        void GenerateBuffers(raphEngine::objects::Mesh* mesh) override;
-        
+        raphEngine::objects::Mesh* mesh_;
   
     };
 

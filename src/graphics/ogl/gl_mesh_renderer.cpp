@@ -33,7 +33,7 @@ namespace raphEngine::graphics
         sh->setValue("view", cam->view_matrix_);
 
         sh->setValue("lightPos", glm::vec3(0));
-        sh->setValue("lightDir", glm::vec3(0));
+        sh->setValue("lightDir", glm::normalize(glm::vec3(1, 1, 1)));
 
         sh->setValue("viewPos", cam->parent_object->get_transform().get_position());
         sh->setValue("farPlane", cam->farPlane);
@@ -54,7 +54,7 @@ namespace raphEngine::graphics
 
         //sh->setVec2Array("offsets", 64, offsets);
 */
-        const char* names[] = { "texture_diffuse", "texture_specular", "texture_normal", "texture_height", "shadowMap" };
+        const char* names[] = { "texture_diffuse", "texture_normal", "texture_specular", "texture_height", "shadowMap" };
         for (int i = 0; i < 5; i++)
         {
             sh->setValue(names[i], i);
@@ -66,10 +66,10 @@ namespace raphEngine::graphics
         glBindTexture(GL_TEXTURE_2D_ARRAY, depthMap);
 */
     }
-
+    
     void GLMeshRenderer::render(const raphEngine::objects::Mesh* mesh) const
     {
-        std::cout << "rendering using openGL\n";
+        //std::cout << "rendering using openGL\n";
         if (!component::CameraComponent::active_camera)
         {
             std::cerr << "Cant render a mesh with no active camera!" << std::endl;
@@ -98,24 +98,32 @@ namespace raphEngine::graphics
         {
             current_active_shader_ = mesh_shader;
             mesh_shader->use();
-            SetupShader(mesh_shader);
         }
 
-        mesh_shader->setValue("model", mesh->parent_object->get_transform().get_model_matrix()/* * mesh->ModelMatrix*/);
+        SetupShader(mesh_shader);
+
+        mesh_shader->setValue("model", mesh->model_matrix_ * mesh->parent_object->get_transform().get_model_matrix() /* * mesh->ModelMatrix*/);
         
+        bool HaveTexture = false;
+        bool HaveNormalMap = false;
+        bool HaveSpecularMap = false;
+        bool HaveHeightMap = false;
+
         for (size_t i = 0; i < mesh->get_textures().size(); i++)
         {
-            if (mesh->get_textures().at(i).type == objects::Texture::DIFFUSE)
-            {
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, mesh->get_textures().at(i).id);
-            }
-        }
+            if (mesh->get_textures().at(i).type == objects::Texture::DIFFUSE) HaveTexture = true;
+            if (mesh->get_textures().at(i).type == objects::Texture::NORMAL) HaveNormalMap = true;
+            if (mesh->get_textures().at(i).type == objects::Texture::SPECULAR) HaveSpecularMap = true;
+            if (mesh->get_textures().at(i).type == objects::Texture::HEIGHT) HaveHeightMap = true;
+            
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, mesh->get_textures().at(i).id);
+        }        
         
-        mesh_shader->setValue("HaveTexture", true);
-        mesh_shader->setValue("HaveNormalMap", false);
-        mesh_shader->setValue("HaveSpecularMap", false);
-        mesh_shader->setValue("HaveHeightMap", false);
+        mesh_shader->setValue("HaveTexture", HaveTexture);
+        mesh_shader->setValue("HaveNormalMap", HaveNormalMap);
+        mesh_shader->setValue("HaveSpecularMap", HaveSpecularMap);
+        mesh_shader->setValue("HaveHeightMap", HaveHeightMap);
 
         const graphics::GLMeshBuffers* mesh_buffers = dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers());
 

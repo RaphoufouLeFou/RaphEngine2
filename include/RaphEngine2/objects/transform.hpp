@@ -8,6 +8,9 @@ namespace raphEngine::objects
     class RAPHENGINE_API Transform
     {
     public:
+
+        Transform();
+
         glm::vec3& get_position();
         const glm::vec3& get_position() const;
 

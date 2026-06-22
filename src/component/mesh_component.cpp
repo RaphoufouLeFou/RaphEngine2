@@ -23,7 +23,6 @@ namespace raphEngine::component
         }
         shader_ = shader;
         meshes_ = meshes;
-        Start();
     }
 
     MeshComponent::MeshComponent(objects::MeshInfo mesh, std::shared_ptr<graphics::Shader> shader)
@@ -33,9 +32,7 @@ namespace raphEngine::component
             shader = graphics::Shader::loadShader();
         }
         shader_ = shader;
-        lods_ = std::make_unique<objects::Lod>(parent_object, mesh, shader);
         meshes_ = {mesh};
-        Start();
     }
 
     void MeshComponent::Start()
@@ -45,7 +42,6 @@ namespace raphEngine::component
 
     void MeshComponent::Update()
     {
-        std::cout << "updating me !!\n";
         render();
     }
     void MeshComponent::render() const

@@ -8,6 +8,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <memory>
 #include "resources/model_resource.hpp"
@@ -48,6 +49,7 @@ namespace raphEngine::objects
                 format = GL_RGBA;
 
             glBindTexture(GL_TEXTURE_2D, textureID);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
                          GL_UNSIGNED_BYTE, data);
 
@@ -201,6 +203,20 @@ namespace raphEngine::objects
         return final_mesh;
     }
 
+    glm::mat4 AiMatToGlm(const aiMatrix4x4& from)
+    {
+        glm::mat4 to;
+        to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+        to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+        to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+        to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+        return to;
+    }
+
+    static const glm::mat4 kYupToZup = glm::rotate(glm::mat4(1.0f),
+                                                glm::radians(-90.0f),
+                                                glm::vec3(-1.0f, 0.0f, 0.0f));
+
     void processNode(ObjectMesh* object_mesh, aiNode* node,
                      const aiScene* scene, bool filter)
     {
@@ -217,12 +233,7 @@ namespace raphEngine::objects
                 parent = parent->mParent;
             }
 
-            glm::mat4 model = glm::mat4(1.0f);
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 4; j++)
-                    model[i][j] = globalTransform[i][j];
-
-            object_mesh->add_mesh(processMesh(mesh, scene, filter, model));
+            object_mesh->add_mesh(processMesh(mesh, scene, filter, kYupToZup * AiMatToGlm(globalTransform)));
         }
 
         for (unsigned int i = 0; i < node->mNumChildren; i++)
@@ -256,6 +267,8 @@ namespace raphEngine::objects
     {
         this->parent_object = parent_object;
         shader_ = shader;
+        
+        std::cout << "loading new mesh for " << "\n";
         loadModel(this, info.mesh_path, info.bilinear);
     }
 
@@ -267,17 +280,17 @@ namespace raphEngine::objects
         mesh->set_shader(shader_);
         
         mesh->parent_object = this->parent_object;
+        std::cout << "Hellloooo 1\n";
         mesh->generate_mesh_buffers();
+        std::cout << "Hellloooo 2\n";
         meshes_.push_back(std::move(mesh));
     }
 
     void ObjectMesh::render() const
     {
-        std::cout << "rendering this mesh\n";
         for (size_t i = 0; i < meshes_.size(); i++)
         {
             graphics::GraphicApi::AddToRenderPool(meshes_[i].get());
-            // meshes_[i].get()->render();
         }
     }
 

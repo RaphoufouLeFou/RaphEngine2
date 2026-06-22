@@ -20,6 +20,17 @@ namespace raphEngine::graphics::ogl
     }
 
     GLFWwindow* window;
+
+    void SetHints() {
+        glfwWindowHint(GLFW_SAMPLES, 8);
+        glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+    
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    }
+
     void OpenGL::Init(const settings::Graphics& graphics_settings,
                       const std::string& window_name)
     {
@@ -29,6 +40,7 @@ namespace raphEngine::graphics::ogl
             exit(EXIT_FAILURE);
         }
 
+        SetHints();
         instance_ = this;
 
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -92,12 +104,16 @@ namespace raphEngine::graphics::ogl
 
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_LIGHTING);
+        glfwSwapInterval(0);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     void OpenGL::Render()
     {
+        glViewport(0, 0, res_x, res_y);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         for (auto* object : render_pool)
         {
             object->render();

@@ -15,11 +15,13 @@ namespace raphEngine::graphics
 
     GLMeshBuffers::GLMeshBuffers(raphEngine::objects::Mesh* mesh)
     {
-        GenerateBuffers(mesh);
+        mesh_ = mesh;
+        GenerateBuffers();
     }
 
-    void GLMeshBuffers::GenerateBuffers(raphEngine::objects::Mesh* mesh)
+    void GLMeshBuffers::GenerateBuffers()
     {
+        std::cout << "Generating buffers\n";
         glGenVertexArrays(1, &vao_);
         glGenBuffers(1, &vbo_);
         glGenBuffers(1, &ebo_);
@@ -28,13 +30,13 @@ namespace raphEngine::graphics
         glBindBuffer(GL_ARRAY_BUFFER, vbo_);
 
         glBufferData(GL_ARRAY_BUFFER,
-                     mesh->get_vertices().size() * sizeof(objects::Vertex),
-                     &mesh->get_vertices()[0], GL_STATIC_DRAW);
+            mesh_->get_vertices().size() * sizeof(objects::Vertex),
+                     &(mesh_->get_vertices()[0]), GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     mesh->get_indices().size() * sizeof(unsigned int),
-                     &mesh->get_indices()[0], GL_STATIC_DRAW);
+            mesh_->get_indices().size() * sizeof(unsigned int),
+                     &(mesh_->get_indices()[0]), GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(objects::Vertex),
@@ -55,6 +57,8 @@ namespace raphEngine::graphics
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(objects::Vertex),
                               (void*)offsetof(objects::Vertex, bitangent));
+                              
+        std::cout << "vao is at : "<< vao_ << " with a total of indicies at :" << mesh_->get_indices().size() << "\n";
     }
     
 } // namespace raphEngine::graphics

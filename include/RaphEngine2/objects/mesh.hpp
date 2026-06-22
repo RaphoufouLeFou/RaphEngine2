@@ -75,6 +75,7 @@ namespace raphEngine::objects
         void generate_mesh_buffers();
 
         objects::GameObject* parent_object;
+        glm::mat4 model_matrix_;
 
     protected:
         std::vector<Vertex> vertices_;
@@ -84,7 +85,6 @@ namespace raphEngine::objects
         bool outline_;
         bool cast_shadows_;
 
-        glm::mat4 model_matrix_;
 
         std::unique_ptr<graphics::MeshBuffers> buffers_;
         graphics::Shader* shader_;

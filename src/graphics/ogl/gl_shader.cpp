@@ -28,6 +28,8 @@ namespace raphEngine::graphics
                    const std::string& gShaderCode)
     {
         unsigned int vertex, fragment;
+
+        std::cout << "compiling a shader OMG!\n";
         
         vertex = glCreateShader(GL_VERTEX_SHADER);
         const char* vertexCode = vShaderCode.c_str();

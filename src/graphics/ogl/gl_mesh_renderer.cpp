@@ -12,12 +12,12 @@
 #include "graphics/mesh_renderer.hpp"
 #include "graphics/ogl/gl_mesh_buffers.hpp"
 #include "graphics/ogl/gl_shader.hpp"
+#include "graphics/shader.hpp"
 #include "objects/mesh.hpp"
 #include "settings/graphics.hpp"
 
 namespace raphEngine::graphics
 {
-
     const GlShader* GLMeshRenderer::current_active_shader_ = nullptr;
 
     GLMeshRenderer::GLMeshRenderer()
@@ -163,10 +163,17 @@ namespace raphEngine::graphics
     }
 
     void
-    GLMeshRenderer::render_shadows(const raphEngine::objects::Mesh* mesh) const
+    GLMeshRenderer::render_shadows(const Shader* shadow_shader, const raphEngine::objects::Mesh* mesh) const
     {
         // TODO: implement
-        (void)mesh;
+        
+        shadow_shader->setValue(
+            "model",
+            mesh->model_matrix_
+                * mesh->parent_object->get_transform()
+                      .get_model_matrix() /* * mesh->ModelMatrix*/);
+
+        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh->get_indices().size()), GL_UNSIGNED_INT, 0);
     }
 
 } // namespace raphEngine::graphics

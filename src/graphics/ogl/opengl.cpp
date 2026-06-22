@@ -101,7 +101,7 @@ namespace raphEngine::graphics::ogl
         // Accept fragment if it is closer to the camera than the former one
         glDepthFunc(GL_LESS);
         // Cull triangles which normal is not towards the camera
-        // glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
 
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_LIGHTING);

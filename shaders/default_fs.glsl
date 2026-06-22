@@ -1,4 +1,4 @@
-#version 330 core
+#version 410 core
 
 #define SAMPLES_COUNT 1
 #define INV_SAMPLES_COUNT (1.0f / SAMPLES_COUNT)

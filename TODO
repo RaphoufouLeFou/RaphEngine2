@@ -1,11 +1,19 @@
 Implement shadows
 Implement cascaded shadows
 Implement smooth shadows
+Add instancing
+Swap the shader from var to filename
+Implement the ressource system
 Add some skyboxes
+Handle big terrains
+Add vegetation
+Add smooth lod transitions
 Fix the settings
 Integrate ImGUI
+Add a logger
 Implement ray casting
 Add the UI
 Add a sound system
 Implement shader clouds
-Start the Editor
+Errors handling
+Start coding the Editor

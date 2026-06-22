@@ -22,12 +22,17 @@ namespace raphEngine::objects
             std::shared_ptr<graphics::Shader> shader);
         Lod(objects::GameObject* parent_object, MeshInfo mesh,
             std::shared_ptr<graphics::Shader> shader);
-        const ObjectMesh* get_lod(size_t level) const;
         size_t get_lod_count() const;
+
+        const ObjectMesh* get_lod_at(const glm::vec3& object_pos) const;
 
         Lod(const Lod&) = delete;
 
     private:
         std::vector<std::unique_ptr<ObjectMesh>> lod_meshes_;
+        std::vector<float> transitions_distances_;
+
+        void calculate_transitions_distances(int lod_count, float exponent = 3.0f);
+        const ObjectMesh* get_lod(size_t level) const;
     };
 } // namespace raphEngine::objects

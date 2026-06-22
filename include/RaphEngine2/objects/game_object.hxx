@@ -1,9 +1,21 @@
 #pragma once
 
 #include "game_object.hpp"
+#include "RaphEngine2/component/component.hpp"
 
 namespace raphEngine::objects
 {
+
+    template <Comp T, class... Args>
+    void GameObject::add_component(Args&&... args)
+    {
+        std::unique_ptr<component::Component> c = std::make_unique<T>(args...);
+
+        std::cout << "adding " << c->get_name() << "\n";
+        c->parent_object = this;
+        components_.push_back(std::move(c));
+    }
+
     template <class T>
     T* GameObject::get_first_component_of_type()
     {

@@ -6,11 +6,14 @@ int main()
 {
     raphEngine::Core::Init();
     raphEngine::objects::GameObject go{};
-    std::initializer_list<raphEngine::objects::MeshInfo> infos = 
+
+    /*std::initializer_list<raphEngine::objects::MeshInfo> infos = 
     {
         // raphEngine::objects::MeshInfo("assets/models/cube.fbx", raphEngine::objects::Shader::create_shader("", ""), true)
     };
     go.add_component(std::make_unique<raphEngine::component::MeshComponent>(infos, nullptr));
+    */
+   
     go.greed();
     
     std::cout << "Engine build" << std::endl;

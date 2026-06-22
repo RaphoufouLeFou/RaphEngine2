@@ -17,6 +17,14 @@ namespace raphEngine::component
 
 namespace raphEngine::objects
 {
+
+    template<class T>
+    concept Comp = requires(T a)
+    {
+        { a } -> std::convertible_to<component::Component>;
+    };
+
+
     class RAPHENGINE_API GameObject
     {
     public:
@@ -38,7 +46,9 @@ namespace raphEngine::objects
 
         std::shared_ptr<GameObject> instanciate();
 
-        void add_component(std::unique_ptr<component::Component> component);
+        template <Comp T, class... Args>
+        void add_component(Args&&... args);
+
         component::Component* get_component(size_t index);
         component::Component* get_component(const std::string& name);
 

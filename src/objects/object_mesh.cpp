@@ -104,7 +104,7 @@ namespace raphEngine::objects
             {
                 if (std::strcmp(ObjectMesh::textures_loaded_[j].path.data(),
                                 str.C_Str())
-                    == 0)
+                    == 0 && ObjectMesh::textures_loaded_[j].bilinear == filter)
                 {
                     textures.push_back(ObjectMesh::textures_loaded_[j]);
                     skip = true; // a texture with the same filepath has already
@@ -119,6 +119,7 @@ namespace raphEngine::objects
                 texture.id = TextureFromFile(str.C_Str(), "", filter);
                 texture.type = typeName;
                 texture.path = str.C_Str();
+                texture.bilinear = filter;
                 textures.push_back(texture);
                 ObjectMesh::textures_loaded_.push_back(
                     texture); // store it as texture loaded for entire model, to

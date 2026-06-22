@@ -27,6 +27,7 @@ namespace raphEngine::component
 
         void set_as_active_camera();
         void calculate_matrices();
+        const glm::vec3& get_position() const;
 
         static CameraComponent* active_camera;
 

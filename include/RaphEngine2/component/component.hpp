@@ -4,7 +4,6 @@
 #include <string>
 
 #include "RaphEngine2/export.hpp"
-#include "RaphEngine2/objects/game_object.hpp"
 
 namespace raphEngine::objects
 {

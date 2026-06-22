@@ -16,7 +16,7 @@ namespace raphEngine::graphics
         GLMeshRenderer();
         void render(const raphEngine::objects::Mesh* mesh) const override;
         void
-        render_shadows(const raphEngine::objects::Mesh* mesh) const override;
+        render_shadows(const Shader* shadow_shader, const raphEngine::objects::Mesh* mesh) const override;
 
     private:
         GlShader* shader_;

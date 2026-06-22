@@ -1,7 +1,56 @@
 #pragma once
 
+inline const char* default_shadow_vs_shader = R"(
+#version 410 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 model;
+
+void main()
+{
+    gl_Position = model * vec4(aPos, 1.0);
+}
+
+)";
+
+inline const char* default_shadow_gs_shader = R"(
+#version 410 core
+
+layout(triangles, invocations = 5) in;
+layout(triangle_strip, max_vertices = 3) out;
+
+layout (std140) uniform LightSpaceMatrices
+{
+    mat4 lightSpaceMatrices[16];
+};
+/*
+uniform mat4 lightSpaceMatrices[16];
+*/
+
+void main()
+{          
+	for (int i = 0; i < 3; ++i)
+	{
+		gl_Position = lightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
+		gl_Layer = gl_InvocationID;
+		EmitVertex();
+	}
+	EndPrimitive();
+}  
+
+)";
+
+inline const char* default_shadow_fs_shader = R"(
+#version 410 core
+
+void main()
+{             
+}
+
+)";
+
 inline const char* default_fs_shader = R"(
-#version 330 core
+#version 410 core
 
 #define SAMPLES_COUNT 1
 #define INV_SAMPLES_COUNT (1.0f / SAMPLES_COUNT)
@@ -168,7 +217,8 @@ void main()
 )";
 
 inline const char* default_vs_shader = R"(
-#version 330 core
+#version 410 core
+
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoords;

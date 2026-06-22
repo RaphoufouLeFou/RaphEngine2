@@ -43,6 +43,11 @@ namespace raphEngine::component
     void CameraComponent::Update()
     {}
 
+    const glm::vec3& CameraComponent::get_position() const
+    {
+        return parent_object->get_transform().get_position();
+    }
+
     void CameraComponent::calculate_matrices()
     {
         objects::Transform& camera_transform = parent_object->get_transform();

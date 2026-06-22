@@ -45,6 +45,7 @@ namespace raphEngine::objects
         unsigned int id;
         TextureType type;
         std::string path;
+        bool bilinear;
     };
 
     class RAPHENGINE_API Mesh : public Renderable

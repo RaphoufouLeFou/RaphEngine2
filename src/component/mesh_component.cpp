@@ -22,6 +22,7 @@ namespace raphEngine::component
         }
         shader_ = shader;
         meshes_ = meshes;
+        std::cout << "initializing mesh with " << meshes.size() << " lods\n";
     }
 
     MeshComponent::MeshComponent(objects::MeshInfo mesh,
@@ -46,7 +47,7 @@ namespace raphEngine::component
     }
     void MeshComponent::render() const
     {
-        lods_->get_lod(0)->render();
+        lods_->get_lod_at(parent_object->get_transform().get_position())->render();
     }
 
 } // namespace raphEngine::component

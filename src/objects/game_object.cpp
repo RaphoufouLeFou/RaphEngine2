@@ -27,14 +27,6 @@ namespace raphEngine::objects
         spawned_game_objects_.push_back(this);
     }
 
-    void
-    GameObject::add_component(std::unique_ptr<component::Component> component)
-    {
-        std::cout << "adding " << component->get_name() << "\n";
-        component->parent_object = this;
-        components_.push_back(std::move(component));
-    }
-
     component::Component* GameObject::get_component(size_t index)
     {
         return components_.at(index).get();

@@ -6,8 +6,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
 
-#include "component.hpp"
 #include "RaphEngine2/objects/mesh_info.hpp"
+#include "component.hpp"
 
 namespace raphEngine::component
 {

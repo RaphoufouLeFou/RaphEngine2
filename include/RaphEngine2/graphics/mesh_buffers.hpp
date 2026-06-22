@@ -19,7 +19,8 @@ namespace raphEngine::graphics
     public:
         virtual void GenerateBuffers() = 0;
         // should generate the needed buffers
-        static std::unique_ptr<MeshBuffers> getMeshBuffer(raphEngine::objects::Mesh* mesh);
+        static std::unique_ptr<MeshBuffers>
+        getMeshBuffer(raphEngine::objects::Mesh* mesh);
     };
 
 } // namespace raphEngine::graphics

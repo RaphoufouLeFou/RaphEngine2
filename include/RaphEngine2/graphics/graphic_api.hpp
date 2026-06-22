@@ -2,9 +2,9 @@
 
 #include <RaphEngine2/export.hpp>
 
+#include "RaphEngine2/objects/mesh.hpp"
 #include "RaphEngine2/renderable.hpp"
 #include "RaphEngine2/settings/graphics.hpp"
-#include "RaphEngine2/objects/mesh.hpp"
 
 namespace raphEngine::graphics
 {
@@ -16,9 +16,9 @@ namespace raphEngine::graphics
         virtual void Render() = 0;
         static void AddToRenderPool(const Renderable* renderable);
         virtual bool Refresh() = 0;
-        
+
         virtual bool IsKeyPressed(int key) const = 0;
-        
+
         virtual glm::vec2 GetCursorPos() const = 0;
         virtual void SetCursorPos(double x, double y) const = 0;
         virtual bool GetMouseButtonPressed(int button) const = 0;
@@ -31,9 +31,8 @@ namespace raphEngine::graphics
         static unsigned short res_y;
 
         static std::vector<const Renderable*> render_pool;
-    
+
     protected:
-        
         static GraphicApi* instance_;
     };
 } // namespace raphEngine::graphics

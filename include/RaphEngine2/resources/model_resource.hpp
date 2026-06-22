@@ -2,8 +2,8 @@
 
 #include "RaphEngine2/RaphEngine2.hpp"
 #include "RaphEngine2/export.hpp"
-#include "resource.hpp"
 #include "RaphEngine2/objects/mesh.hpp"
+#include "resource.hpp"
 
 namespace raphEngine::resources
 {
@@ -11,8 +11,8 @@ namespace raphEngine::resources
     {
     public:
         ModelResource(const std::string& path);
-    
-    public: //temporary
+
+    public: // temporary
         std::vector<std::unique_ptr<objects::Mesh>> meshes_;
     };
 } // namespace raphEngine::resources

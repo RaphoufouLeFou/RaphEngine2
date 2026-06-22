@@ -1,7 +1,7 @@
 #include "graphics/ogl/gl_mesh_buffers.hpp"
 
-#include <GL/glew.h>
 #include <GL/gl.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
@@ -30,12 +30,12 @@ namespace raphEngine::graphics
         glBindBuffer(GL_ARRAY_BUFFER, vbo_);
 
         glBufferData(GL_ARRAY_BUFFER,
-            mesh_->get_vertices().size() * sizeof(objects::Vertex),
+                     mesh_->get_vertices().size() * sizeof(objects::Vertex),
                      &(mesh_->get_vertices()[0]), GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-            mesh_->get_indices().size() * sizeof(unsigned int),
+                     mesh_->get_indices().size() * sizeof(unsigned int),
                      &(mesh_->get_indices()[0]), GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
@@ -57,8 +57,9 @@ namespace raphEngine::graphics
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(objects::Vertex),
                               (void*)offsetof(objects::Vertex, bitangent));
-                              
-        std::cout << "vao is at : "<< vao_ << " with a total of indicies at :" << mesh_->get_indices().size() << "\n";
+
+        std::cout << "vao is at : " << vao_ << " with a total of indicies at :"
+                  << mesh_->get_indices().size() << "\n";
     }
-    
+
 } // namespace raphEngine::graphics

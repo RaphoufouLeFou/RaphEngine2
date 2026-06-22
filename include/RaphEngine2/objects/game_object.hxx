@@ -9,9 +9,9 @@ namespace raphEngine::objects
     {
         for (const auto& c : components_)
         {
-            if (dynamic_cast<T>(*c.get()) != nullptr)
+            if (dynamic_cast<T*>(c.get()) != nullptr)
             {
-                return c.get();
+                return dynamic_cast<T*>(c.get());
             }
         }
         return nullptr;
@@ -23,7 +23,7 @@ namespace raphEngine::objects
         std::vector<T*> res;
         for (const auto& c : components_)
         {
-            if (dynamic_cast<T>(*c.get()) != nullptr)
+            if (dynamic_cast<T*>(c.get()) != nullptr)
             {
                 res.push_back(c.get());
             }
@@ -36,7 +36,7 @@ namespace raphEngine::objects
     {
         for (auto it = components_.begin(); it != components_.end(); it++)
         {
-            if (dynamic_cast<T>(*(*it).get()) != nullptr)
+            if (dynamic_cast<T*>((*it).get()) != nullptr)
                 it = components_.erase(it);
         }
     }
@@ -46,7 +46,7 @@ namespace raphEngine::objects
     {
         for (auto it = components_.begin(); it != components_.end(); it++)
         {
-            if (dynamic_cast<T>(*(*it).get()) != nullptr)
+            if (dynamic_cast<T*>(*(*it).get()) != nullptr)
             {
                 components_.erase(it);
                 return;

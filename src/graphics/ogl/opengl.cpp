@@ -1,7 +1,7 @@
 #include "graphics/ogl/opengl.hpp"
 
-#include <GL/glew.h>
 #include <GL/gl.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>
@@ -13,7 +13,7 @@ namespace raphEngine::graphics::ogl
     void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     {
         // make sure the viewport matches the new window dimensions
-        (void) window;
+        (void)window;
         glViewport(0, 0, width, height);
         graphics::GraphicApi::res_x = width;
         graphics::GraphicApi::res_y = height;
@@ -21,10 +21,11 @@ namespace raphEngine::graphics::ogl
 
     GLFWwindow* window;
 
-    void SetHints() {
+    void SetHints()
+    {
         glfwWindowHint(GLFW_SAMPLES, 8);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-    
+
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
@@ -126,8 +127,8 @@ namespace raphEngine::graphics::ogl
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        return glfwWindowShouldClose(window) == 0 &&
-            glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS;
+        return glfwWindowShouldClose(window) == 0
+            && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS;
     }
 
     bool OpenGL::IsKeyPressed(int key) const
@@ -154,7 +155,7 @@ namespace raphEngine::graphics::ogl
 
     void OpenGL::SetMouseVisibility(bool visible) const
     {
-        if(visible)
+        if (visible)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         else
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
@@ -164,6 +165,5 @@ namespace raphEngine::graphics::ogl
     {
         return glfwGetWindowAttrib(window, GLFW_FOCUSED);
     }
-
 
 } // namespace raphEngine::graphics::ogl

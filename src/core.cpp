@@ -2,11 +2,11 @@
 
 #include <iostream>
 
+#include "RaphEngine2/time_utils.hpp"
 #include "graphics/ogl/opengl.hpp"
 #include "objects/game_object.hpp"
 #include "settings/graphics.hpp"
 #include "settings/save_settings.hpp"
-#include "RaphEngine2/time_utils.hpp"
 
 namespace raphEngine
 {
@@ -21,7 +21,7 @@ namespace raphEngine
         /*
         std::vector<std::unique_ptr<settings::SavableSetting>> sett =
             settings::SettingsSaver::load_settings("test.json");
-            
+
         std::vector<settings::SavableSetting*> test;
 
         for (auto& s : sett)
@@ -50,7 +50,7 @@ namespace raphEngine
             renderer.Render();
             bool still_alive = renderer.Refresh();
 
-            if(!still_alive)
+            if (!still_alive)
             {
                 break;
             }

@@ -10,12 +10,12 @@ namespace raphEngine::graphics
     std::vector<const Renderable*> GraphicApi::render_pool;
 
     GraphicApi* GraphicApi::instance_ = nullptr;
-    
+
     void GraphicApi::AddToRenderPool(const Renderable* renderable)
     {
         render_pool.push_back(renderable);
     }
-    
+
     const GraphicApi* GraphicApi::get_api()
     {
         return instance_;

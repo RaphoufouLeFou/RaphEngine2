@@ -11,8 +11,7 @@ namespace raphEngine::objects
 {
     struct RAPHENGINE_API MeshInfo
     {
-        MeshInfo(const std::string& mesh_path_,
-                 bool bilinear_ = true)
+        MeshInfo(const std::string& mesh_path_, bool bilinear_ = true)
             : mesh_path{ mesh_path_ }
             , bilinear{ bilinear_ }
         {}

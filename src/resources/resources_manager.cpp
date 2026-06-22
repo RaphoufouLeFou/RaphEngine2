@@ -1,9 +1,10 @@
+#include "resources/resources_manager.hpp"
+
 #include <memory>
 
 #include "RaphEngine2.hpp"
 #include "export.hpp"
 #include "resources/resource.hpp"
-#include "resources/resources_manager.hpp"
 
 namespace raphEngine::resources
 {

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
-#include <RaphEngine2/graphics/shader.hpp>
-#include <RaphEngine2/renderable.hpp>
 #include <RaphEngine2/graphics/mesh_buffers.hpp>
+#include <RaphEngine2/graphics/shader.hpp>
 #include <RaphEngine2/objects/game_object.hpp>
+#include <RaphEngine2/renderable.hpp>
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
@@ -14,7 +14,7 @@ namespace raphEngine::graphics
 {
     class MeshRenderer;
     class MeshBuffers;
-}
+} // namespace raphEngine::graphics
 
 namespace raphEngine::objects
 {
@@ -74,6 +74,9 @@ namespace raphEngine::objects
 
         void generate_mesh_buffers();
 
+        glm::vec3 get_lower_bounds() const;
+        glm::vec3 get_higher_bounds() const;
+
         objects::GameObject* parent_object;
         glm::mat4 model_matrix_;
 
@@ -84,7 +87,6 @@ namespace raphEngine::objects
 
         bool outline_;
         bool cast_shadows_;
-
 
         std::unique_ptr<graphics::MeshBuffers> buffers_;
         graphics::Shader* shader_;

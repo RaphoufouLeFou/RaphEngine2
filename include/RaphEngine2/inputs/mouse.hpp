@@ -3,8 +3,8 @@
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
 
-#define SCANCODE_MASK (1<<30)
-#define SCANCODE_TO_KEYCODE(X)  (X | SCANCODE_MASK)
+#define SCANCODE_MASK (1 << 30)
+#define SCANCODE_TO_KEYCODE(X) (X | SCANCODE_MASK)
 
 namespace raphEngine::inputs
 {
@@ -27,4 +27,4 @@ namespace raphEngine::inputs
         static bool IsMouseOnScreen();
         static bool IsWindowFocused();
     };
-}
+} // namespace raphEngine::inputs

@@ -1,7 +1,7 @@
 #include "graphics/ogl/gl_shader.hpp"
 
-#include <GL/glew.h>
 #include <GL/gl.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <iostream>
@@ -15,8 +15,8 @@ namespace raphEngine::graphics
 
     std::shared_ptr<GlShader>
     GlShader::create_shader(const std::string& vShaderCode,
-                          const std::string& fShaderCode,
-                          const std::string& gShaderCode)
+                            const std::string& fShaderCode,
+                            const std::string& gShaderCode)
     {
         return std::make_shared<GlShader>(
             vShaderCode.empty() ? default_vs_shader : vShaderCode,
@@ -24,25 +24,25 @@ namespace raphEngine::graphics
     }
 
     GlShader::GlShader(const std::string& vShaderCode,
-                   const std::string& fShaderCode,
-                   const std::string& gShaderCode)
+                       const std::string& fShaderCode,
+                       const std::string& gShaderCode)
     {
         unsigned int vertex, fragment;
 
         std::cout << "compiling a shader OMG!\n";
-        
+
         vertex = glCreateShader(GL_VERTEX_SHADER);
         const char* vertexCode = vShaderCode.c_str();
         const char* fragmentCode = fShaderCode.c_str();
         glShaderSource(vertex, 1, &vertexCode, NULL);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
-        
+
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fragmentCode, NULL);
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
-        
+
         unsigned int geometry = 0;
         if (!gShaderCode.empty())
         {
@@ -52,7 +52,7 @@ namespace raphEngine::graphics
             glCompileShader(geometry);
             checkCompileErrors(geometry, "GEOMETRY");
         }
-        
+
         id_ = glCreateProgram();
         glAttachShader(id_, vertex);
         glAttachShader(id_, fragment);
@@ -60,7 +60,7 @@ namespace raphEngine::graphics
             glAttachShader(id_, geometry);
         glLinkProgram(id_);
         checkCompileErrors(id_, "PROGRAM");
-        
+
         glDeleteShader(vertex);
         glDeleteShader(fragment);
         if (!gShaderCode.empty())
@@ -83,11 +83,9 @@ namespace raphEngine::graphics
             if (!success)
             {
                 glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                std::cout
-                    << "ERROR::SHADER_COMPILATION_ERROR of type: " << type
-                    << "\n"
-                    << infoLog
-                    << std::endl;
+                std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type
+                          << "\n"
+                          << infoLog << std::endl;
             }
         }
         else
@@ -96,75 +94,88 @@ namespace raphEngine::graphics
             if (!success)
             {
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                std::cout
-                    << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n"
-                    << infoLog
-                    << std::endl;
+                std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type
+                          << "\n"
+                          << infoLog << std::endl;
             }
         }
     }
 
     void GlShader::setValue(const std::string& name, bool value) const
     {
-        glUniform1i(glGetUniformLocation(id_, name.c_str()), static_cast<int>(value));
+        glUniform1i(glGetUniformLocation(id_, name.c_str()),
+                    static_cast<int>(value));
     }
 
     void GlShader::setValue(const std::string& name, int value) const
     {
         glUniform1i(glGetUniformLocation(id_, name.c_str()), value);
     }
-    
+
     void GlShader::setValue(const std::string& name, float value) const
     {
         glUniform1f(glGetUniformLocation(id_, name.c_str()), value);
     }
 
-    void GlShader::setValue(const std::string& name, const glm::vec2& value) const
+    void GlShader::setValue(const std::string& name,
+                            const glm::vec2& value) const
     {
         glUniform2fv(glGetUniformLocation(id_, name.c_str()), 1, &value.x);
     }
 
-    void GlShader::setValue(const std::string& name, const glm::vec3& value) const
+    void GlShader::setValue(const std::string& name,
+                            const glm::vec3& value) const
     {
         glUniform3fv(glGetUniformLocation(id_, name.c_str()), 1, &value.x);
     }
 
-    void GlShader::setValue(const std::string& name, const glm::vec4& value) const
+    void GlShader::setValue(const std::string& name,
+                            const glm::vec4& value) const
     {
         glUniform4fv(glGetUniformLocation(id_, name.c_str()), 1, &value[0]);
     }
 
-    void GlShader::setValue(const std::string& name, const glm::mat2& value) const
+    void GlShader::setValue(const std::string& name,
+                            const glm::mat2& value) const
     {
-        glUniformMatrix2fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE, &value[0][0]);
+        glUniformMatrix2fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE,
+                           &value[0][0]);
     }
 
-    void GlShader::setValue(const std::string& name, const glm::mat3& value) const
+    void GlShader::setValue(const std::string& name,
+                            const glm::mat3& value) const
     {
-        glUniformMatrix3fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE, &value[0][0]);
+        glUniformMatrix3fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE,
+                           &value[0][0]);
     }
 
-    void GlShader::setValue(const std::string& name, const glm::mat4& value) const
+    void GlShader::setValue(const std::string& name,
+                            const glm::mat4& value) const
     {
-        glUniformMatrix4fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE, &value[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE,
+                           &value[0][0]);
     }
 
-    void GlShader::setValueArray(const std::string& name, size_t count, const int* array) const
+    void GlShader::setValueArray(const std::string& name, size_t count,
+                                 const int* array) const
     {
         glUniform3iv(glGetUniformLocation(id_, name.c_str()), count, array);
     }
 
-    void GlShader::setValueArray(const std::string& name, size_t count, const float* array) const
+    void GlShader::setValueArray(const std::string& name, size_t count,
+                                 const float* array) const
     {
         glUniform3fv(glGetUniformLocation(id_, name.c_str()), count, array);
     }
 
-    void GlShader::setValueArray(const std::string& name, size_t count, const glm::vec2* array) const
+    void GlShader::setValueArray(const std::string& name, size_t count,
+                                 const glm::vec2* array) const
     {
         glUniform2fv(glGetUniformLocation(id_, name.c_str()), count, &array->x);
     }
 
-    void GlShader::setValueArray(const std::string& name, size_t count, const glm::vec3* array) const
+    void GlShader::setValueArray(const std::string& name, size_t count,
+                                 const glm::vec3* array) const
     {
         glUniform3fv(glGetUniformLocation(id_, name.c_str()), count, &array->x);
     }

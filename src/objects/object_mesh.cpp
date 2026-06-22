@@ -1,8 +1,8 @@
 #include <ostream>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <GL/glew.h>
 #include <GL/gl.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -11,10 +11,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <memory>
-#include "resources/model_resource.hpp"
 
 #include "RaphEngine2/graphics/graphic_api.hpp"
 #include "objects/mesh.hpp"
+#include "resources/model_resource.hpp"
 #include "stb_image.h"
 
 namespace raphEngine::objects
@@ -206,16 +206,27 @@ namespace raphEngine::objects
     glm::mat4 AiMatToGlm(const aiMatrix4x4& from)
     {
         glm::mat4 to;
-        to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
-        to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
-        to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
-        to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+        to[0][0] = from.a1;
+        to[1][0] = from.a2;
+        to[2][0] = from.a3;
+        to[3][0] = from.a4;
+        to[0][1] = from.b1;
+        to[1][1] = from.b2;
+        to[2][1] = from.b3;
+        to[3][1] = from.b4;
+        to[0][2] = from.c1;
+        to[1][2] = from.c2;
+        to[2][2] = from.c3;
+        to[3][2] = from.c4;
+        to[0][3] = from.d1;
+        to[1][3] = from.d2;
+        to[2][3] = from.d3;
+        to[3][3] = from.d4;
         return to;
     }
 
-    static const glm::mat4 kYupToZup = glm::rotate(glm::mat4(1.0f),
-                                                glm::radians(-90.0f),
-                                                glm::vec3(-1.0f, 0.0f, 0.0f));
+    static const glm::mat4 kYupToZup = glm::rotate(
+        glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
 
     void processNode(ObjectMesh* object_mesh, aiNode* node,
                      const aiScene* scene, bool filter)
@@ -233,7 +244,8 @@ namespace raphEngine::objects
                 parent = parent->mParent;
             }
 
-            object_mesh->add_mesh(processMesh(mesh, scene, filter, kYupToZup * AiMatToGlm(globalTransform)));
+            object_mesh->add_mesh(processMesh(
+                mesh, scene, filter, kYupToZup * AiMatToGlm(globalTransform)));
         }
 
         for (unsigned int i = 0; i < node->mNumChildren; i++)
@@ -263,22 +275,24 @@ namespace raphEngine::objects
         processNode(object_mesh, scene->mRootNode, scene, filter);
     }
 
-    ObjectMesh::ObjectMesh(objects::GameObject* parent_object, const MeshInfo& info, graphics::Shader* shader)
+    ObjectMesh::ObjectMesh(objects::GameObject* parent_object,
+                           const MeshInfo& info, graphics::Shader* shader)
     {
         this->parent_object = parent_object;
         shader_ = shader;
-        
+
         std::cout << "loading new mesh for " << "\n";
         loadModel(this, info.mesh_path, info.bilinear);
     }
 
     void ObjectMesh::add_mesh(std::unique_ptr<Mesh> mesh)
     {
-        //auto* truc = dynamic_cast<resources::ModelResource*>(meshes_resource_);
-        //truc->meshes_.push_back(std::move(mesh));
+        // auto* truc =
+        // dynamic_cast<resources::ModelResource*>(meshes_resource_);
+        // truc->meshes_.push_back(std::move(mesh));
 
         mesh->set_shader(shader_);
-        
+
         mesh->parent_object = this->parent_object;
         std::cout << "Hellloooo 1\n";
         mesh->generate_mesh_buffers();

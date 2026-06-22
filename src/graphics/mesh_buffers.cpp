@@ -8,7 +8,8 @@
 
 namespace raphEngine::graphics
 {
-    std::unique_ptr<MeshBuffers> MeshBuffers::getMeshBuffer(raphEngine::objects::Mesh* mesh)
+    std::unique_ptr<MeshBuffers>
+    MeshBuffers::getMeshBuffer(raphEngine::objects::Mesh* mesh)
     {
         // TODO: select the correct API
         return std::make_unique<GLMeshBuffers>(mesh);

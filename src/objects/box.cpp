@@ -86,6 +86,7 @@ namespace raphEngine::objects
             if (lower_bounds_.z > v.position.z)
                 lower_bounds_.z = v.position.z;
         }
+
         calculate_vertexs_();
     }
 } // namespace raphEngine::objects

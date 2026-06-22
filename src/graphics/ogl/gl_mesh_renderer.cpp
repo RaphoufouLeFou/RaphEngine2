@@ -1,18 +1,19 @@
 #include "graphics/ogl/gl_mesh_renderer.hpp"
-#include "graphics/ogl/gl_mesh_buffers.hpp"
 
-#include <GL/glew.h>
 #include <GL/gl.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
 
-#include "objects/mesh.hpp"
-#include "graphics/mesh_renderer.hpp"
-#include "settings/graphics.hpp"
 #include "RaphEngine2/component/camera_component.hpp"
+#include "graphics/mesh_renderer.hpp"
+#include "graphics/ogl/gl_mesh_buffers.hpp"
+#include "graphics/ogl/gl_shader.hpp"
+#include "objects/mesh.hpp"
+#include "settings/graphics.hpp"
 
 namespace raphEngine::graphics
 {
@@ -20,14 +21,12 @@ namespace raphEngine::graphics
     const GlShader* GLMeshRenderer::current_active_shader_ = nullptr;
 
     GLMeshRenderer::GLMeshRenderer()
+    {}
+
+    void SetupShader(const GlShader* sh)
     {
-
-    }
-
-    void SetupShader(const GlShader * sh)
-    {
-
-        component::CameraComponent* cam = component::CameraComponent::active_camera;
+        component::CameraComponent* cam =
+            component::CameraComponent::active_camera;
 
         sh->setValue("projection", cam->projection_matrix_);
         sh->setValue("view", cam->view_matrix_);
@@ -35,44 +34,50 @@ namespace raphEngine::graphics
         sh->setValue("lightPos", glm::vec3(0));
         sh->setValue("lightDir", glm::normalize(glm::vec3(1, 1, 1)));
 
-        sh->setValue("viewPos", cam->parent_object->get_transform().get_position());
+        sh->setValue("viewPos",
+                     cam->parent_object->get_transform().get_position());
         sh->setValue("farPlane", cam->farPlane);
 
         // sh->setValue("lightSpaceMatrix", lightSpaceMatrix);
         // sh->setInt("cascadeCount", shadowCascadeLevels.size());
-/*
-        for (size_t i = 0; i < shadowCascadeLevels.size(); i++)
-        {
-            sh->setFloat(("cascadePlaneDistances[" + std::to_string(i) + "]").c_str(), shadowCascadeLevels[i]);
-        }
+        /*
+                for (size_t i = 0; i < shadowCascadeLevels.size(); i++)
+                {
+                    sh->setFloat(("cascadePlaneDistances[" + std::to_string(i) +
+           "]").c_str(), shadowCascadeLevels[i]);
+                }
 
-        for(int i = 0; i < SAMPLE_SIZE; i++)
-        {
-            std::string name = "offsets[" + std::to_string(i) + "]";
-            glUniform2f(glGetUniformLocation(sh->ID, name.c_str()), offsets[i].x, offsets[i].y);
-        }
+                for(int i = 0; i < SAMPLE_SIZE; i++)
+                {
+                    std::string name = "offsets[" + std::to_string(i) + "]";
+                    glUniform2f(glGetUniformLocation(sh->ID, name.c_str()),
+           offsets[i].x, offsets[i].y);
+                }
 
-        //sh->setVec2Array("offsets", 64, offsets);
-*/
-        const char* names[] = { "texture_diffuse", "texture_normal", "texture_specular", "texture_height", "shadowMap" };
+                //sh->setVec2Array("offsets", 64, offsets);
+        */
+        const char* names[] = { "texture_diffuse", "texture_normal",
+                                "texture_specular", "texture_height",
+                                "shadowMap" };
         for (int i = 0; i < 5; i++)
         {
             sh->setValue(names[i], i);
         }
 
-/*
-        glActiveTexture(GL_TEXTURE4);
-        sh->setValue("shadowMap", 4);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, depthMap);
-*/
+        /*
+                glActiveTexture(GL_TEXTURE4);
+                sh->setValue("shadowMap", 4);
+                glBindTexture(GL_TEXTURE_2D_ARRAY, depthMap);
+        */
     }
-    
+
     void GLMeshRenderer::render(const raphEngine::objects::Mesh* mesh) const
     {
-        //std::cout << "rendering using openGL\n";
+        // std::cout << "rendering using openGL\n";
         if (!component::CameraComponent::active_camera)
         {
-            std::cerr << "Cant render a mesh with no active camera!" << std::endl;
+            std::cerr << "Cant render a mesh with no active camera!"
+                      << std::endl;
             return;
         }
 
@@ -84,14 +89,14 @@ namespace raphEngine::graphics
             return;
         }
 
-        if(mesh->get_vertices().size() == 0)
+        if (mesh->get_vertices().size() == 0)
         {
             std::cerr << "Cant render a mesh with no vertices!" << std::endl;
             return;
         }
 
         const GlShader* mesh_shader = dynamic_cast<const GlShader*>(s);
-        
+
         component::CameraComponent::active_camera->calculate_matrices();
 
         if (mesh_shader != current_active_shader_)
@@ -102,8 +107,12 @@ namespace raphEngine::graphics
 
         SetupShader(mesh_shader);
 
-        mesh_shader->setValue("model", mesh->model_matrix_ * mesh->parent_object->get_transform().get_model_matrix() /* * mesh->ModelMatrix*/);
-        
+        mesh_shader->setValue(
+            "model",
+            mesh->model_matrix_
+                * mesh->parent_object->get_transform()
+                      .get_model_matrix() /* * mesh->ModelMatrix*/);
+
         bool HaveTexture = false;
         bool HaveNormalMap = false;
         bool HaveSpecularMap = false;
@@ -111,31 +120,53 @@ namespace raphEngine::graphics
 
         for (size_t i = 0; i < mesh->get_textures().size(); i++)
         {
-            if (mesh->get_textures().at(i).type == objects::Texture::DIFFUSE) HaveTexture = true;
-            if (mesh->get_textures().at(i).type == objects::Texture::NORMAL) HaveNormalMap = true;
-            if (mesh->get_textures().at(i).type == objects::Texture::SPECULAR) HaveSpecularMap = true;
-            if (mesh->get_textures().at(i).type == objects::Texture::HEIGHT) HaveHeightMap = true;
-            
+            if (mesh->get_textures().at(i).type == objects::Texture::DIFFUSE)
+                HaveTexture = true;
+            if (mesh->get_textures().at(i).type == objects::Texture::NORMAL)
+                HaveNormalMap = true;
+            if (mesh->get_textures().at(i).type == objects::Texture::SPECULAR)
+                HaveSpecularMap = true;
+            if (mesh->get_textures().at(i).type == objects::Texture::HEIGHT)
+                HaveHeightMap = true;
+
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, mesh->get_textures().at(i).id);
-        }        
-        
+        }
+
         mesh_shader->setValue("HaveTexture", HaveTexture);
         mesh_shader->setValue("HaveNormalMap", HaveNormalMap);
         mesh_shader->setValue("HaveSpecularMap", HaveSpecularMap);
         mesh_shader->setValue("HaveHeightMap", HaveHeightMap);
 
-        const graphics::GLMeshBuffers* mesh_buffers = dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers());
+        const graphics::GLMeshBuffers* mesh_buffers =
+            dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers());
 
         glBindVertexArray(mesh_buffers->vao_);
 
-        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh->get_indices().size()), GL_UNSIGNED_INT, 0);
+        // glm::vec3 lower_bounds = glm::vec3(mesh->model_matrix_ *
+        // mesh->parent_object->get_transform().get_model_matrix() *
+        // glm::vec4(mesh->get_lower_bounds(), 1.0)); glm::vec3 higher_bounds =
+        // glm::vec3(mesh->model_matrix_ *
+        // mesh->parent_object->get_transform().get_model_matrix() *
+        // glm::vec4(mesh->get_higher_bounds(), 1.0));
+
+        /*
+        printf("rendering mesh withs mins of %.2f, %.2f, %.2f, and max of %.2f,
+        %.2f, %.2f\n", lower_bounds.x, lower_bounds.y, lower_bounds.z,
+            higher_bounds.x, higher_bounds.y, higher_bounds.z
+        );
+        */
+
+        glDrawElements(GL_TRIANGLES,
+                       static_cast<unsigned int>(mesh->get_indices().size()),
+                       GL_UNSIGNED_INT, 0);
     }
 
-    void GLMeshRenderer::render_shadows(const raphEngine::objects::Mesh* mesh) const
+    void
+    GLMeshRenderer::render_shadows(const raphEngine::objects::Mesh* mesh) const
     {
         // TODO: implement
-        (void) mesh;
+        (void)mesh;
     }
 
 } // namespace raphEngine::graphics

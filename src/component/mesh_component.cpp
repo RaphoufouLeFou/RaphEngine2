@@ -11,7 +11,6 @@
 
 namespace raphEngine::component
 {
-    
 
     MeshComponent::MeshComponent(
         std::initializer_list<objects::MeshInfo> meshes,
@@ -25,14 +24,15 @@ namespace raphEngine::component
         meshes_ = meshes;
     }
 
-    MeshComponent::MeshComponent(objects::MeshInfo mesh, std::shared_ptr<graphics::Shader> shader)
+    MeshComponent::MeshComponent(objects::MeshInfo mesh,
+                                 std::shared_ptr<graphics::Shader> shader)
     {
         if (!shader)
         {
             shader = graphics::Shader::loadShader();
         }
         shader_ = shader;
-        meshes_ = {mesh};
+        meshes_ = { mesh };
     }
 
     void MeshComponent::Start()

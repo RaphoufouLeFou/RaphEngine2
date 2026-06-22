@@ -1,1 +1,12 @@
-TODO
+Fix the normals
+Fix the settings
+Implement shadows
+Implement cascaded shadows
+Implement smooth shadows
+Add some skyboxes
+Integrate ImGUI
+Implement ray casting
+Add the UI
+Add a sound system
+Implement shader clouds
+Start the Editor

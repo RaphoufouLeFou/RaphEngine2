@@ -19,7 +19,6 @@ namespace raphEngine::graphics
 
     private:
         raphEngine::objects::Mesh* mesh_;
-  
     };
 
 } // namespace raphEngine::graphics

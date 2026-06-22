@@ -10,6 +10,7 @@ namespace raphEngine::objects
 {
     class RAPHENGINE_API Box : public Mesh
     {
+    public:
         void render() const override;
         void create_bounding_box(const Mesh& mesh);
 

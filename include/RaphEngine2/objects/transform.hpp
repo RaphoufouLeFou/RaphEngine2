@@ -8,7 +8,6 @@ namespace raphEngine::objects
     class RAPHENGINE_API Transform
     {
     public:
-
         Transform();
 
         glm::vec3& get_position();
@@ -21,7 +20,7 @@ namespace raphEngine::objects
         const glm::vec3& get_scale() const;
 
         const glm::mat4 get_model_matrix();
-        
+
         bool can_have_moved = true;
 
     private:
@@ -32,6 +31,5 @@ namespace raphEngine::objects
         glm::vec3 scale_;
 
         glm::mat4 model_matrix_;
-
     };
 } // namespace raphEngine::objects

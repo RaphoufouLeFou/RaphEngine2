@@ -1,6 +1,7 @@
+#include "objects/transform.hpp"
+
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
-#include "objects/transform.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <iostream>
@@ -57,7 +58,7 @@ namespace raphEngine::objects
         model = glm::scale(model, scale_);
         model_matrix_ = model;
     }
-    
+
     const glm::mat4 Transform::get_model_matrix()
     {
         if (can_have_moved)

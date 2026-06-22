@@ -6,11 +6,10 @@
 
 namespace raphEngine
 {
-    class RAPHENGINE_API Time 
+    class RAPHENGINE_API Time
     {
     public:
         static double GetTime();
         static double deltaTime;
-
     };
-}
+} // namespace raphEngine

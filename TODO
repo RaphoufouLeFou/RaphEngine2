@@ -1,9 +1,8 @@
-Fix the normals
-Fix the settings
 Implement shadows
 Implement cascaded shadows
 Implement smooth shadows
 Add some skyboxes
+Fix the settings
 Integrate ImGUI
 Implement ray casting
 Add the UI

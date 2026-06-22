@@ -1,7 +1,7 @@
 #include "graphics/ogl/gl_mesh_renderer.hpp"
 
-#include <GL/gl.h>
 #include <GL/glew.h>
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>

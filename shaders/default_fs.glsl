@@ -116,10 +116,11 @@ void main()
     
     vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.FragPos);
     
-    if (HaveNormalMap)
+    if (HaveNormalMap )
 	{
         normal = texture(texture_normal, fs_in.TexCoords).rgb;
-        normal = normalize(fs_in.TBN * (normal * 2.0 - 1.0)); 
+        normal = normalize(transpose(fs_in.TBN) * (normal * 2.0 - 1.0));
+
 	}
     
 
@@ -150,9 +151,13 @@ void main()
     vec3 specular = vec3(spec);
 
     // calculate shadow
-    float shadow = ShadowCalculation(fs_in.FragPos, normal);
+    float shadow = 0;//ShadowCalculation(fs_in.FragPos, normal);
     vec3 lighting = (ambient + vec3(1 - shadow) * (diffuse + specular)) * color;
-
+/*
+    if (normal.x < 0) normal.x = -normal.x;
+    if (normal.y < 0) normal.y = -normal.y;
+    if (normal.z < 0) normal.z = -normal.z;
+*/
     FragColor = vec4(lighting, 1.0);
 
 }

@@ -1,7 +1,7 @@
 #include "graphics/ogl/opengl.hpp"
 
-#include <GL/gl.h>
 #include <GL/glew.h>
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>

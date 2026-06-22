@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::objects
 {
@@ -10,7 +11,7 @@ namespace raphEngine::objects
 
     void GameObject::greed()
     {
-        std::cout << "Hello, my name is \"" << name_ << "\"\n";
+        Logger::LogInfo("Hello, my name is \"", name_, "\"");  
     }
 
     GameObject::GameObject(const std::string& name)

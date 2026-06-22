@@ -9,6 +9,8 @@
 
 #include "graphics/mesh_buffers.hpp"
 #include "objects/mesh.hpp"
+#include <RaphEngine2/logger/logger.hpp>
+
 
 namespace raphEngine::graphics
 {
@@ -21,7 +23,7 @@ namespace raphEngine::graphics
 
     void GLMeshBuffers::GenerateBuffers()
     {
-        std::cout << "Generating buffers\n";
+        // Logger::LogDebug("Generating buffers");
         glGenVertexArrays(1, &vao_);
         glGenBuffers(1, &vbo_);
         glGenBuffers(1, &ebo_);
@@ -58,8 +60,6 @@ namespace raphEngine::graphics
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(objects::Vertex),
                               (void*)offsetof(objects::Vertex, bitangent));
 
-        std::cout << "vao is at : " << vao_ << " with a total of indicies at :"
-                  << mesh_->get_indices().size() << "\n";
     }
 
 } // namespace raphEngine::graphics

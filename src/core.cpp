@@ -7,16 +7,19 @@
 #include "objects/game_object.hpp"
 #include "settings/graphics.hpp"
 #include "settings/save_settings.hpp"
+#include "logger/logger.hpp"
 
 namespace raphEngine
 {
-
     graphics::ogl::OpenGL renderer{};
 
     void Core::Init(const std::string& title)
     {
+        
+        Logger::ConfigureLogger("log.txt");
         (void)title;
-        std::cout << "Hello world from RaphEngine2!" << std::endl;
+
+        Logger::LogDebug("Hello world from RaphEngine2!");
 
         /*
         std::vector<std::unique_ptr<settings::SavableSetting>> sett =
@@ -27,18 +30,16 @@ namespace raphEngine
         for (auto& s : sett)
         {
             test.push_back(s.get());
-            std::cout << "test\n";
         }
 
         settings::SettingsSaver::save_settings(test, "test.json");
 */
-        // std::cout << "Heree" << std::endl;
         renderer.Init(settings::Graphics(), "test");
     }
 
     void Core::Run()
     {
-        std::cout << "running now from RaphEngine2!" << std::endl;
+        Logger::LogDebug("running now from RaphEngine2!");
 
         execute_starts();
 
@@ -56,8 +57,8 @@ namespace raphEngine
             }
             Time::deltaTime = (Time::GetTime() - start) / 1000.0;
         }
-
-        std::cout << "exiting now!" << std::endl;
+        
+        Logger::LogDebug("exiting now!");
     }
 
     void Core::execute_starts()

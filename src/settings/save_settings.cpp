@@ -10,6 +10,7 @@
 
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
+#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::settings
 {
@@ -20,8 +21,8 @@ namespace raphEngine::settings
         if (!ofs.is_open())
             throw std::invalid_argument(std::string("can't open file \"")
                                         + path.string() + "\"");
-        std::cout << "saving " << settings.size() << " setting(s) to " << path
-                  << "\n";
+
+        Logger::LogDebug("saving ", settings.size(), " setting(s) to ", path);
         nlohmann::json arr = nlohmann::json::array();
         for (auto& setting : settings)
         {
@@ -46,8 +47,7 @@ namespace raphEngine::settings
 
         if (!ifs.is_open() || true)
         {
-            std::cout << "No settings file found, loading default settings!"
-                      << std::endl;
+            Logger::LogWarning("No settings file found, loading default settings!");
             return load_default();
         }
 

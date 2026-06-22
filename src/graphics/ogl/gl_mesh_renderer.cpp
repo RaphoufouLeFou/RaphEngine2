@@ -15,6 +15,7 @@
 #include "graphics/shader.hpp"
 #include "objects/mesh.hpp"
 #include "settings/graphics.hpp"
+#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::graphics
 {
@@ -73,11 +74,9 @@ namespace raphEngine::graphics
 
     void GLMeshRenderer::render(const raphEngine::objects::Mesh* mesh) const
     {
-        // std::cout << "rendering using openGL\n";
         if (!component::CameraComponent::active_camera)
         {
-            std::cerr << "Cant render a mesh with no active camera!"
-                      << std::endl;
+            Logger::LogError("Cant render a mesh with no active camera!");
             return;
         }
 
@@ -85,13 +84,13 @@ namespace raphEngine::graphics
 
         if (!s)
         {
-            std::cerr << "Cant render a mesh with no shader!" << std::endl;
+            Logger::LogError("Cant render a mesh with no shader!");
             return;
         }
 
         if (mesh->get_vertices().size() == 0)
         {
-            std::cerr << "Cant render a mesh with no vertices!" << std::endl;
+            Logger::LogError("Cant render a mesh with no vertices!");
             return;
         }
 

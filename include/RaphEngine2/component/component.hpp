@@ -20,9 +20,7 @@ namespace raphEngine::component
         virtual void Start()
         {}
         virtual void Update()
-        {
-            std::cout << "here from default component sadly\n";
-        }
+        {}
 
         virtual const std::string get_name() const
         {

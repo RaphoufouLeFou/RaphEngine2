@@ -6,13 +6,13 @@
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>
 #include <iostream>
+#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::graphics::ogl
 {
 
     void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     {
-        // make sure the viewport matches the new window dimensions
         (void)window;
         glViewport(0, 0, width, height);
         graphics::GraphicApi::res_x = width;
@@ -37,7 +37,7 @@ namespace raphEngine::graphics::ogl
     {
         if (!glfwInit())
         {
-            std::cerr << "Failed to initialize GLFW" << std::endl;
+            Logger::LogError("Failed to initialize GLFW");
             exit(EXIT_FAILURE);
         }
 
@@ -50,8 +50,7 @@ namespace raphEngine::graphics::ogl
         res_x = ResX;
         res_y = ResY;
 
-        std::cout << "starting with a resolution of " << ResX << 'x' << ResY
-                  << std::endl;
+        Logger::LogDebug("starting with a resolution of ", ResX, 'x', ResY);
 
         window = glfwCreateWindow(
             ResX, ResY, window_name.c_str(),
@@ -59,48 +58,38 @@ namespace raphEngine::graphics::ogl
 
         if (!window)
         {
-            std::cerr << "Failed to create window (skill issue)" << std::endl;
-            // display the error message
+            Logger::LogError("Failed to create window (skill issue)");
             const char* description;
             int code = glfwGetError(&description);
-            std::cerr << "Error code: " << code
-                      << ", description: " << description << std::endl;
+
+            Logger::LogError("Error code: ", code, ", description: ", description);
             glfwTerminate();
             exit(EXIT_FAILURE);
         }
 
         // glfwGetWindowSize(window, &ResX, &ResY);
-        glfwMakeContextCurrent(window); // Initialize GLEW
+        glfwMakeContextCurrent(window);
 
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
         glewExperimental = true; // Needed in core profile
         if (glewInit() != GLEW_OK)
         {
-            std::cerr << "Failed to initialize GLEW" << std::endl;
+            Logger::LogError("Failed to initialize GLEW");
             exit(EXIT_FAILURE);
             return;
         }
 
-        std::cout << "Here" << std::endl;
-
-        // Ensure we can capture the escape key being pressed below
         glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-        // Hide the mouse and enable unlimited movement
         // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        // Set the mouse at the center of the screen
         glfwPollEvents();
         // glfwSetCursorPos(window, ResX / 2, ResY / 2);
 
-        // Dark blue background
         glClearColor(0.36f, 0.74f, 0.89f, 0.0f);
 
-        // Enable depth test
         glEnable(GL_DEPTH_TEST);
-        // Accept fragment if it is closer to the camera than the former one
         glDepthFunc(GL_LESS);
-        // Cull triangles which normal is not towards the camera
         glEnable(GL_CULL_FACE);
 
         glEnable(GL_TEXTURE_2D);

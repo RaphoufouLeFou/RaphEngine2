@@ -10,10 +10,10 @@ Add vegetation
 Add smooth lod transitions
 Fix the settings
 Integrate ImGUI
-Add a logger
 Implement ray casting
 Add the UI
 Add a sound system
 Implement shader clouds
 Errors handling
 Start coding the Editor
+Add a guizmo

@@ -15,6 +15,7 @@
 
 #include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
+#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::component
 {
@@ -30,7 +31,7 @@ namespace raphEngine::component
         fov = 60;
         nearPlane = .1f;
         farPlane = 5000.0f;
-        std::cout << "creating camera\n";
+        Logger::LogDebug("creating camera");
         if (!active_camera)
         {
             set_as_active_camera();

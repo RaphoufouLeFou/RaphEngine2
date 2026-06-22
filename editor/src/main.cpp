@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <RaphEngine2/RaphEngine2.hpp>
+#include <RaphEngine2/logger/logger.hpp>
 
 int main()
 {
@@ -13,10 +14,10 @@ int main()
     };
     go.add_component(std::make_unique<raphEngine::component::MeshComponent>(infos, nullptr));
     */
-   
+
     go.greed();
     
-    std::cout << "Engine build" << std::endl;
+    raphEngine::Logger::LogDebug("Engine build");
     raphEngine::Core::Run();
     return 0;
 }

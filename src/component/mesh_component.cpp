@@ -22,7 +22,7 @@ namespace raphEngine::component
         }
         shader_ = shader;
         meshes_ = meshes;
-        std::cout << "initializing mesh with " << meshes.size() << " lods\n";
+        Logger::LogDebug("initializing mesh with ", meshes.size(), " lods");
     }
 
     MeshComponent::MeshComponent(objects::MeshInfo mesh,

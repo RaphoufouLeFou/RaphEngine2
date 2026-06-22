@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <memory>
+#include <RaphEngine2/logger/logger.hpp>
 
 #include "RaphEngine2/graphics/graphic_api.hpp"
 #include "objects/mesh.hpp"
@@ -72,14 +73,12 @@ namespace raphEngine::objects
 
             glGenerateMipmap(GL_TEXTURE_2D);
 
-            std::cout << "Texture loaded at path: " << filename.c_str()
-                      << std::endl;
+            Logger::LogDebug("Texture loaded at path: ", filename.c_str());
             stbi_image_free(data);
         }
         else
         {
-            std::cout << "Texture failed to load at path: " << filename.c_str()
-                      << std::endl;
+            Logger::LogWarning("Texture failed to load at path: ", filename.c_str());
             stbi_image_free(data);
         }
 
@@ -267,8 +266,7 @@ namespace raphEngine::objects
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE
             || !scene->mRootNode)
         {
-            std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString()
-                      << std::endl;
+            Logger::LogError("assimp: ", importer.GetErrorString());
             return;
         }
         std::string directory = path.substr(0, path.find_last_of('/'));
@@ -282,7 +280,7 @@ namespace raphEngine::objects
         this->parent_object = parent_object;
         shader_ = shader;
 
-        std::cout << "loading new mesh for " << "\n";
+        Logger::LogDebug("loading new mesh for ", parent_object->get_name());
         loadModel(this, info.mesh_path, info.bilinear);
     }
 
@@ -295,9 +293,7 @@ namespace raphEngine::objects
         mesh->set_shader(shader_);
 
         mesh->parent_object = this->parent_object;
-        std::cout << "Hellloooo 1\n";
         mesh->generate_mesh_buffers();
-        std::cout << "Hellloooo 2\n";
         meshes_.push_back(std::move(mesh));
     }
 

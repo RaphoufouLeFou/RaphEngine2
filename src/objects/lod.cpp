@@ -41,8 +41,8 @@ namespace raphEngine::objects
             else
                 break;
         }
-        
-        // std::cout << "lod " << lod_index << " for a threshold of " << threshold << "\n";
+
+        // Logger::LogDebug("lod ", lod_index, " for a threshold of ", threshold);
         return get_lod(lod_index);
     }
 

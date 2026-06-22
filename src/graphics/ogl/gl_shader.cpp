@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "default_shaders.hpp"
+#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::graphics
 {
@@ -29,7 +30,7 @@ namespace raphEngine::graphics
     {
         unsigned int vertex, fragment;
 
-        std::cout << "compiling a shader OMG!\n";
+        Logger::LogDebug("compiling a shader");
 
         vertex = glCreateShader(GL_VERTEX_SHADER);
         const char* vertexCode = vShaderCode.c_str();
@@ -83,9 +84,7 @@ namespace raphEngine::graphics
             if (!success)
             {
                 glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type
-                          << "\n"
-                          << infoLog << std::endl;
+                Logger::LogError("shader compilation error of type", type, "\n", infoLog);          
             }
         }
         else
@@ -94,9 +93,7 @@ namespace raphEngine::graphics
             if (!success)
             {
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type
-                          << "\n"
-                          << infoLog << std::endl;
+                Logger::LogError("shader linking error of type", type, "\n", infoLog);
             }
         }
     }

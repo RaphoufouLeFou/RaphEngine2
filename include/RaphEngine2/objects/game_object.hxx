@@ -2,6 +2,7 @@
 
 #include "game_object.hpp"
 #include "RaphEngine2/component/component.hpp"
+#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::objects
 {
@@ -10,8 +11,7 @@ namespace raphEngine::objects
     void GameObject::add_component(Args&&... args)
     {
         std::unique_ptr<component::Component> c = std::make_unique<T>(args...);
-
-        std::cout << "adding " << c->get_name() << "\n";
+        Logger::LogDebug("adding ", c->get_name());
         c->parent_object = this;
         components_.push_back(std::move(c));
     }

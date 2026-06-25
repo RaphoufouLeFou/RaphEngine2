@@ -11,8 +11,7 @@ namespace raphEngine::graphics::ogl
     class RAPHENGINE_API OpenGL : public GraphicApi
     {
     public:
-        void Init(const settings::Graphics& graphics_settings,
-                  const std::string& window_name) override;
+        void Init(const std::string& window_name) override;
         void Render() override;
         bool Refresh() override;
 

@@ -1,30 +1,45 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
+#include <cassert>
+#include <functional>
 #include <memory>
-#include <nlohmann/json.hpp>
-#include <string>
-#include <type_traits>
-#include <vector>
+#include <typeindex>
+#include <unordered_map>
 
-#include "RaphEngine2/serializable.hpp"
-#include "save_settings.hpp"
+#include "ISettingsCategory.hpp"
 
-namespace raphEngine::settings
+namespace raphEngine
 {
-
     class RAPHENGINE_API Settings
     {
     public:
-        Settings(const std::string& setting_name)
-            : setting_name_{ setting_name }
-        {}
+        template <typename T, typename... Args>
+        static T& Register(Args&&... args);
 
-        const std::string& get_pretty_name() const;
+        template <typename T>
+        static T& Get();
 
-        virtual void add_to_json(nlohmann::json& parent_node) const = 0;
-        virtual void from_json(const nlohmann::json& parent_node) = 0;
+        template <typename T>
+        static bool IsRegistered();
 
-        const std::string setting_name_;
+        static bool Load(const std::string& path = "settings.json");
+        static bool Save(const std::string& path = "settings.json");
+        static void Reset();
+
+        using ChangeCallback = std::function<void()>;
+        static void OnChanged(ChangeCallback cb);
+        static void NotifyChanged();
+
+    private:
+        Settings() = delete;
+
+        static std::unordered_map<std::type_index,
+                                  std::shared_ptr<ISettingsCategory>>
+            s_byType;
+        static std::unordered_map<std::string, ISettingsCategory*> s_byKey;
+        static std::vector<ChangeCallback> s_callbacks;
     };
-} // namespace raphEngine::settings
+} // namespace raphEngine
+
+#include "settings.hxx"

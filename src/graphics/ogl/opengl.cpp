@@ -1,12 +1,12 @@
 #include "graphics/ogl/opengl.hpp"
 
-#include <GL/glew.h>
 #include <GL/gl.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
+#include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/renderable.hpp>
 #include <iostream>
-#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::graphics::ogl
 {
@@ -32,8 +32,7 @@ namespace raphEngine::graphics::ogl
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     }
 
-    void OpenGL::Init(const settings::Graphics& graphics_settings,
-                      const std::string& window_name)
+    void OpenGL::Init(const std::string& window_name)
     {
         if (!glfwInit())
         {
@@ -62,7 +61,8 @@ namespace raphEngine::graphics::ogl
             const char* description;
             int code = glfwGetError(&description);
 
-            Logger::LogError("Error code: ", code, ", description: ", description);
+            Logger::LogError("Error code: ", code,
+                             ", description: ", description);
             glfwTerminate();
             exit(EXIT_FAILURE);
         }

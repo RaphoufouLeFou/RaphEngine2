@@ -11,8 +11,7 @@ namespace raphEngine::graphics
     class RAPHENGINE_API GraphicApi
     {
     public:
-        virtual void Init(const settings::Graphics& graphics_settings,
-                          const std::string& window_name) = 0;
+        virtual void Init(const std::string& window_name) = 0;
         virtual void Render() = 0;
         static void AddToRenderPool(const Renderable* renderable);
         virtual bool Refresh() = 0;

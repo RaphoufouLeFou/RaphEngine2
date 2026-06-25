@@ -4,10 +4,10 @@
 
 #include "RaphEngine2/time_utils.hpp"
 #include "graphics/ogl/opengl.hpp"
+#include "logger/logger.hpp"
 #include "objects/game_object.hpp"
 #include "settings/graphics.hpp"
-#include "settings/save_settings.hpp"
-#include "logger/logger.hpp"
+#include "settings/settings.hpp"
 
 namespace raphEngine
 {
@@ -15,13 +15,11 @@ namespace raphEngine
 
     void Core::Init(const std::string& title)
     {
-        
         Logger::ConfigureLogger("log.txt");
         (void)title;
 
         Logger::LogDebug("Hello world from RaphEngine2!");
 
-        /*
         std::vector<std::unique_ptr<settings::SavableSetting>> sett =
             settings::SettingsSaver::load_settings("test.json");
 
@@ -33,8 +31,8 @@ namespace raphEngine
         }
 
         settings::SettingsSaver::save_settings(test, "test.json");
-*/
-        renderer.Init(settings::Graphics(), "test");
+
+        renderer.Init(settings::Graphics(), title);
     }
 
     void Core::Run()
@@ -57,7 +55,7 @@ namespace raphEngine
             }
             Time::deltaTime = (Time::GetTime() - start) / 1000.0;
         }
-        
+
         Logger::LogDebug("exiting now!");
     }
 

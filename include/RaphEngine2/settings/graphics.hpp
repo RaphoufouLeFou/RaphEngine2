@@ -1,82 +1,49 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
-#include <memory>
-#include <nlohmann/json.hpp>
 #include <string>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 
-#include "generic_settings.hpp"
-#include "save_settings.hpp"
-#include "settings.hpp"
+#include "ISettingsCategory.hpp"
 
-namespace raphEngine::settings
+namespace raphEngine
 {
-
-    class RAPHENGINE_API Graphics : public SavableSetting
+    class RAPHENGINE_API GraphicsSettings : public ISettingsCategory
     {
     public:
-        nlohmann::json serialize() const override;
-        bool deserialize(const nlohmann::json& input) override;
+        std::string api = "OpenGL";
+        bool fullscreen = false;
+        std::string resolution = "1920x1080";
+        std::string shadow = "High";
 
-        const std::string get_settings_name() const override
+        const std::string& GetKey() const override
         {
-            return "Graphics";
+            static const std::string key = "Graphics";
+            return key;
         }
 
-        enum class Api
+        nlohmann::json ToJson() const override
         {
+            return { { "Api", api },
+                     { "Fullscreen", fullscreen },
+                     { "Resolution", resolution },
+                     { "Shadow", shadow } };
+        }
 
-            OPENGL = 0,
-            VULAKAN,
-            DX11,
-        };
-
-        constexpr static std::array<std::string_view, 3> api_names = {
-            "openGL",
-            "Vulkan",
-            "DX11",
-        };
-
-        enum class Quality
+        void FromJson(const nlohmann::json& j) override
         {
-            HIGH,
-            MEDIUM,
-            LOW,
-        };
+            if (j.contains("Api"))
+                j.at("Api").get_to(api);
+            if (j.contains("Fullscreen"))
+                j.at("Fullscreen").get_to(fullscreen);
+            if (j.contains("Resolution"))
+                j.at("Resolution").get_to(resolution);
+            if (j.contains("Shadow"))
+                j.at("Shadow").get_to(shadow);
+        }
 
-        constexpr static std::array<std::string_view, 3> quality_names = {
-            "High",
-            "Medium",
-            "Low",
-        };
-
-        Api getApi() const;
-        Quality getShadowQuality() const;
-        bool getFullScreen() const;
-        std::pair<unsigned short, unsigned short> getResolution() const;
-
-        void setApi(Api new_api);
-        void setShadowQuality(Quality new_shadow);
-        void setFullSceen(bool new_fullscreen);
-        void setResolution(unsigned short new_x, unsigned short new_y);
-
-    private:
-        EnumSetting<Api, 3> api_ = EnumSetting<Api, 3>("Api", api_names);
-        EnumSetting<Quality, 3> shadow_ =
-            EnumSetting<Quality, 3>("Shadow", quality_names);
-        BooleanSetting fullscreen_ = BooleanSetting("Fullscreen", false);
-        StringSetting resolution_ = StringSetting("Resolution", "1920x1080");
-
-        std::vector<Settings*> graphics_settings = {
-            &api_,
-            &shadow_,
-            &fullscreen_,
-            &resolution_,
-        };
-
-        static bool registered;
+        void Reset() override
+        {
+            *this = GraphicsSettings{};
+        }
     };
-} // namespace raphEngine::settings
+} // namespace raphEngine

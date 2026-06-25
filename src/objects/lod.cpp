@@ -16,9 +16,9 @@ namespace raphEngine::objects
 
     float getManhattanDistance(const glm::vec3& c1, const glm::vec3& c2)
     {
-        float dx = abs(c2.x - c1.x);
-        float dy = abs(c2.y - c1.y);
-        float dz = abs(c2.z - c1.z);
+        float dx = std::abs(c2.x - c1.x);
+        float dy = std::abs(c2.y - c1.y);
+        float dz = std::abs(c2.z - c1.z);
         return dx*dy*dz;
     }
 

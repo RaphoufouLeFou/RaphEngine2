@@ -1,18 +1,19 @@
 Implement shadows
-Implement cascaded shadows
+Add the UI (RmlUI)
 Implement smooth shadows
+Implement cascaded shadows
 Add instancing
 Swap the shader from var to filename
 Implement the ressource system
+Integrate ImGUI
 Add some skyboxes
 Handle big terrains
 Add vegetation
-Add smooth lod transitions
 Fix the settings
-Integrate ImGUI
+Add smooth lod transitions
 Implement ray casting
-Add the UI
 Add a sound system
+Add animations
 Implement shader clouds
 Errors handling
 Start coding the Editor

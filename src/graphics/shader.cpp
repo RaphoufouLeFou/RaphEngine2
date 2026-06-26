@@ -29,7 +29,7 @@ namespace raphEngine::graphics
         if (Settings::Get<GraphicsSettings>().api == "Vulkan")
         {
             Logger::LogError("Cannot create Vulkan shader",
-                             " (Not implemented) ", "Defaulting to OpenGl");
+                             " (Not implemented). ", "Defaulting to OpenGl");
             return GlShader::create_shader(vShaderCode, fShaderCode,
                                            gShaderCode);
             // TODO: for later
@@ -37,13 +37,13 @@ namespace raphEngine::graphics
         if (Settings::Get<GraphicsSettings>().api == "D3D11")
         {
             Logger::LogError("Cannot create DirectX 11 shader",
-                             " (Not implemented) ", "Defaulting to OpenGl");
+                             " (Not implemented). ", "Defaulting to OpenGl");
             return GlShader::create_shader(vShaderCode, fShaderCode,
                                            gShaderCode);
             // TODO: for later
         }
 
-        Logger::LogError("Cannot create shader for an unknown grpahics API",
+        Logger::LogError("Cannot create shader for an unknown grpahics API.",
                          " Defaulting to OpenGl");
 
         return GlShader::create_shader(vShaderCode, fShaderCode, gShaderCode);

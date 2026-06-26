@@ -15,7 +15,7 @@ namespace raphEngine
 
     void Core::Init(const std::string& title)
     {
-        Logger::ConfigureLogger("log.txt", Logger::INFO);
+        Logger::ConfigureLogger("log.txt", Logger::DEBUG);
         Logger::LogDebug("Hello world from RaphEngine2!");
 
         Settings::Register<GraphicsSettings>();

@@ -11,12 +11,20 @@ namespace raphEngine::objects
 
     void GameObject::greed()
     {
-        Logger::LogInfo("Hello, my name is \"", name_, "\"");  
+        Logger::LogInfo("Hello, my name is \"", name_, "\"");
     }
 
     GameObject::GameObject(const std::string& name)
     {
         name_ = name;
+        transform_ = Transform();
+        spawned_game_objects_.push_back(this);
+    }
+
+    GameObject::GameObject()
+    {
+        name_ =
+            "New GameObject " + std::to_string(spawned_game_objects_.size());
         transform_ = Transform();
         spawned_game_objects_.push_back(this);
     }

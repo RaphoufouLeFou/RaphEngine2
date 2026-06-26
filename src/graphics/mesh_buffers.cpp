@@ -21,19 +21,19 @@ namespace raphEngine::graphics
         if (Settings::Get<GraphicsSettings>().api == "Vulkan")
         {
             Logger::LogError("Cannot get mesh buffer from Vulkan",
-                             " (Not implemented) ", "Defaulting to OpenGl");
+                             " (Not implemented). ", "Defaulting to OpenGl");
             return std::make_unique<GLMeshBuffers>(mesh);
             // TODO: for later
         }
         if (Settings::Get<GraphicsSettings>().api == "D3D11")
         {
             Logger::LogError("Cannot get mesh buffer from DirectX 11",
-                             " (Not implemented) ", "Defaulting to OpenGl");
+                             " (Not implemented). ", "Defaulting to OpenGl");
             return std::make_unique<GLMeshBuffers>(mesh);
             // TODO: for later
         }
 
-        Logger::LogError("Cannot get mesh buffer from an unknown grpahics API",
+        Logger::LogError("Cannot get mesh buffer from an unknown grpahics API.",
                          " Defaulting to OpenGl");
 
         return std::make_unique<GLMeshBuffers>(mesh);

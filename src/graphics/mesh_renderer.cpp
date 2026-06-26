@@ -21,24 +21,29 @@ namespace raphEngine::graphics
             if (Settings::Get<GraphicsSettings>().api == "OpenGL")
             {
                 instance_ = std::make_unique<GLMeshRenderer>();
+                return instance_.get();
             }
             if (Settings::Get<GraphicsSettings>().api == "Vulkan")
             {
                 Logger::LogError("Cannot get mesh renderer from Vulkan",
-                                 " (Not implemented) ", "Defaulting to OpenGl");
+                                 " (Not implemented). ",
+                                 "Defaulting to OpenGl");
                 instance_ = std::make_unique<GLMeshRenderer>();
+                return instance_.get();
                 // TODO: for later
             }
             if (Settings::Get<GraphicsSettings>().api == "D3D11")
             {
                 Logger::LogError("Cannot get mesh renderer from DirectX 11",
-                                 " (Not implemented) ", "Defaulting to OpenGl");
+                                 " (Not implemented). ",
+                                 "Defaulting to OpenGl");
                 instance_ = std::make_unique<GLMeshRenderer>();
+                return instance_.get();
                 // TODO: for later
             }
 
             Logger::LogError(
-                "Cannot get mesh renderer from an unknown grpahics API",
+                "Cannot get mesh renderer from an unknown grpahics API.",
                 " Defaulting to OpenGl");
 
             instance_ = std::make_unique<GLMeshRenderer>();

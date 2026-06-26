@@ -18,17 +18,16 @@ namespace raphEngine::component
 namespace raphEngine::objects
 {
 
-    template<class T>
-    concept Comp = requires(T a)
-    {
+    template <class T>
+    concept Comp = requires(T a) {
         { a } -> std::convertible_to<component::Component>;
     };
-
 
     class RAPHENGINE_API GameObject
     {
     public:
-        GameObject(const std::string& name = "New GameObject");
+        GameObject();
+        GameObject(const std::string& name);
         GameObject(GameObject& other);
         ~GameObject() = default;
 

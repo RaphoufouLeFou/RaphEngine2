@@ -15,35 +15,14 @@ namespace raphEngine
         std::string resolution = "1920x1080";
         std::string shadow = "High";
 
-        const std::string& GetKey() const override
-        {
-            static const std::string key = "Graphics";
-            return key;
-        }
+        const std::string& GetKey() const override;
 
-        nlohmann::json ToJson() const override
-        {
-            return { { "Api", api },
-                     { "Fullscreen", fullscreen },
-                     { "Resolution", resolution },
-                     { "Shadow", shadow } };
-        }
+        nlohmann::json ToJson() const override;
 
-        void FromJson(const nlohmann::json& j) override
-        {
-            if (j.contains("Api"))
-                j.at("Api").get_to(api);
-            if (j.contains("Fullscreen"))
-                j.at("Fullscreen").get_to(fullscreen);
-            if (j.contains("Resolution"))
-                j.at("Resolution").get_to(resolution);
-            if (j.contains("Shadow"))
-                j.at("Shadow").get_to(shadow);
-        }
+        void FromJson(const nlohmann::json& j) override;
+        void Reset() override;
 
-        void Reset() override
-        {
-            *this = GraphicsSettings{};
-        }
+        std::pair<unsigned short, unsigned short> getResolution();
+        void setResolution(unsigned short new_x, unsigned short new_y);
     };
 } // namespace raphEngine

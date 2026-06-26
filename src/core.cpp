@@ -15,24 +15,13 @@ namespace raphEngine
 
     void Core::Init(const std::string& title)
     {
-        Logger::ConfigureLogger("log.txt");
-        (void)title;
-
+        Logger::ConfigureLogger("log.txt", Logger::INFO);
         Logger::LogDebug("Hello world from RaphEngine2!");
 
-        std::vector<std::unique_ptr<settings::SavableSetting>> sett =
-            settings::SettingsSaver::load_settings("test.json");
+        Settings::Register<GraphicsSettings>();
+        Settings::Load("settings.json");
 
-        std::vector<settings::SavableSetting*> test;
-
-        for (auto& s : sett)
-        {
-            test.push_back(s.get());
-        }
-
-        settings::SettingsSaver::save_settings(test, "test.json");
-
-        renderer.Init(settings::Graphics(), title);
+        renderer.Init(title);
     }
 
     void Core::Run()
@@ -56,6 +45,7 @@ namespace raphEngine
             Time::deltaTime = (Time::GetTime() - start) / 1000.0;
         }
 
+        Settings::Save("settings.json");
         Logger::LogDebug("exiting now!");
     }
 

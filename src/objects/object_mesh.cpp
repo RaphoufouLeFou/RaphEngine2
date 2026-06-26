@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
+#include <RaphEngine2/logger/logger.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -11,7 +12,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <memory>
-#include <RaphEngine2/logger/logger.hpp>
 
 #include "RaphEngine2/graphics/graphic_api.hpp"
 #include "objects/mesh.hpp"
@@ -78,7 +78,8 @@ namespace raphEngine::objects
         }
         else
         {
-            Logger::LogWarning("Texture failed to load at path: ", filename.c_str());
+            Logger::LogWarning("Texture failed to load at path: ",
+                               filename.c_str());
             stbi_image_free(data);
         }
 
@@ -103,7 +104,8 @@ namespace raphEngine::objects
             {
                 if (std::strcmp(ObjectMesh::textures_loaded_[j].path.data(),
                                 str.C_Str())
-                    == 0 && ObjectMesh::textures_loaded_[j].bilinear == filter)
+                        == 0
+                    && ObjectMesh::textures_loaded_[j].bilinear == filter)
                 {
                     textures.push_back(ObjectMesh::textures_loaded_[j]);
                     skip = true; // a texture with the same filepath has already

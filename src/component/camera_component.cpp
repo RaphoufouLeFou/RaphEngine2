@@ -9,13 +9,13 @@
 #include "graphics/graphic_api.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <RaphEngine2/logger/logger.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 #include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
-#include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::component
 {

@@ -11,7 +11,7 @@
 
 namespace raphEngine
 {
-    template<Printable... Args>
+    template <Printable... Args>
     void Logger::Log(const std::string& type, const char* color, Args&&... args)
     {
         if (std_cout_)
@@ -37,28 +37,36 @@ namespace raphEngine
         }
     }
 
-    template<Printable... Args>
+    template <Printable... Args>
     void Logger::LogInfo(Args&&... args)
     {
-        Log("LOG  ", Color::White, args...);
-    }
-    
-    template<Printable... Args>
-    void Logger::LogDebug(Args&&... args)
-    {
-        Log("DEBUG", Color::Cyan, args...);
-    }
-    
-    template<Printable... Args>
-    void Logger::LogWarning(Args&&... args)
-    {
-        Log("WARN ", Color::Yellow, args...);
-    }
-    
-    template<Printable... Args>
-    void Logger::LogError(Args&&... args)
-    {
-        Log("ERROR", Color::Red, args...);
+        if (log_level_ < INFO)
+            return;
+        Log("LOG  ", Color::IntenseWhite, args...);
     }
 
-}
+    template <Printable... Args>
+    void Logger::LogDebug(Args&&... args)
+    {
+        if (log_level_ < DEBUG)
+            return;
+        Log("DEBUG", Color::IntenseBlue, args...);
+    }
+
+    template <Printable... Args>
+    void Logger::LogWarning(Args&&... args)
+    {
+        if (log_level_ < WARN)
+            return;
+        Log("WARN ", Color::IntenseYellow, args...);
+    }
+
+    template <Printable... Args>
+    void Logger::LogError(Args&&... args)
+    {
+        if (log_level_ < ERROR)
+            return;
+        Log("ERROR", Color::IntenseRed, args...);
+    }
+
+} // namespace raphEngine

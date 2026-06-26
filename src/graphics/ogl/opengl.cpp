@@ -1,11 +1,12 @@
 #include "graphics/ogl/opengl.hpp"
 
-#include <GL/gl.h>
 #include <GL/glew.h>
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/renderable.hpp>
+#include <RaphEngine2/settings/settings.hpp>
 #include <iostream>
 
 namespace raphEngine::graphics::ogl
@@ -45,15 +46,16 @@ namespace raphEngine::graphics::ogl
 
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
-        auto [ResX, ResY] = graphics_settings.getResolution();
+        auto& gfx = Settings::Get<GraphicsSettings>();
+
+        auto [ResX, ResY] = gfx.getResolution();
         res_x = ResX;
         res_y = ResY;
 
         Logger::LogDebug("starting with a resolution of ", ResX, 'x', ResY);
 
-        window = glfwCreateWindow(
-            ResX, ResY, window_name.c_str(),
-            graphics_settings.getFullScreen() ? monitor : NULL, NULL);
+        window = glfwCreateWindow(ResX, ResY, window_name.c_str(),
+                                  gfx.fullscreen ? monitor : NULL, NULL);
 
         if (!window)
         {

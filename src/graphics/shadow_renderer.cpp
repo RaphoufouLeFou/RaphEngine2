@@ -21,7 +21,9 @@ namespace raphEngine::graphics
 
     // TODO: Change it to the light component
     glm::vec3 ShadowRenderer::lightDirGlobal =
-        glm::normalize(glm::vec3(-0, -0, -1));
+        glm::normalize(glm::vec3(1, 1, 1));
+
+    std::shared_ptr<Shader> ShadowRenderer::shadow_shader = nullptr;
 
     ShadowRenderer* ShadowRenderer::getInstance()
     {
@@ -112,7 +114,7 @@ namespace raphEngine::graphics
         }
         center /= corners.size();
 
-        const auto lightView = glm::lookAt(center, center + lightDirGlobal,
+        const auto lightView = glm::lookAt(center, center - lightDirGlobal,
                                            glm::vec3(0.0f, 0.0f, 1.0f));
 
         float minX = std::numeric_limits<float>::max();

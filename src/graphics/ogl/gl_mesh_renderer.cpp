@@ -10,6 +10,7 @@
 #include <iostream>
 #include <memory>
 
+#include "graphics/ogl/gl_shadow_renderer.hpp"
 #include "RaphEngine2/component/camera_component.hpp"
 #include "graphics/mesh_renderer.hpp"
 #include "graphics/ogl/gl_mesh_buffers.hpp"
@@ -46,38 +47,40 @@ namespace raphEngine::graphics
         sh->setValue("farPlane", cam->farPlane);
 
         // sh->setValue("lightSpaceMatrix", lightSpaceMatrix);
-        // sh->setInt("cascadeCount", shadowCascadeLevels.size());
-        /*
-                for (size_t i = 0; i < shadowCascadeLevels.size(); i++)
-                {
-                    sh->setFloat(("cascadePlaneDistances[" + std::to_string(i) +
-           "]").c_str(), shadowCascadeLevels[i]);
-                }
 
-                for(int i = 0; i < SAMPLE_SIZE; i++)
+        sh->setValue("cascadeCount",
+                     (int)ShadowRenderer::shadowCascadeLevels.size());
+
+        for (size_t i = 0; i < ShadowRenderer::shadowCascadeLevels.size(); i++)
+        {
+            sh->setValue(
+                ("cascadePlaneDistances[" + std::to_string(i) + "]").c_str(),
+                ShadowRenderer::shadowCascadeLevels[i]);
+        }
+        /*
+                for (int i = 0; i < SAMPLE_SIZE; i++)
                 {
                     std::string name = "offsets[" + std::to_string(i) + "]";
                     glUniform2f(glGetUniformLocation(sh->ID, name.c_str()),
-           offsets[i].x, offsets[i].y);
+                                offsets[i].x, offsets[i].y);
                 }
-
-                //sh->setVec2Array("offsets", 64, offsets);
+                sh->setVec2Array("offsets", 64, offsets);
         */
 
         // TODO: rework this, there for sure is a better way to to it
         const char* names[] = { "texture_diffuse", "texture_normal",
-                                "texture_specular", "texture_height",
-                                "shadowMap" };
-        for (int i = 0; i < 5; i++)
+                                "texture_specular", "texture_height" };
+        for (int i = 0; i < 4; i++)
         {
             sh->setValue(names[i], i);
         }
 
-        /*
-                glActiveTexture(GL_TEXTURE4);
-                sh->setValue("shadowMap", 4);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, depthMap);
-        */
+        glActiveTexture(GL_TEXTURE4);
+        sh->setValue("shadowMap", 4);
+        glBindTexture(
+            GL_TEXTURE_2D_ARRAY,
+            dynamic_cast<GLShadowRenderer*>(ShadowRenderer::getInstance())
+                ->depthMap);
     }
 
     void GLMeshRenderer::render(const raphEngine::objects::Mesh* mesh) const
@@ -102,6 +105,7 @@ namespace raphEngine::graphics
             return;
         }
 
+        // TODO: remove the dynamic cast
         const GlShader* mesh_shader = dynamic_cast<const GlShader*>(s);
 
         component::CameraComponent::active_camera->calculate_matrices();

@@ -101,23 +101,27 @@ namespace raphEngine::graphics::ogl
         glfwSwapInterval(0);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        GLShadowRenderer::generate_shadows_buffer();
     }
 
     void OpenGL::Render()
     {
+        GLShadowRenderer::prepare_shadows();
+
+        for (auto* object : render_pool)
+        {
+            object->render_shadow();
+        }
+
+        GLShadowRenderer::cleanup_shadows();
+
         glViewport(0, 0, res_x, res_y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         for (auto* object : render_pool)
         {
             object->render();
-        }
-
-        GLShadowRenderer::prepare_shadows();
-
-        for (auto* object : render_pool)
-        {
-            object->render_shadow();
         }
     }
 

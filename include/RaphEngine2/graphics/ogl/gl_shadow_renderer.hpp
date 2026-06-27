@@ -19,8 +19,8 @@ namespace raphEngine::graphics
 
         static void prepare_shadows();
         static void cleanup_shadows();
-
-    private:
         static void generate_shadows_buffer();
+
+        static unsigned int depthMap;
     };
 } // namespace raphEngine::graphics

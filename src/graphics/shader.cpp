@@ -17,6 +17,8 @@ namespace raphEngine::graphics
         // base class constructor - nothing to do
     }
 
+    // TODO: add a list of loaded shader for optimization.
+    // It needs to be done after the change to shaders in files.
     std::shared_ptr<Shader> Shader::loadShader(const std::string& vShaderCode,
                                                const std::string& fShaderCode,
                                                const std::string& gShaderCode)

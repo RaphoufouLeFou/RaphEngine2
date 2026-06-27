@@ -23,6 +23,8 @@ namespace raphEngine::graphics
         static ShadowRenderer* getInstance();
         static glm::vec3 lightDirGlobal;
 
+        static std::vector<float> shadowCascadeLevels;
+
     protected:
         static std::vector<glm::vec4>
         getFrustumCornersWorldSpace(const glm::mat4& projview);
@@ -36,7 +38,7 @@ namespace raphEngine::graphics
 
         static std::vector<glm::mat4> getLightSpaceMatrices();
 
-        static std::vector<float> shadowCascadeLevels;
+        static std::shared_ptr<Shader> shadow_shader;
 
     private:
         static std::unique_ptr<ShadowRenderer> instance_;

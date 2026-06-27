@@ -12,6 +12,7 @@ Integrate ImGUI
 Add some skyboxes
 Handle big terrains
 Add vegetation
+Add water planes
 Add smooth lod transitions
 Implement ray casting
 Add a sound system

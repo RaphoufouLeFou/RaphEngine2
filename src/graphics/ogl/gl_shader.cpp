@@ -84,7 +84,8 @@ namespace raphEngine::graphics
             if (!success)
             {
                 glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                Logger::LogError("shader compilation error of type", type, "\n", infoLog);          
+                Logger::LogError("shader compilation error of type ", type,
+                                 "\n", infoLog);
             }
         }
         else
@@ -93,7 +94,8 @@ namespace raphEngine::graphics
             if (!success)
             {
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                Logger::LogError("shader linking error of type", type, "\n", infoLog);
+                Logger::LogError("shader linking error of type ", type, "\n",
+                                 infoLog);
             }
         }
     }

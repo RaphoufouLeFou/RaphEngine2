@@ -55,7 +55,7 @@ namespace raphEngine::graphics
         {
             sh->setValue(
                 ("cascadePlaneDistances[" + std::to_string(i) + "]").c_str(),
-                ShadowRenderer::shadowCascadeLevels[i]);
+                cam->farPlane / ShadowRenderer::shadowCascadeLevels[i]);
         }
         /*
                 for (int i = 0; i < SAMPLE_SIZE; i++)

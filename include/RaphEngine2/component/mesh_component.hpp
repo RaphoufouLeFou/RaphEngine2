@@ -34,6 +34,9 @@ namespace raphEngine::component
 
         void Start() override;
         void Update() override;
+
+        bool cast_shadows;
+
         std::unique_ptr<objects::Lod> lods_;
 
     protected:

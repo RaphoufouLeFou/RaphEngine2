@@ -1,11 +1,11 @@
 Light component
 Static lights
-Implement shadows
+Fix the README
 window cross-platform
 Add the UI (RmlUI)
-Implement smooth shadows
-Implement cascaded shadows
+tweak shadows
 Add instancing
+Hide object not visibles
 Swap the shader from var to filename
 Implement the ressource system
 Integrate ImGUI

@@ -94,11 +94,11 @@ namespace raphEngine::graphics::ogl
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-        glEnable(GL_CULL_FACE);
+        // glEnable(GL_CULL_FACE);
 
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_LIGHTING);
-        glfwSwapInterval(0);
+        glfwSwapInterval(1);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -123,6 +123,8 @@ namespace raphEngine::graphics::ogl
         {
             object->render();
         }
+
+        GLShadowRenderer::debug_draw_lights();
     }
 
     bool OpenGL::Refresh()

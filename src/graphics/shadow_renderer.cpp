@@ -16,12 +16,11 @@ namespace raphEngine::graphics
 
     std::unique_ptr<ShadowRenderer> ShadowRenderer::instance_ = nullptr;
 
-    std::vector<float> ShadowRenderer::shadowCascadeLevels = { 500.0f, 100.0f,
-                                                               30.0f, 4.0f };
+    std::vector<float> ShadowRenderer::shadowCascadeLevels = { 125.0f, 33.3f,
+                                                               10.0f, 3.1f };
 
-    // TODO: Change it to the light component
     glm::vec3 ShadowRenderer::lightDirGlobal =
-        glm::normalize(glm::vec3(1, 1, 1));
+        glm::normalize(glm::vec3(1, 1, 0.1));
 
     std::shared_ptr<Shader> ShadowRenderer::shadow_shader = nullptr;
 
@@ -41,7 +40,6 @@ namespace raphEngine::graphics
                                  "Defaulting to OpenGl");
                 instance_ = std::make_unique<GLShadowRenderer>();
                 return instance_.get();
-                // TODO: for later
             }
             if (Settings::Get<GraphicsSettings>().api == "D3D11")
             {
@@ -50,11 +48,10 @@ namespace raphEngine::graphics
                                  "Defaulting to OpenGl");
                 instance_ = std::make_unique<GLShadowRenderer>();
                 return instance_.get();
-                // TODO: for later
             }
 
             Logger::LogError(
-                "Cannot get shadow renderer from an unknown grpahics API.",
+                "Cannot get shadow renderer from an unknown graphics API.",
                 " Defaulting to OpenGl");
 
             instance_ = std::make_unique<GLShadowRenderer>();
@@ -70,9 +67,7 @@ namespace raphEngine::graphics
 
         std::vector<glm::vec4> frustumCorners;
         for (unsigned int x = 0; x < 2; ++x)
-        {
             for (unsigned int y = 0; y < 2; ++y)
-            {
                 for (unsigned int z = 0; z < 2; ++z)
                 {
                     const glm::vec4 pt = inv
@@ -80,8 +75,6 @@ namespace raphEngine::graphics
                                     2.0f * z - 1.0f, 1.0f);
                     frustumCorners.push_back(pt / pt.w);
                 }
-            }
-        }
 
         return frustumCorners;
     }
@@ -107,51 +100,51 @@ namespace raphEngine::graphics
         const auto corners =
             getFrustumCornersWorldSpace(Proj, cam->view_matrix_);
 
-        glm::vec3 center = glm::vec3(0, 0, 0);
+        glm::vec3 center = glm::vec3(0.0f);
         for (const auto& v : corners)
         {
             center += glm::vec3(v);
         }
-        center /= corners.size();
+        center /= (float)corners.size();
 
-        const auto lightView = glm::lookAt(center, center - lightDirGlobal,
-                                           glm::vec3(0.0f, 0.0f, 1.0f));
-
-        float minX = std::numeric_limits<float>::max();
-        float maxX = std::numeric_limits<float>::lowest();
-        float minY = std::numeric_limits<float>::max();
-        float maxY = std::numeric_limits<float>::lowest();
-        float minZ = std::numeric_limits<float>::max();
-        float maxZ = std::numeric_limits<float>::lowest();
+        float radius = 0.0f;
         for (const auto& v : corners)
         {
-            const auto trf = lightView * v;
-            minX = std::min(minX, trf.x);
-            maxX = std::max(maxX, trf.x);
-            minY = std::min(minY, trf.y);
-            maxY = std::max(maxY, trf.y);
-            minZ = std::min(minZ, trf.z);
-            maxZ = std::max(maxZ, trf.z);
+            float distance = glm::length(glm::vec3(v) - center);
+            radius = std::max(radius, distance);
         }
 
-        // Tune this parameter according to the scene
-        constexpr float zMult = 10.0f;
-        if (minZ < 0)
-        {
-            minZ *= zMult;
-        }
-        else
-        {
-            minZ /= zMult;
-        }
-        if (maxZ < 0)
-        {
-            maxZ /= zMult;
-        }
-        else
-        {
-            maxZ *= zMult;
-        }
+        radius = std::ceil(radius * 16.0f) / 16.0f;
+
+        const float shadowMapRes =
+            (float)Settings::Get<GraphicsSettings>().getShadowResolution();
+        const float texelSize = (radius * 2.0f) / shadowMapRes;
+
+        glm::mat4 baseLightView = glm::lookAt(glm::vec3(0.0f), -lightDirGlobal,
+                                              glm::vec3(0.0f, 1.0f, 0.0f));
+
+        glm::vec3 centerLightSpace =
+            glm::vec3(baseLightView * glm::vec4(center, 1.0f));
+
+        centerLightSpace.x =
+            std::floor(centerLightSpace.x / texelSize) * texelSize;
+        centerLightSpace.y =
+            std::floor(centerLightSpace.y / texelSize) * texelSize;
+
+        center = glm::vec3(glm::inverse(baseLightView)
+                           * glm::vec4(centerLightSpace, 1.0f));
+
+        const auto lightView = glm::lookAt(center, center - lightDirGlobal,
+                                           glm::vec3(0.0f, 1.0f, 0.0f));
+
+        const float minX = -radius;
+        const float maxX = radius;
+        const float minY = -radius;
+        const float maxY = radius;
+
+        constexpr float CASTER_EXTENSION = 500.0f;
+        const float minZ = -radius - CASTER_EXTENSION;
+        const float maxZ = radius + CASTER_EXTENSION;
 
         const glm::mat4 lightProjection =
             glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);

@@ -277,10 +277,12 @@ namespace raphEngine::objects
     }
 
     ObjectMesh::ObjectMesh(objects::GameObject* parent_object,
-                           const MeshInfo& info, graphics::Shader* shader)
+                           const MeshInfo& info, graphics::Shader* shader,
+                           const bool* cast_shadow)
     {
         this->parent_object = parent_object;
         shader_ = shader;
+        cast_shadow_ = cast_shadow;
 
         Logger::LogDebug("loading new mesh for ", parent_object->get_name());
         loadModel(this, info.mesh_path, info.bilinear);
@@ -293,7 +295,7 @@ namespace raphEngine::objects
         // truc->meshes_.push_back(std::move(mesh));
 
         mesh->set_shader(shader_);
-
+        mesh->cast_shadows = cast_shadow_;
         mesh->parent_object = this->parent_object;
         mesh->generate_mesh_buffers();
         meshes_.push_back(std::move(mesh));

@@ -19,12 +19,13 @@ namespace raphEngine::objects
         float dx = std::abs(c2.x - c1.x);
         float dy = std::abs(c2.y - c1.y);
         float dz = std::abs(c2.z - c1.z);
-        return dx*dy*dz;
+        return dx * dy * dz;
     }
 
     const ObjectMesh* Lod::get_lod_at(const glm::vec3& object_pos) const
     {
-        component::CameraComponent* cam = component::CameraComponent::active_camera;
+        component::CameraComponent* cam =
+            component::CameraComponent::active_camera;
         const glm::vec3& campera_pos = cam->get_position();
         float far_plane_2 = cam->farPlane * cam->farPlane;
 
@@ -42,7 +43,8 @@ namespace raphEngine::objects
                 break;
         }
 
-        // Logger::LogDebug("lod ", lod_index, " for a threshold of ", threshold);
+        // Logger::LogDebug("lod ", lod_index, " for a threshold of ",
+        // threshold);
         return get_lod(lod_index);
     }
 
@@ -53,36 +55,35 @@ namespace raphEngine::objects
 
     Lod::Lod(objects::GameObject* parent_object,
              std::initializer_list<MeshInfo> meshes,
-             std::shared_ptr<graphics::Shader> shader)
+             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow)
     {
         lod_meshes_.reserve(meshes.size());
         for (const auto& info : meshes)
         {
             lod_meshes_.push_back(std::make_unique<ObjectMesh>(
-                parent_object, info, shader.get()));
+                parent_object, info, shader.get(), cast_shadow));
         }
         calculate_transitions_distances(meshes.size());
     }
 
     Lod::Lod(objects::GameObject* parent_object, std::vector<MeshInfo>& meshes,
-             std::shared_ptr<graphics::Shader> shader)
+             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow)
     {
         lod_meshes_.reserve(meshes.size());
-        
+
         for (const auto& info : meshes)
         {
             lod_meshes_.push_back(std::make_unique<ObjectMesh>(
-                parent_object, info, shader.get()));
+                parent_object, info, shader.get(), cast_shadow));
         }
         calculate_transitions_distances(meshes.size());
     }
 
     Lod::Lod(objects::GameObject* parent_object, MeshInfo mesh,
-             std::shared_ptr<graphics::Shader> shader)
+             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow)
     {
-        lod_meshes_.push_back(
-            std::make_unique<ObjectMesh>(parent_object, mesh, shader.get()));
-            
+        lod_meshes_.push_back(std::make_unique<ObjectMesh>(
+            parent_object, mesh, shader.get(), cast_shadow));
     }
 
     void Lod::calculate_transitions_distances(int lod_count, float exponent)

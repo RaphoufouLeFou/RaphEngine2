@@ -34,11 +34,13 @@ namespace raphEngine::component
         }
         shader_ = shader;
         meshes_ = { mesh };
+        cast_shadows = true;
     }
 
     void MeshComponent::Start()
     {
-        lods_ = std::make_unique<objects::Lod>(parent_object, meshes_, shader_);
+        lods_ = std::make_unique<objects::Lod>(parent_object, meshes_, shader_,
+                                               &cast_shadows);
     }
 
     void MeshComponent::Update()

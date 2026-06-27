@@ -30,7 +30,7 @@ namespace raphEngine::component
     {
         fov = 60;
         nearPlane = .1f;
-        farPlane = 5000.0f;
+        farPlane = 2500.0f;
         Logger::LogDebug("creating camera");
         if (!active_camera)
         {

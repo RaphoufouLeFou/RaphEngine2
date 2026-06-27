@@ -21,6 +21,12 @@ namespace raphEngine::graphics
         static void cleanup_shadows();
         static void generate_shadows_buffer();
 
+        static void debug_draw_lights();
+
         static unsigned int depthMap;
+
+    private:
+        static void drawCascadeVolumeVisualizers(
+            const std::vector<glm::mat4>& lightMatrices, Shader* shader);
     };
 } // namespace raphEngine::graphics

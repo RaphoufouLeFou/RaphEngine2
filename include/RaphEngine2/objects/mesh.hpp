@@ -81,6 +81,7 @@ namespace raphEngine::objects
 
         objects::GameObject* parent_object;
         glm::mat4 model_matrix_;
+        const bool* cast_shadows;
 
     protected:
         std::vector<Vertex> vertices_;
@@ -88,7 +89,6 @@ namespace raphEngine::objects
         std::vector<Texture> textures_;
 
         bool outline_;
-        bool cast_shadows_;
 
         std::unique_ptr<graphics::MeshBuffers> buffers_;
         graphics::Shader* shader_;

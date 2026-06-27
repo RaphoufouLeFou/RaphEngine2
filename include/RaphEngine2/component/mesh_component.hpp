@@ -18,9 +18,7 @@ namespace raphEngine::objects
 namespace raphEngine::component
 {
 
-    class RAPHENGINE_API MeshComponent
-        : public Component
-        , public Renderable
+    class RAPHENGINE_API MeshComponent : public Component
     {
     public:
         MeshComponent(std::initializer_list<objects::MeshInfo> mesh_lods,
@@ -43,6 +41,6 @@ namespace raphEngine::component
         std::vector<objects::MeshInfo> meshes_;
 
     private:
-        void render() const override;
+        void render() const;
     };
 } // namespace raphEngine::component

@@ -7,6 +7,8 @@
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/renderable.hpp>
 #include <RaphEngine2/settings/settings.hpp>
+#include <RaphEngine2/graphics/ogl/gl_mesh_renderer.hpp>
+#include <RaphEngine2/graphics/ogl/gl_shadow_renderer.hpp>
 #include <iostream>
 
 namespace raphEngine::graphics::ogl
@@ -109,6 +111,13 @@ namespace raphEngine::graphics::ogl
         for (auto* object : render_pool)
         {
             object->render();
+        }
+
+        GLShadowRenderer::prepare_shadows();
+
+        for (auto* object : render_pool)
+        {
+            object->render_shadow();
         }
     }
 

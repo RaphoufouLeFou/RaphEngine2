@@ -1,4 +1,7 @@
+Light component
+Static lights
 Implement shadows
+window cross-platform
 Add the UI (RmlUI)
 Implement smooth shadows
 Implement cascaded shadows
@@ -9,12 +12,12 @@ Integrate ImGUI
 Add some skyboxes
 Handle big terrains
 Add vegetation
-Fix the settings
 Add smooth lod transitions
 Implement ray casting
 Add a sound system
 Add animations
 Implement shader clouds
 Errors handling
+Add vulkan / D3D11
 Start coding the Editor
 Add a guizmo

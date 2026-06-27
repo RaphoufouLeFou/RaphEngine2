@@ -47,7 +47,8 @@ namespace raphEngine::component
     }
     void MeshComponent::render() const
     {
-        lods_->get_lod_at(parent_object->get_transform().get_position())->render();
+        lods_->get_lod_at(parent_object->get_transform().get_position())
+            ->render();
     }
 
 } // namespace raphEngine::component

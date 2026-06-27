@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <iostream>
 #include <memory>
 
@@ -12,13 +14,17 @@
 #include "graphics/mesh_renderer.hpp"
 #include "graphics/ogl/gl_mesh_buffers.hpp"
 #include "graphics/ogl/gl_shader.hpp"
+#include "graphics/graphic_api.hpp"
 #include "graphics/shader.hpp"
 #include "objects/mesh.hpp"
 #include "settings/graphics.hpp"
+#include <RaphEngine2/settings/settings.hpp>
 #include <RaphEngine2/logger/logger.hpp>
+#include <RaphEngine2/graphics/shadow_renderer.hpp>
 
 namespace raphEngine::graphics
 {
+
     const GlShader* GLMeshRenderer::current_active_shader_ = nullptr;
 
     GLMeshRenderer::GLMeshRenderer()
@@ -33,7 +39,7 @@ namespace raphEngine::graphics
         sh->setValue("view", cam->view_matrix_);
 
         sh->setValue("lightPos", glm::vec3(0));
-        sh->setValue("lightDir", glm::normalize(glm::vec3(1, 1, 1)));
+        sh->setValue("lightDir", ShadowRenderer::lightDirGlobal);
 
         sh->setValue("viewPos",
                      cam->parent_object->get_transform().get_position());
@@ -57,6 +63,8 @@ namespace raphEngine::graphics
 
                 //sh->setVec2Array("offsets", 64, offsets);
         */
+
+        // TODO: rework this, there for sure is a better way to to it
         const char* names[] = { "texture_diffuse", "texture_normal",
                                 "texture_specular", "texture_height",
                                 "shadowMap" };
@@ -160,19 +168,4 @@ namespace raphEngine::graphics
                        static_cast<unsigned int>(mesh->get_indices().size()),
                        GL_UNSIGNED_INT, 0);
     }
-
-    void
-    GLMeshRenderer::render_shadows(const Shader* shadow_shader, const raphEngine::objects::Mesh* mesh) const
-    {
-        // TODO: implement
-        
-        shadow_shader->setValue(
-            "model",
-            mesh->model_matrix_
-                * mesh->parent_object->get_transform()
-                      .get_model_matrix() /* * mesh->ModelMatrix*/);
-
-        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh->get_indices().size()), GL_UNSIGNED_INT, 0);
-    }
-
 } // namespace raphEngine::graphics

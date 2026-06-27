@@ -55,6 +55,7 @@ namespace raphEngine::objects
         virtual ~Mesh() = default;
 
         virtual void render() const override;
+        virtual void render_shadow() const override;
 
         const std::vector<Vertex>& get_vertices() const;
         std::vector<Vertex>& get_vertices();

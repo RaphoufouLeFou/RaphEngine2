@@ -1,6 +1,7 @@
 #include "objects/mesh.hpp"
 
 #include "graphics/mesh_renderer.hpp"
+#include "graphics/shadow_renderer.hpp"
 
 namespace raphEngine::objects
 {
@@ -70,6 +71,11 @@ namespace raphEngine::objects
     void Mesh::render() const
     {
         graphics::MeshRenderer::getInstance()->render(this);
+    }
+
+    void Mesh::render_shadow() const
+    {
+        graphics::ShadowRenderer::getInstance()->render_shadows(this);
     }
 
     glm::vec3 Mesh::get_lower_bounds() const

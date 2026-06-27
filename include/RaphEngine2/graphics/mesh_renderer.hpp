@@ -19,8 +19,6 @@ namespace raphEngine::graphics
     {
     public:
         virtual void render(const raphEngine::objects::Mesh* mesh) const = 0;
-        virtual void
-        render_shadows(const Shader* shadow_shader, const raphEngine::objects::Mesh* mesh) const = 0;
         static MeshRenderer* getInstance();
 
     private:

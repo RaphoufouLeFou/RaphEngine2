@@ -64,4 +64,19 @@ namespace raphEngine
         resolution = ss.str();
     }
 
+    int GraphicsSettings::getShadowResolution()
+    {
+        int res = 1024;
+        if (shadow == "High")
+            return res * 2;
+        if (shadow == "Mid")
+            return res;
+        if (shadow == "Low")
+            return res / 2;
+
+        Logger::LogWarning("Cannot resolve shadow quality: ", shadow);
+        shadow = "Mid";
+        return getShadowResolution();
+    }
+
 } // namespace raphEngine

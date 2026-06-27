@@ -24,5 +24,7 @@ namespace raphEngine
 
         std::pair<unsigned short, unsigned short> getResolution();
         void setResolution(unsigned short new_x, unsigned short new_y);
+
+        int getShadowResolution();
     };
 } // namespace raphEngine

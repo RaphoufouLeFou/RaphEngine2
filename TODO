@@ -4,6 +4,8 @@ Fix the README
 window cross-platform
 Add the UI (RmlUI)
 tweak shadows
+Shadows for spot lights
+Shadows for point lights
 Add instancing
 Hide object not visibles
 Swap the shader from var to filename

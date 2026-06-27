@@ -108,6 +108,34 @@ float GetCascadeLayer(float depthViewSpace)
     return float(cascadeCount);
 }
 
+float SampleShadow(vec3 fragPosWorldSpace, int layer)
+{
+    float shadow = 0;
+    vec4 fragPosLightSpace =
+        lightSpaceMatrices[layer] * vec4(fragPosWorldSpace, 1.0);
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float currentDepth = projCoords.z;
+    if (currentDepth > 1.0)
+        return 0.0;
+
+    // 3x3 Hardware PCF
+    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
+    for (int x = -1; x <= 1; x++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            shadow += texture(shadowMap,
+                              vec4(projCoords.xy + vec2(x, y) * texelSize,
+                                   layer, currentDepth));
+        }
+    }
+    shadow /= 9.0;
+
+    return shadow;
+}
+
 float ShadowCalculation(vec3 fragPosWorldSpace, vec3 worldNormal)
 {
     vec4 fragPosViewSpace = view * vec4(fragPosWorldSpace, 1.0);
@@ -118,45 +146,23 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 worldNormal)
     if (layer == -1)
         layer = cascadeCount;
 
-    float shadow = 0;
-
-    float blendRange = 0.1; // 10% of cascade size
-    float transition = 0.0;
+    float shadow = SampleShadow(fragPosWorldSpace, layer);
+    float blendRange = 0.15;
     if (layer < cascadeCount)
     {
         float distToEdge = cascadePlaneDistances[layer] - depthValue;
-        if (distToEdge < (cascadePlaneDistances[layer] * blendRange))
+        float fadeThreshold = cascadePlaneDistances[layer] * blendRange;
+
+        if (distToEdge < fadeThreshold)
         {
-            transition = 1.0
-                - (distToEdge / (cascadePlaneDistances[layer] * blendRange));
+            float transition = 1.0 - (distToEdge / fadeThreshold);
+            float shadowNext = SampleShadow(fragPosWorldSpace, layer + 1);
+            shadow = mix(shadow, shadowNext, transition);
         }
     }
 
-    vec4 fragPosLightSpace =
-        lightSpaceMatrices[layer] * vec4(fragPosWorldSpace, 1.0);
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5;
-
-    float currentDepth = projCoords.z;
-    if (currentDepth > 1.0)
-        return 0.0;
-
-    float bias = max(0.05 * (1.0 - dot(worldNormal, lightDir)), 0.01);
-    bias *= (layer < 2) ? 0.015 : 0.008;
-
-    // 3x3 Hardware PCF
-    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
-    for (int x = -1; x <= 1; x++)
-    {
-        for (int y = -1; y <= 1; y++)
-        {
-            shadow += texture(shadowMap,
-                              vec4(projCoords.xy + vec2(x, y) * texelSize,
-                                   layer, currentDepth - bias));
-        }
-    }
-    shadow /= 9.0;
-
+    // Since SampleShadow returns 1.0 for LIT and 0.0 for SHADOWED,
+    // we return (1.0 - shadow) so that 1.0 means "IN SHADOW"
     return 1.0 - shadow;
 }
 

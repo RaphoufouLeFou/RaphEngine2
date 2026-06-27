@@ -143,7 +143,7 @@ namespace raphEngine::graphics
         const float maxY = radius;
 
         constexpr float CASTER_EXTENSION = 500.0f;
-        const float minZ = -radius - CASTER_EXTENSION;
+        const float minZ = -radius - 2 * CASTER_EXTENSION;
         const float maxZ = radius + CASTER_EXTENSION;
 
         const glm::mat4 lightProjection =

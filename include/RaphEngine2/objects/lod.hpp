@@ -27,6 +27,8 @@ namespace raphEngine::objects
         const ObjectMesh* get_lod_at(const glm::vec3& object_pos) const;
 
         Lod(const Lod&) = delete;
+        Lod& operator=(const Lod&) = delete;
+
 
     private:
         std::vector<std::unique_ptr<ObjectMesh>> lod_meshes_;

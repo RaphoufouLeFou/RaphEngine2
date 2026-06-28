@@ -1,5 +1,6 @@
 #include "objects/transform.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

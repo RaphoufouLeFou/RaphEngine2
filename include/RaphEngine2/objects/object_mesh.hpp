@@ -25,6 +25,11 @@ namespace raphEngine::objects
         void render() const;
         std::vector<std::unique_ptr<objects::Mesh>> meshes_;
 
+        
+        ObjectMesh(const ObjectMesh&) = delete;
+        ObjectMesh& operator=(const ObjectMesh&) = delete;
+
+
     private:
         // TODO: replace the vec by the recource system
         // resources::Resource* meshes_resource_;

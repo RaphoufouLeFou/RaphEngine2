@@ -1,5 +1,6 @@
 #include <ostream>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #define STB_IMAGE_IMPLEMENTATION
 #include <GL/glew.h>
 #include <GL/gl.h>

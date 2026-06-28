@@ -12,6 +12,9 @@ namespace raphEngine::resources
     public:
         ModelResource(const std::string& path);
 
+        ModelResource(const ModelResource&) = delete;
+        ModelResource& operator=(const ModelResource&) = delete;
+
     public: // temporary
         std::vector<std::unique_ptr<objects::Mesh>> meshes_;
     };

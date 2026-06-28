@@ -1,5 +1,6 @@
 #include "graphics/ogl/gl_shader.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>

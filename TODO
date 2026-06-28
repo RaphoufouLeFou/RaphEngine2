@@ -16,6 +16,9 @@ Add vegetation
 Add water planes
 Add smooth lod transitions
 Implement ray casting
+Add a particle system
+Add bloom
+Add terrain painting
 Add a sound system
 Add animations
 Implement shader clouds

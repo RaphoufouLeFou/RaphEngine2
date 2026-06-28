@@ -16,7 +16,10 @@ namespace raphEngine
         return { { "Api", api },
                  { "Fullscreen", fullscreen },
                  { "Resolution", resolution },
-                 { "Shadow", shadow } };
+                 { "Shadow", shadow },
+                 { "vSync", vSync },
+                 { "AA", antiAlisaing }
+                 };
     }
 
     void GraphicsSettings::FromJson(const nlohmann::json& j)
@@ -29,6 +32,10 @@ namespace raphEngine
             j.at("Resolution").get_to(resolution);
         if (j.contains("Shadow"))
             j.at("Shadow").get_to(shadow);
+        if (j.contains("vSync"))
+            j.at("vSync").get_to(vSync);        
+        if (j.contains("AA"))
+            j.at("AA").get_to(antiAlisaing);
     }
 
     void GraphicsSettings::Reset()
@@ -66,7 +73,7 @@ namespace raphEngine
 
     int GraphicsSettings::getShadowResolution()
     {
-        int res = 1024;
+        int res = 2048;
         if (shadow == "High")
             return res * 2;
         if (shadow == "Mid")

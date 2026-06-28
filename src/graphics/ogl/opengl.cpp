@@ -1,5 +1,6 @@
 #include "graphics/ogl/opengl.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -59,6 +60,8 @@ namespace raphEngine::graphics::ogl
         window = glfwCreateWindow(ResX, ResY, window_name.c_str(),
                                   gfx.fullscreen ? monitor : NULL, NULL);
 
+                                  
+
         if (!window)
         {
             Logger::LogError("Failed to create window (skill issue)");
@@ -101,6 +104,8 @@ namespace raphEngine::graphics::ogl
         glfwSwapInterval(1);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
+        glViewport(0, 0, ResX, ResY);
 
         GLShadowRenderer::generate_shadows_buffer();
     }

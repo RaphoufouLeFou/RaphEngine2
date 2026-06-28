@@ -14,6 +14,8 @@ namespace raphEngine
         bool fullscreen = false;
         std::string resolution = "1920x1080";
         std::string shadow = "High";
+        bool vSync = true;
+        int antiAlisaing = 8;
 
         const std::string& GetKey() const override;
 

@@ -17,12 +17,18 @@ Add water planes
 Add smooth lod transitions
 Implement ray casting
 Add a particle system
+Add a scene manager
 Add bloom
 Add terrain painting
 Add a sound system
 Add animations
 Implement shader clouds
 Errors handling
+Function to get user folder
+God rays ?
 Add vulkan / D3D11
+Assets compressions
+Glass/Transparency
+Reflexions ?
 Start coding the Editor
 Add a guizmo

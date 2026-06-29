@@ -55,7 +55,6 @@ namespace raphEngine::graphics::ogl
         res_x = ResX;
         res_y = ResY;
 
-        Logger::LogDebug("starting with a resolution of ", ResX, 'x', ResY);
 
         window = glfwCreateWindow(ResX, ResY, window_name.c_str(),
                                   gfx.fullscreen ? monitor : NULL, NULL);
@@ -74,7 +73,14 @@ namespace raphEngine::graphics::ogl
             exit(EXIT_FAILURE);
         }
 
-        // glfwGetWindowSize(window, &ResX, &ResY);
+        int x, y;
+        glfwGetWindowSize(window, &x, &y);
+        res_x = x;
+        res_y = y;
+
+
+        Logger::LogDebug("starting with a resolution of ", res_x, 'x', res_y);
+
         glfwMakeContextCurrent(window);
 
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);

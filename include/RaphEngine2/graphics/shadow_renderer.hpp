@@ -6,6 +6,7 @@
 #include "RaphEngine2/export.hpp"
 #include "RaphEngine2/objects/mesh.hpp"
 #include "RaphEngine2/settings/graphics.hpp"
+#include "RaphEngine2/component/light_component.hpp"
 
 namespace raphEngine::objects
 {
@@ -21,7 +22,7 @@ namespace raphEngine::graphics
         virtual void
         render_shadows(const raphEngine::objects::Mesh* mesh) const = 0;
         static ShadowRenderer* getInstance();
-        static glm::vec3 lightDirGlobal;
+        static const component::LightComponent* GetDirectionalLight();
 
         static std::vector<float> shadowCascadeLevels;
 

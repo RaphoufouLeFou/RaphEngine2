@@ -9,7 +9,9 @@
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 #include "graphics/graphic_api.hpp"
+#include "RaphEngine2/component/light_component.hpp"
 #include "logger/logger.hpp"
+#include "utils.hpp"
 
 namespace raphEngine::graphics
 {
@@ -19,10 +21,20 @@ namespace raphEngine::graphics
     std::vector<float> ShadowRenderer::shadowCascadeLevels = { 125.0f, 33.3f,
                                                                10.0f, 3.1f };
 
-    glm::vec3 ShadowRenderer::lightDirGlobal =
-        glm::normalize(glm::vec3(1, 1, 0.1));
-
     std::shared_ptr<Shader> ShadowRenderer::shadow_shader = nullptr;
+
+    const component::LightComponent* ShadowRenderer::GetDirectionalLight()
+    {
+        for (const auto& light : GraphicApi::lights_pool)
+        {
+            if (light->type == component::LightComponent::DIRECTIONAL)
+                return light;
+        }
+
+        Logger::LogCritical("No directional light!");
+        throw std::runtime_error("No directional light!");
+        return nullptr;
+    }
 
     ShadowRenderer* ShadowRenderer::getInstance()
     {
@@ -120,8 +132,13 @@ namespace raphEngine::graphics
             (float)Settings::Get<GraphicsSettings>().getShadowResolution();
         const float texelSize = (radius * 2.0f) / shadowMapRes;
 
-        glm::mat4 baseLightView = glm::lookAt(glm::vec3(0.0f), -lightDirGlobal,
-                                              glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 baseLightView =
+            glm::lookAt(glm::vec3(0.0f),
+                        -Utils::GetDirectionFromRotation(
+                            GetDirectionalLight()
+                                ->parent_object->get_transform()
+                                .get_rotation()),
+                        glm::vec3(0.0f, 1.0f, 0.0f));
 
         glm::vec3 centerLightSpace =
             glm::vec3(baseLightView * glm::vec4(center, 1.0f));
@@ -134,8 +151,14 @@ namespace raphEngine::graphics
         center = glm::vec3(glm::inverse(baseLightView)
                            * glm::vec4(centerLightSpace, 1.0f));
 
-        const auto lightView = glm::lookAt(center, center - lightDirGlobal,
-                                           glm::vec3(0.0f, 1.0f, 0.0f));
+        const auto lightView =
+            glm::lookAt(center,
+                        center
+                            - Utils::GetDirectionFromRotation(
+                                GetDirectionalLight()
+                                    ->parent_object->get_transform()
+                                    .get_rotation()),
+                        glm::vec3(0.0f, 1.0f, 0.0f));
 
         const float minX = -radius;
         const float maxX = radius;

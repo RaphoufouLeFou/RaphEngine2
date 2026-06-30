@@ -55,11 +55,8 @@ namespace raphEngine::graphics::ogl
         res_x = ResX;
         res_y = ResY;
 
-
         window = glfwCreateWindow(ResX, ResY, window_name.c_str(),
                                   gfx.fullscreen ? monitor : NULL, NULL);
-
-                                  
 
         if (!window)
         {
@@ -77,7 +74,6 @@ namespace raphEngine::graphics::ogl
         glfwGetWindowSize(window, &x, &y);
         res_x = x;
         res_y = y;
-
 
         Logger::LogDebug("starting with a resolution of ", res_x, 'x', res_y);
 
@@ -110,7 +106,7 @@ namespace raphEngine::graphics::ogl
         glfwSwapInterval(1);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        
+
         glViewport(0, 0, ResX, ResY);
 
         GLShadowRenderer::generate_shadows_buffer();
@@ -141,6 +137,8 @@ namespace raphEngine::graphics::ogl
     bool OpenGL::Refresh()
     {
         render_pool.clear();
+        lights_pool.clear();
+        spot_lights_pool.clear();
         glfwSwapBuffers(window);
         glfwPollEvents();
 

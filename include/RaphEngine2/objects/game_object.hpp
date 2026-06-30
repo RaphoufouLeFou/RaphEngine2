@@ -29,7 +29,7 @@ namespace raphEngine::objects
         GameObject();
         GameObject(const std::string& name);
         GameObject(GameObject& other);
-        ~GameObject() = default;
+        ~GameObject();
 
         void greed();
 
@@ -46,24 +46,24 @@ namespace raphEngine::objects
         std::shared_ptr<GameObject> instanciate();
 
         template <Comp T, class... Args>
-        void add_component(Args&&... args);
+        T* add_component(Args&&... args);
 
         component::Component* get_component(size_t index);
         component::Component* get_component(const std::string& name);
 
-        template <class T>
+        template <Comp T>
         std::vector<T*> get_all_component_of_type();
 
-        template <class T>
+        template <Comp T>
         T* get_first_component_of_type();
 
         void remove_component(size_t index);
         void remove_component(const std::string& name);
 
-        template <class T>
+        template <Comp T>
         void remove_all_component_of_type();
 
-        template <class T>
+        template <Comp T>
         void remove_first_component_of_type();
 
         void start_components();

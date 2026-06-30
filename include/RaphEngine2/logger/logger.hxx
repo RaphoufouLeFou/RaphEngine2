@@ -69,4 +69,12 @@ namespace raphEngine
         Log("ERROR", Color::IntenseRed, args...);
     }
 
+    template <Printable... Args>
+    void Logger::LogCritical(Args&&... args)
+    {
+        if (log_level_ < ERROR)
+            return;
+        Log("CRIT ", Color::IntensePurple, args...);
+    }
+
 } // namespace raphEngine

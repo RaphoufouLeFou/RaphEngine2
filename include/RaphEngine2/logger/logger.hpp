@@ -20,6 +20,7 @@ namespace raphEngine
         constexpr const char* BgRed = "\033[41m";
 
         constexpr const char* IntenseRed = "\033[1;91m";
+        constexpr const char* IntensePurple = "\033[1;95m";
         constexpr const char* IntenseWhite = "\033[1;97m";
         constexpr const char* IntenseBlue = "\033[1;94m";
         constexpr const char* IntenseYellow = "\033[1;93m";
@@ -36,6 +37,7 @@ namespace raphEngine
     public:
         enum LogLevel
         {
+            CRITICAL,
             ERROR,
             WARN,
             INFO,
@@ -54,6 +56,8 @@ namespace raphEngine
         static void LogWarning(Args&&... args);
         template <Printable... Args>
         static void LogError(Args&&... args);
+        template <Printable... Args>
+        static void LogCritical(Args&&... args);
 
     private:
         static std::ofstream output_stream;

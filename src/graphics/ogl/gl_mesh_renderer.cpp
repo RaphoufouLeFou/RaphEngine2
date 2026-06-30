@@ -19,6 +19,7 @@
 #include "graphics/graphic_api.hpp"
 #include "graphics/shader.hpp"
 #include "objects/mesh.hpp"
+#include "utils.hpp"
 #include "settings/graphics.hpp"
 #include <RaphEngine2/settings/settings.hpp>
 #include <RaphEngine2/logger/logger.hpp>
@@ -40,8 +41,11 @@ namespace raphEngine::graphics
         sh->setValue("projection", cam->projection_matrix_);
         sh->setValue("view", cam->view_matrix_);
 
-        sh->setValue("lightPos", glm::vec3(0));
-        sh->setValue("lightDir", ShadowRenderer::lightDirGlobal);
+        sh->setValue("lightDir",
+                     Utils::GetDirectionFromRotation(
+                         ShadowRenderer::GetDirectionalLight()
+                             ->parent_object->get_transform()
+                             .get_rotation()));
 
         sh->setValue("viewPos",
                      cam->parent_object->get_transform().get_position());

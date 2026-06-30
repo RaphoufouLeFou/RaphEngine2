@@ -36,6 +36,14 @@ namespace raphEngine::objects
         spawned_game_objects_.push_back(this);
     }
 
+    GameObject::~GameObject()
+    {
+        auto position = std::find(spawned_game_objects_.begin(),
+                                  spawned_game_objects_.end(), this);
+        if (position != spawned_game_objects_.end())
+            spawned_game_objects_.erase(position);
+    }
+
     component::Component* GameObject::get_component(size_t index)
     {
         return components_.at(index).get();

@@ -2,6 +2,9 @@
 
 #include <RaphEngine2/export.hpp>
 #include <string>
+#include <vector>
+
+#include <glm/glm.hpp>
 
 #include "component.hpp"
 
@@ -17,7 +20,8 @@ namespace raphEngine::component
             POINT,
         };
 
-        LightComponent();
+        LightComponent(Type light_type = DIRECTIONAL, float intensity = 1.0f,
+                       bool cast_shadows = false);
         const std::string component_name = "Light";
 
         inline const std::string get_name() const override
@@ -25,8 +29,13 @@ namespace raphEngine::component
             return component_name;
         }
 
+        void set_direction(glm::vec3 direction);
+
         void Start() override;
         void Update() override;
 
+        float intensity_;
+        bool cast_shadows_;
+        Type type;
     };
 } // namespace raphEngine::component

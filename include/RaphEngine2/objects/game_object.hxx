@@ -8,15 +8,17 @@ namespace raphEngine::objects
 {
 
     template <Comp T, class... Args>
-    void GameObject::add_component(Args&&... args)
+    T* GameObject::add_component(Args&&... args)
     {
         std::unique_ptr<component::Component> c = std::make_unique<T>(args...);
         Logger::LogDebug("adding ", c->get_name());
         c->parent_object = this;
+        T* ptr = dynamic_cast<T*>(c.get());
         components_.push_back(std::move(c));
+        return ptr;
     }
 
-    template <class T>
+    template <Comp T>
     T* GameObject::get_first_component_of_type()
     {
         for (const auto& c : components_)
@@ -29,7 +31,7 @@ namespace raphEngine::objects
         return nullptr;
     }
 
-    template <class T>
+    template <Comp T>
     std::vector<T*> GameObject::get_all_component_of_type()
     {
         std::vector<T*> res;
@@ -43,7 +45,7 @@ namespace raphEngine::objects
         return res;
     }
 
-    template <class T>
+    template <Comp T>
     void GameObject::remove_all_component_of_type()
     {
         for (auto it = components_.begin(); it != components_.end(); it++)
@@ -53,7 +55,7 @@ namespace raphEngine::objects
         }
     }
 
-    template <class T>
+    template <Comp T>
     void GameObject::remove_first_component_of_type()
     {
         for (auto it = components_.begin(); it != components_.end(); it++)

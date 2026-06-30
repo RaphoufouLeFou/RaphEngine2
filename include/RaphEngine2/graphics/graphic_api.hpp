@@ -5,6 +5,7 @@
 #include "RaphEngine2/objects/mesh.hpp"
 #include "RaphEngine2/renderable.hpp"
 #include "RaphEngine2/settings/graphics.hpp"
+#include "RaphEngine2/component/light_component.hpp"
 
 namespace raphEngine::graphics
 {
@@ -13,8 +14,13 @@ namespace raphEngine::graphics
     public:
         virtual void Init(const std::string& window_name) = 0;
         virtual void Render() = 0;
-        static void AddToRenderPool(const Renderable* renderable);
         virtual bool Refresh() = 0;
+
+        static void AddToRenderPool(const Renderable* renderable);
+        static void
+        AddToLightsPool(const component::LightComponent* light_componentt);
+        void
+        AddToSpotLightsPool(const component::LightComponent* light_componentt);
 
         virtual bool IsKeyPressed(int key) const = 0;
 
@@ -30,6 +36,8 @@ namespace raphEngine::graphics
         static unsigned short res_y;
 
         static std::vector<const Renderable*> render_pool;
+        static std::vector<const component::LightComponent*> lights_pool;
+        static std::vector<const component::LightComponent*> spot_lights_pool;
 
     protected:
         static GraphicApi* instance_;

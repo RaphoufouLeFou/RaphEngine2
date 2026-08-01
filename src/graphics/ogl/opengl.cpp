@@ -10,7 +10,9 @@
 #include <RaphEngine2/settings/settings.hpp>
 #include <RaphEngine2/graphics/ogl/gl_mesh_renderer.hpp>
 #include <RaphEngine2/graphics/ogl/gl_shadow_renderer.hpp>
-#include <iostream>
+
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 namespace raphEngine::graphics::ogl
 {
@@ -110,6 +112,12 @@ namespace raphEngine::graphics::ogl
         glViewport(0, 0, ResX, ResY);
 
         GLShadowRenderer::generate_shadows_buffer();
+
+        ImGui_ImplGlfw_InitForOpenGL(
+            window,
+            true); // Second param install_callback=true will install GLFW
+                   // callbacks and chain to existing ones.
+        ImGui_ImplOpenGL3_Init();
     }
 
     void OpenGL::Render()

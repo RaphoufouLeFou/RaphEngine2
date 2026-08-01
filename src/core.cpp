@@ -1,7 +1,5 @@
 #include "RaphEngine2/core.hpp"
 
-#include <iostream>
-
 #include "RaphEngine2/time_utils.hpp"
 #include "graphics/ogl/opengl.hpp"
 #include "logger/logger.hpp"
@@ -9,9 +7,14 @@
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 namespace raphEngine
 {
     graphics::ogl::OpenGL renderer{};
+    
 
     void Core::Init(const std::string& title)
     {
@@ -21,7 +24,21 @@ namespace raphEngine
         Settings::Register<GraphicsSettings>();
         Settings::Load("settings.json");
 
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |=
+            ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        io.ConfigFlags |=
+            ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+        io.ConfigFlags |=
+            ImGuiConfigFlags_NoMouseCursorChange;
+        io.ConfigFlags |=
+            ImGuiConfigFlags_DockingEnable; // IF using Docking Branch
+            
         renderer.Init(title);
+
+
     }
 
     void Core::Run()
@@ -35,7 +52,22 @@ namespace raphEngine
             double start = Time::GetTime();
             execute_updates();
             execute_components_updates();
+
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+            
+            ImGui::DockSpaceOverViewport(
+                0, ImGui::GetMainViewport(),
+                ImGuiDockNodeFlags_PassthruCentralNode);
+
+            ImGui::ShowDemoWindow(); // Show demo window! :)
+
             renderer.Render();
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
             bool still_alive = renderer.Refresh();
 
             if (!still_alive)
@@ -47,6 +79,10 @@ namespace raphEngine
 
         Settings::Save("settings.json");
         Logger::LogDebug("exiting now!");
+
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
     }
 
     void Core::execute_starts()

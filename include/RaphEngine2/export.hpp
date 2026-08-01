@@ -13,3 +13,7 @@
 #        define RAPHENGINE_API
 #    endif
 #endif
+
+// lights debug infos
+// #define DEBUG_LIGHTS
+

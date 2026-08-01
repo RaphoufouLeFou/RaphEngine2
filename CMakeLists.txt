@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.21.2)
 project(RaphEngine2 VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -13,6 +14,25 @@ file(GLOB RaphEngine2_SRC
      "src/*/*.cpp"
      "src/*/*/*.cpp"
 )
+
+set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
+
+if(NOT EXISTS ${IMGUI_DIR}/imgui.cpp)
+    message(FATAL_ERROR "imgui not found at ${IMGUI_DIR} - did you clone it into the project root?")
+endif()
+
+file(GLOB IMGUI_CORE_SRC "${IMGUI_DIR}/*.cpp")
+
+set(IMGUI_BACKEND_SRC
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+    # ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+    # ${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
+    # ${IMGUI_DIR}/backends/imgui_impl_dx12.cpp
+    # ${IMGUI_DIR}/backends/imgui_impl_win32.cpp   # needed alongside DX backends on Windows
+)
+
+list(APPEND RaphEngine2_SRC ${IMGUI_CORE_SRC} ${IMGUI_BACKEND_SRC})
 
 add_library(RaphEngine2 SHARED ${RaphEngine2_SRC})
 
@@ -54,6 +74,14 @@ set_target_properties(RaphEngine2 PROPERTIES
 # ========================
 # dependencies
 # ========================
+
+#imgui
+
+target_include_directories(RaphEngine2
+    PUBLIC
+        $<BUILD_INTERFACE:${IMGUI_DIR}>
+        $<BUILD_INTERFACE:${IMGUI_DIR}/backends>
+)
 
 # glm
 find_package(glm QUIET)

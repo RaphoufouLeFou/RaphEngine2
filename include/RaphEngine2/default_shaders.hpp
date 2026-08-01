@@ -1,67 +1,5 @@
 #pragma once
 
-inline const char* default_shadow_vs_shader = R"(
-#version 410 core
-layout (location = 0) in vec3 aPos;
-
-uniform mat4 model;
-
-void main()
-{
-    gl_Position = model * vec4(aPos, 1.0);
-}
-
-)";
-
-inline const char* debug_cascade_fs_shader = R"(
-#version 410 core
-out vec4 FragColor;
-
-uniform vec4 color;
-
-void main()
-{             
-    FragColor = color;
-}
-
-)";
-
-inline const char* default_shadow_gs_shader = R"(
-#version 410 core
-
-layout(triangles, invocations = 5) in;
-layout(triangle_strip, max_vertices = 3) out;
-
-layout (std140) uniform LightSpaceMatrices
-{
-    mat4 lightSpaceMatrices[16];
-};
-/*
-uniform mat4 lightSpaceMatrices[16];
-*/
-
-void main()
-{          
-	for (int i = 0; i < 3; ++i)
-	{
-		gl_Position = lightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
-		gl_Layer = gl_InvocationID;
-		EmitVertex();
-	}
-	EndPrimitive();
-}  
-
-)";
-
-inline const char* default_shadow_fs_shader = R"(
-#version 410 core
-
-void main()
-{             
-}
-
-)";
-
 inline const char* default_fs_shader = R"(
 #version 410 core
 
@@ -212,6 +150,69 @@ void main()
 
 )";
 
+inline const char* default_shadow_fs_shader = R"(
+#version 410 core
+
+void main()
+{             
+}
+
+)";
+
+inline const char* debug_cascade_vs_shader = R"(
+#version 410 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * vec4(aPos, 1.0);
+}
+
+)";
+
+inline const char* default_shadow_vs_shader = R"(
+#version 410 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 model;
+
+void main()
+{
+    gl_Position = model * vec4(aPos, 1.0);
+}
+
+)";
+
+inline const char* default_shadow_gs_shader = R"(
+#version 410 core
+
+layout(triangles, invocations = 5) in;
+layout(triangle_strip, max_vertices = 3) out;
+
+layout (std140) uniform LightSpaceMatrices
+{
+    mat4 lightSpaceMatrices[16];
+};
+/*
+uniform mat4 lightSpaceMatrices[16];
+*/
+
+void main()
+{          
+	for (int i = 0; i < 3; ++i)
+	{
+		gl_Position = lightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
+		gl_Layer = gl_InvocationID;
+		EmitVertex();
+	}
+	EndPrimitive();
+}  
+
+)";
+
 inline const char* default_vs_shader = R"(
 #version 410 core
 
@@ -275,16 +276,15 @@ void main()
 
 )";
 
-inline const char* debug_cascade_vs_shader = R"(
+inline const char* debug_cascade_fs_shader = R"(
 #version 410 core
-layout (location = 0) in vec3 aPos;
+out vec4 FragColor;
 
-uniform mat4 view;
-uniform mat4 projection;
+uniform vec4 color;
 
 void main()
-{
-    gl_Position = projection * view * vec4(aPos, 1.0);
+{             
+    FragColor = color;
 }
 
 )";

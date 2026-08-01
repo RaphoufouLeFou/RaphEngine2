@@ -26,9 +26,9 @@ Implement shader clouds
 Errors handling
 Function to get user folder
 God rays ?
-Add vulkan / D3D11
+Add vulkan / D3D11 / D3D12
 Assets compressions
 Glass/Transparency
-Reflexions ?
+Reflections ?
 Start coding the Editor
 Add a guizmo

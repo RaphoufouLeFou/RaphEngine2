@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.21.2)
 
 project(RaphEngine2 VERSION 1.0.0 LANGUAGES CXX)
 
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(FetchContent)

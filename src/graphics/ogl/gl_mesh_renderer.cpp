@@ -1,4 +1,5 @@
 #include "graphics/ogl/gl_mesh_renderer.hpp"
+#include <glm/ext/vector_float3.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
@@ -41,11 +42,22 @@ namespace raphEngine::graphics
         sh->setValue("projection", cam->projection_matrix_);
         sh->setValue("view", cam->view_matrix_);
 
-        sh->setValue("lightDir",
-                     Utils::GetDirectionFromRotation(
-                         ShadowRenderer::GetDirectionalLight()
-                             ->parent_object->get_transform()
-                             .get_rotation()));
+        const auto* dir_light = ShadowRenderer::GetDirectionalLight();
+
+
+        if (dir_light)
+        {
+            sh->setValue("lightIntensity", dir_light->intensity_);
+            sh->setValue(
+                "lightDir",
+                Utils::GetDirectionFromRotation(
+                    dir_light->parent_object->get_transform().get_rotation()));
+            
+        }
+        else {
+            sh->setValue("lightIntensity", 0.0f);
+            sh->setValue("lightDir",glm::vec3(0));
+        }
 
         sh->setValue("viewPos",
                      cam->parent_object->get_transform().get_position());
@@ -80,7 +92,7 @@ namespace raphEngine::graphics
             sh->setValue(names[i], i);
         }
 
-        glActiveTexture(GL_TEXTURE4);
+            glActiveTexture(GL_TEXTURE4);
         sh->setValue("shadowMap", 4);
         glBindTexture(
             GL_TEXTURE_2D_ARRAY,

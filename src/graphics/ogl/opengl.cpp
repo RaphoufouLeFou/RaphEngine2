@@ -123,12 +123,14 @@ namespace raphEngine::graphics::ogl
     void OpenGL::Render()
     {
         GLShadowRenderer::prepare_shadows();
-
-        for (auto* object : render_pool)
+        if (ShadowRenderer::GetDirectionalLight()->cast_shadows_)
         {
-            object->render_shadow();
-        }
 
+            for (auto* object : render_pool)
+            {
+                object->render_shadow();
+            }
+        }
         GLShadowRenderer::cleanup_shadows();
 
         glViewport(0, 0, res_x, res_y);

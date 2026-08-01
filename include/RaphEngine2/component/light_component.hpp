@@ -21,7 +21,7 @@ namespace raphEngine::component
         };
 
         LightComponent(Type light_type = DIRECTIONAL, float intensity = 1.0f,
-                       bool cast_shadows = false);
+                       bool cast_shadows = true);
         const std::string component_name = "Light";
 
         inline const std::string get_name() const override

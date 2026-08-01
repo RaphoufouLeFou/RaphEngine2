@@ -12,6 +12,8 @@
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/graphics/graphic_api.hpp>
 
+#include "imgui.h"
+
 namespace raphEngine::component
 {
 
@@ -36,7 +38,10 @@ namespace raphEngine::component
     void LightComponent::set_direction(glm::vec3 direction)
     {
         direction = glm::normalize(direction);
+
         glm::vec3& rotation = parent_object->get_transform().get_rotation();
+
+        parent_object->get_transform().get_position() = direction * 20.0f;
 
         rotation.x = std::asin(-direction.y);
         rotation.y = std::atan2(direction.x, -direction.z);
@@ -44,11 +49,29 @@ namespace raphEngine::component
     }
 
     void LightComponent::Start()
-    {}
+    {
+    }
 
+    float v = 0;
     void LightComponent::Update()
     {
         graphics::GraphicApi::AddToLightsPool(this);
+
+        ImGui::Begin("Light component");
+
+        ImGui::Text("Transform");
+        ImGui::DragFloat3(
+            "Position", &this->parent_object->get_transform().get_position().x,
+            0.05);
+        ImGui::DragFloat3(
+            "Rotation", &this->parent_object->get_transform().get_rotation().x,
+            0.01);
+
+        ImGui::Text("Properties");
+        ImGui::Checkbox("cast shadows", &cast_shadows_);
+        ImGui::DragFloat("intensity", &intensity_, 0.01);
+
+        ImGui::End();
     }
 
 } // namespace raphEngine::component

@@ -31,8 +31,8 @@ namespace raphEngine::graphics
                 return light;
         }
 
-        Logger::LogCritical("No directional light!");
-        throw std::runtime_error("No directional light!");
+        Logger::LogError("No directional light!");
+        // throw std::runtime_error("No directional light!");
         return nullptr;
     }
 
@@ -132,13 +132,18 @@ namespace raphEngine::graphics
             (float)Settings::Get<GraphicsSettings>().getShadowResolution();
         const float texelSize = (radius * 2.0f) / shadowMapRes;
 
-        glm::mat4 baseLightView =
-            glm::lookAt(glm::vec3(0.0f),
-                        -Utils::GetDirectionFromRotation(
-                            GetDirectionalLight()
-                                ->parent_object->get_transform()
-                                .get_rotation()),
-                        glm::vec3(0.0f, 1.0f, 0.0f));
+        const auto* dir_light = ShadowRenderer::GetDirectionalLight();
+
+        glm::vec3 light_rot = glm::vec3(0);
+
+        if(dir_light)
+        {
+            light_rot = dir_light->parent_object->get_transform().get_rotation();
+        }
+
+        glm::mat4 baseLightView = glm::lookAt(
+            glm::vec3(0.0f), -Utils::GetDirectionFromRotation(light_rot),
+            glm::vec3(0.0f, 1.0f, 0.0f));
 
         glm::vec3 centerLightSpace =
             glm::vec3(baseLightView * glm::vec4(center, 1.0f));
@@ -151,14 +156,9 @@ namespace raphEngine::graphics
         center = glm::vec3(glm::inverse(baseLightView)
                            * glm::vec4(centerLightSpace, 1.0f));
 
-        const auto lightView =
-            glm::lookAt(center,
-                        center
-                            - Utils::GetDirectionFromRotation(
-                                GetDirectionalLight()
-                                    ->parent_object->get_transform()
-                                    .get_rotation()),
-                        glm::vec3(0.0f, 1.0f, 0.0f));
+        const auto lightView = glm::lookAt(
+            center, center - Utils::GetDirectionFromRotation(light_rot),
+            glm::vec3(0.0f, 1.0f, 0.0f));
 
         const float minX = -radius;
         const float maxX = radius;

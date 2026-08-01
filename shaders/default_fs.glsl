@@ -20,6 +20,7 @@ uniform sampler2D texture_normal;
 uniform sampler2DArrayShadow shadowMap;
 
 uniform vec3 lightDir; // world space
+uniform float lightIntensity;
 uniform vec3 viewPos;
 uniform bool HaveTexture;
 uniform bool HaveNormalMap;
@@ -131,12 +132,12 @@ void main()
     vec3 lightColor = vec3(1.0);
     vec3 ambient = 0.1 * lightColor;
 
-    float diff = max(dot(lightDirT, normal), 0.0);
+    float diff = max(dot(lightDirT * lightIntensity, normal), 0.0);
     vec3 diffuse = diff * lightColor;
 
     float specFact =
         HaveSpecularMap ? texture(texture_specular, fs_in.TexCoords).r : 1.0;
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0) * specFact;
+    float spec = pow(max(dot(normal, halfwayDir * lightIntensity), 0.0), 32.0) * specFact;
     vec3 specular = vec3(spec);
 
     float shadow = ShadowCalculation(fs_in.FragPos, worldNormal);

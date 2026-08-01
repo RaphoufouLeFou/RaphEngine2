@@ -27,15 +27,15 @@ namespace raphEngine
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |=
-            ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
         io.ConfigFlags |=
             ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
         io.ConfigFlags |=
             ImGuiConfigFlags_NoMouseCursorChange;
         io.ConfigFlags |=
             ImGuiConfigFlags_DockingEnable; // IF using Docking Branch
-            
+        ImGui::StyleColorsDark();
+
         renderer.Init(title);
 
 
@@ -49,19 +49,17 @@ namespace raphEngine
 
         while (1)
         {
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
             double start = Time::GetTime();
             execute_updates();
             execute_components_updates();
 
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-            
             ImGui::DockSpaceOverViewport(
                 0, ImGui::GetMainViewport(),
                 ImGuiDockNodeFlags_PassthruCentralNode);
-
-            ImGui::ShowDemoWindow(); // Show demo window! :)
 
             renderer.Render();
 

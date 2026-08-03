@@ -25,6 +25,7 @@ namespace raphEngine::objects
         size_t get_lod_count() const;
 
         const ObjectMesh* get_lod_at(const glm::vec3& object_pos) const;
+        const ObjectMesh* get_lod_at_level(int level) const;
 
         Lod(const Lod&) = delete;
         Lod& operator=(const Lod&) = delete;

@@ -35,7 +35,7 @@ namespace raphEngine::component
         void Update() override;
 
         float intensity_;
-        bool cast_shadows_;
+        bool cast_shadows_ = true;
         Type type;
     };
 } // namespace raphEngine::component

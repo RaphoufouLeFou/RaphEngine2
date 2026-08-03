@@ -48,6 +48,11 @@ namespace raphEngine::objects
         return get_lod(lod_index);
     }
 
+    const ObjectMesh* Lod::get_lod_at_level(int level) const
+    {
+        return get_lod(level);
+    }
+
     size_t Lod::get_lod_count() const
     {
         return lod_meshes_.size();
@@ -84,11 +89,12 @@ namespace raphEngine::objects
     {
         lod_meshes_.push_back(std::make_unique<ObjectMesh>(
             parent_object, mesh, shader.get(), cast_shadow));
+        calculate_transitions_distances(1);
     }
 
     void Lod::calculate_transitions_distances(int lod_count, float exponent)
     {
-        if (lod_count <= 1)
+        if (lod_count < 1)
         {
             return;
         }

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "RaphEngine2/raycast/raycast.hpp"
 #include "RaphEngine2/component/component.hpp"
 #include "RaphEngine2/core.hpp"
 #include "transform.hpp"
@@ -25,6 +26,8 @@ namespace raphEngine::objects
 
     class RAPHENGINE_API GameObject
     {
+        friend raphEngine::RayCast;
+
     public:
         GameObject();
         GameObject(const std::string& name);
@@ -75,6 +78,9 @@ namespace raphEngine::objects
         GameObject& operator=(const GameObject&) = delete;
         GameObject& operator=(GameObject&&) = default;
 
+        int raycast_layer_ = 0;
+        static std::vector<GameObject*> spawned_game_objects_;
+
     protected:
         friend raphEngine::Core;
 
@@ -82,7 +88,6 @@ namespace raphEngine::objects
         objects::Transform transform_;
         std::vector<std::unique_ptr<component::Component>> components_;
 
-        static std::vector<GameObject*> spawned_game_objects_;
     };
 } // namespace raphEngine::objects
 

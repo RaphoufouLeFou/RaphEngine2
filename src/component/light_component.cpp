@@ -22,7 +22,7 @@ namespace raphEngine::component
     {
         if (cast_shadows)
         {
-            if (type != DIRECTIONAL)
+            if (light_type != DIRECTIONAL)
             {
                 Logger::LogError("A light other than a directional light ",
                                  "cannot cast shaodws for now!");
@@ -52,7 +52,6 @@ namespace raphEngine::component
     {
     }
 
-    float v = 0;
     void LightComponent::Update()
     {
         graphics::GraphicApi::AddToLightsPool(this);

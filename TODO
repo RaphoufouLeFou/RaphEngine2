@@ -10,7 +10,6 @@ Add instancing
 Hide object not visibles
 Swap the shader from var to filename
 Implement the ressource system
-Integrate ImGUI
 Add some skyboxes
 Handle big terrains
 Add vegetation

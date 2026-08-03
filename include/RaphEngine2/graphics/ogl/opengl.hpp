@@ -12,6 +12,7 @@ namespace raphEngine::graphics::ogl
     {
     public:
         void Init(const std::string& window_name) override;
+        void StartFrame() override;
         void Render() override;
         bool Refresh() override;
 

@@ -117,7 +117,14 @@ namespace raphEngine::graphics::ogl
             window,
             true); // Second param install_callback=true will install GLFW
                    // callbacks and chain to existing ones.
+        Logger::LogDebug("imgui opengl3 init");
         ImGui_ImplOpenGL3_Init();
+    }
+
+    void OpenGL::StartFrame()
+    {
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
     }
 
     void OpenGL::Render()
@@ -146,14 +153,24 @@ namespace raphEngine::graphics::ogl
 
     bool OpenGL::Refresh()
     {
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         render_pool.clear();
         lights_pool.clear();
         spot_lights_pool.clear();
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        return glfwWindowShouldClose(window) == 0
+        bool stay_open = glfwWindowShouldClose(window) == 0
             && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS;
+
+        if (!stay_open)
+        {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+        }
+
+        return stay_open;
     }
 
     bool OpenGL::IsKeyPressed(int key) const

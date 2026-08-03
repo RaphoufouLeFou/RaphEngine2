@@ -1,4 +1,3 @@
-#include <ostream>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #define STB_IMAGE_IMPLEMENTATION
@@ -11,7 +10,6 @@
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
 #include <memory>
 
 #include "RaphEngine2/graphics/graphic_api.hpp"

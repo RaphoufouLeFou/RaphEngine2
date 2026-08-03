@@ -51,7 +51,7 @@ else()
     target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -fPIC)
 endif()
 
-option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" OFF)
+option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" ON)
 
 if(RAPHENGINE2_ENABLE_ASAN AND NOT WIN32)
     target_compile_options(RaphEngine2 PRIVATE -fsanitize=address -fno-omit-frame-pointer -g)

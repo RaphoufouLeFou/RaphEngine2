@@ -57,7 +57,7 @@ float SampleShadow(vec3 fragPosWorldSpace, int layer)
 
     float currentDepth = projCoords.z;
     if (currentDepth > 1.0)
-        return 0.0;
+        return 1.0;
 
     // 3x3 Hardware PCF
     vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
@@ -100,8 +100,6 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 worldNormal)
         }
     }
 
-    // Since SampleShadow returns 1.0 for LIT and 0.0 for SHADOWED,
-    // we return (1.0 - shadow) so that 1.0 means "IN SHADOW"
     return 1.0 - shadow;
 }
 
@@ -135,13 +133,13 @@ void main()
     vec3 lightColor = vec3(1.0);
     vec3 ambient = 0.1 * lightColor;
 
-    float diff = max(dot(lightDirT * lightIntensity, normal), 0.0);
-    vec3 diffuse = diff * lightColor;
+    float diff = max(dot(lightDirT, normal), 0.0);
+    vec3 diffuse = diff * lightColor * lightIntensity;
 
     float specFact =
-        HaveSpecularMap ? texture(texture_specular, fs_in.TexCoords).r : 1.0;
-    float spec = pow(max(dot(normal, halfwayDir * lightIntensity), 0.0), 32.0) * specFact;
-    vec3 specular = vec3(spec);
+        HaveSpecularMap ? texture(texture_specular, fs_in.TexCoords).r : 0.2;
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0) * specFact;
+    vec3 specular = vec3(spec) * lightIntensity;
 
     float shadow = ShadowCalculation(fs_in.FragPos, worldNormal);
 

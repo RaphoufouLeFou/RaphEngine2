@@ -2,9 +2,10 @@
 
 #include <RaphEngine2/graphics/shader.hpp>
 #include <initializer_list>
-#include <iostream>
 #include <memory>
 #include <vector>
+
+#include "imgui.h"
 
 #include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
@@ -46,11 +47,30 @@ namespace raphEngine::component
     void MeshComponent::Update()
     {
         render();
+
+        ImGui::Begin(parent_object->get_name().c_str());
+
+        ImGui::Text("Transform");
+        ImGui::DragFloat3(
+            "Position", &this->parent_object->get_transform().get_position().x,
+            0.05);
+        ImGui::DragFloat3(
+            "Rotation", &this->parent_object->get_transform().get_rotation().x,
+            0.01);
+        ImGui::DragFloat3(
+            "Scale", &this->parent_object->get_transform().get_scale().x,
+            0.01);
+
+        ImGui::Text("Properties");
+        ImGui::Checkbox("cast shadows", &cast_shadows);
+
+        ImGui::End();
     }
     void MeshComponent::render() const
     {
         lods_->get_lod_at(parent_object->get_transform().get_position())
             ->render();
+
     }
 
 } // namespace raphEngine::component

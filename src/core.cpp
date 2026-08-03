@@ -8,8 +8,6 @@
 #include "settings/settings.hpp"
 
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 
 namespace raphEngine
 {
@@ -49,22 +47,22 @@ namespace raphEngine
 
         while (1)
         {
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
 
-            double start = Time::GetTime();
-            execute_updates();
-            execute_components_updates();
+
+            renderer.StartFrame();
+            ImGui::NewFrame();
 
             ImGui::DockSpaceOverViewport(
                 0, ImGui::GetMainViewport(),
                 ImGuiDockNodeFlags_PassthruCentralNode);
 
+            double start = Time::GetTime();
+            execute_updates();
+            execute_components_updates();
+
             renderer.Render();
 
             ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             bool still_alive = renderer.Refresh();
 
@@ -78,8 +76,7 @@ namespace raphEngine
         Settings::Save("settings.json");
         Logger::LogDebug("exiting now!");
 
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
+
         ImGui::DestroyContext();
     }
 

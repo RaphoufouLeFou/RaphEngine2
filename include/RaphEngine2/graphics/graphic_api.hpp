@@ -33,8 +33,26 @@ namespace raphEngine::graphics
 
         static const GraphicApi* get_api();
 
+#ifdef EDITOR_BUILD
+        virtual void ResizeViewportFramebuffer(int width, int height)
+        {
+            (void)width;
+            (void)height;
+        }
+        virtual void* GetViewportTexture() const
+        {
+            return nullptr;
+        }
+#endif
+
         static unsigned short res_x;
         static unsigned short res_y;
+
+#ifdef EDITOR_BUILD
+        static inline int viewport_res_x = 0;
+        static inline int viewport_res_y = 0;
+        static inline bool viewport_focused = false;
+#endif
 
         static std::vector<const Renderable*> render_pool;
         static std::vector<const component::LightComponent*> lights_pool;

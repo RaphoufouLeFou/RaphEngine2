@@ -11,8 +11,10 @@
 #include <RaphEngine2/graphics/ogl/gl_mesh_renderer.hpp>
 #include <RaphEngine2/graphics/ogl/gl_shadow_renderer.hpp>
 
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#ifdef EDITOR_BUILD
+#    include "imgui_impl_glfw.h"
+#    include "imgui_impl_opengl3.h"
+#endif
 
 namespace raphEngine::graphics::ogl
 {
@@ -21,8 +23,13 @@ namespace raphEngine::graphics::ogl
     {
         (void)window;
         glViewport(0, 0, width, height);
-        graphics::GraphicApi::res_x = width;
-        graphics::GraphicApi::res_y = height;
+        GraphicApi::res_x = width;
+        GraphicApi::res_y = height;
+
+#ifdef EDITOR_BUILD
+        GraphicApi::viewport_res_x = width; // <-- new
+        GraphicApi::viewport_res_y = height; // <-- new
+#endif
     }
 
     GLFWwindow* window;
@@ -113,18 +120,24 @@ namespace raphEngine::graphics::ogl
 
         GLShadowRenderer::generate_shadows_buffer();
 
+#ifdef EDITOR_BUILD
         ImGui_ImplGlfw_InitForOpenGL(
             window,
             true); // Second param install_callback=true will install GLFW
                    // callbacks and chain to existing ones.
         Logger::LogDebug("imgui opengl3 init");
         ImGui_ImplOpenGL3_Init();
+        CreateViewportFramebuffer(res_x, res_y);
+
+#endif
     }
 
     void OpenGL::StartFrame()
     {
+#ifdef EDITOR_BUILD
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
+#endif
     }
 
     void OpenGL::Render()
@@ -132,29 +145,40 @@ namespace raphEngine::graphics::ogl
         GLShadowRenderer::prepare_shadows();
         if (ShadowRenderer::GetDirectionalLight()->cast_shadows_)
         {
-
             for (auto* object : render_pool)
-            {
                 object->render_shadow();
-            }
         }
         GLShadowRenderer::cleanup_shadows();
 
+#ifdef EDITOR_BUILD
+        glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);
+#endif
         glViewport(0, 0, res_x, res_y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         for (auto* object : render_pool)
-        {
             object->render();
-        }
 
         GLShadowRenderer::debug_draw_lights();
+
+#ifdef EDITOR_BUILD
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_ms_);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, viewport_fbo_resolve_);
+        glBlitFramebuffer(0, 0, viewport_width_, viewport_height_, 0, 0,
+                          viewport_width_, viewport_height_,
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
     }
 
     bool OpenGL::Refresh()
     {
+#ifdef EDITOR_BUILD
+        glViewport(0, 0, res_x, res_y);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+#endif
         render_pool.clear();
         lights_pool.clear();
         spot_lights_pool.clear();
@@ -166,12 +190,83 @@ namespace raphEngine::graphics::ogl
 
         if (!stay_open)
         {
+#ifdef EDITOR_BUILD
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplGlfw_Shutdown();
+#endif
         }
 
         return stay_open;
     }
+
+#ifdef EDITOR_BUILD
+    void OpenGL::CreateViewportFramebuffer(int width, int height)
+    {
+        if (width <= 0 || height <= 0)
+            return;
+
+        viewport_width_ = width;
+        viewport_height_ = height;
+
+        GraphicApi::res_x = width;
+        GraphicApi::res_y = height;
+
+        glGenFramebuffers(1, &viewport_fbo_ms_);
+        glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);
+
+        glGenRenderbuffers(1, &viewport_color_rbo_ms_);
+        glBindRenderbuffer(GL_RENDERBUFFER, viewport_color_rbo_ms_);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, viewport_samples_,
+                                         GL_RGB8, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                  GL_RENDERBUFFER, viewport_color_rbo_ms_);
+
+        glGenRenderbuffers(1, &viewport_depth_rbo_ms_);
+        glBindRenderbuffer(GL_RENDERBUFFER, viewport_depth_rbo_ms_);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, viewport_samples_,
+                                         GL_DEPTH24_STENCIL8, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                                  GL_RENDERBUFFER, viewport_depth_rbo_ms_);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            Logger::LogError("Viewport MSAA framebuffer is not complete!");
+
+        glGenFramebuffers(1, &viewport_fbo_resolve_);
+        glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_resolve_);
+
+        glGenTextures(1, &viewport_color_tex_);
+        glBindTexture(GL_TEXTURE_2D, viewport_color_tex_);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                     GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D, viewport_color_tex_, 0);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            Logger::LogError("Viewport resolve framebuffer is not complete!");
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    void OpenGL::ResizeViewportFramebuffer(int width, int height)
+    {
+        if (width <= 0 || height <= 0)
+            return;
+        if (width == viewport_width_ && height == viewport_height_)
+            return;
+
+        if (viewport_fbo_ms_)
+        {
+            glDeleteFramebuffers(1, &viewport_fbo_ms_);
+            glDeleteRenderbuffers(1, &viewport_color_rbo_ms_);
+            glDeleteRenderbuffers(1, &viewport_depth_rbo_ms_);
+            glDeleteFramebuffers(1, &viewport_fbo_resolve_);
+            glDeleteTextures(1, &viewport_color_tex_);
+        }
+        CreateViewportFramebuffer(width, height);
+    }
+#endif
 
     bool OpenGL::IsKeyPressed(int key) const
     {

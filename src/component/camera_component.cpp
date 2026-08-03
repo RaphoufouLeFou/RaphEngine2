@@ -17,6 +17,11 @@
 #include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
 
+#ifdef EDITOR_BUILD
+#    include "imgui.h"
+#    include "misc/cpp/imgui_stdlib.h"
+#endif
+
 namespace raphEngine::component
 {
     CameraComponent* CameraComponent::active_camera = nullptr;
@@ -43,6 +48,19 @@ namespace raphEngine::component
 
     void CameraComponent::Update()
     {}
+
+#ifdef EDITOR_BUILD
+    void CameraComponent::ImGuiPrint()
+    {
+        if (ImGui::TreeNode(get_name().c_str()))
+        {
+            ImGui::DragFloat("FOV", &fov, 1);
+            ImGui::DragFloat("Far plane", &farPlane, 1);
+            ImGui::DragFloat("Near Plane", &nearPlane, 0.01);
+            ImGui::TreePop();
+        }
+    }
+#endif
 
     const glm::vec3& CameraComponent::get_position() const
     {

@@ -12,7 +12,10 @@
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/graphics/graphic_api.hpp>
 
-#include "imgui.h"
+#ifdef EDITOR_BUILD
+#    include "imgui.h"
+#    include "misc/cpp/imgui_stdlib.h"
+#endif
 
 namespace raphEngine::component
 {
@@ -49,28 +52,23 @@ namespace raphEngine::component
     }
 
     void LightComponent::Start()
-    {
-    }
+    {}
 
     void LightComponent::Update()
     {
         graphics::GraphicApi::AddToLightsPool(this);
-
-        ImGui::Begin("Light component");
-
-        ImGui::Text("Transform");
-        ImGui::DragFloat3(
-            "Position", &this->parent_object->get_transform().get_position().x,
-            0.05);
-        ImGui::DragFloat3(
-            "Rotation", &this->parent_object->get_transform().get_rotation().x,
-            0.01);
-
-        ImGui::Text("Properties");
-        ImGui::Checkbox("cast shadows", &cast_shadows_);
-        ImGui::DragFloat("intensity", &intensity_, 0.01);
-
-        ImGui::End();
     }
+
+#ifdef EDITOR_BUILD
+    void LightComponent::ImGuiPrint()
+    {
+        if (ImGui::TreeNode(get_name().c_str()))
+        {
+            ImGui::Checkbox("cast shadows", &cast_shadows_);
+            ImGui::DragFloat("intensity", &intensity_, 0.01);
+            ImGui::TreePop();
+        }
+    }
+#endif
 
 } // namespace raphEngine::component

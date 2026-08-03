@@ -14,6 +14,6 @@
 #    endif
 #endif
 
-// lights debug infos
-// #define DEBUG_LIGHTS
+// Export important stuff for the editor engine version
 
+#define EDITOR_BUILD

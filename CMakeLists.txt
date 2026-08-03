@@ -26,6 +26,7 @@ file(GLOB IMGUI_CORE_SRC "${IMGUI_DIR}/*.cpp")
 set(IMGUI_BACKEND_SRC
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+    ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
     # ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
     # ${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
     # ${IMGUI_DIR}/backends/imgui_impl_dx12.cpp

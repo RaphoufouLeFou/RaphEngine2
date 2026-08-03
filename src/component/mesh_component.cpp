@@ -6,9 +6,12 @@
 #include <vector>
 
 #include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
 
-#include "objects/lod.hpp"
-#include "objects/mesh_info.hpp"
+#ifdef EDITOR_BUILD
+#    include "objects/lod.hpp"
+#    include "objects/mesh_info.hpp"
+#endif
 
 namespace raphEngine::component
 {
@@ -47,30 +50,25 @@ namespace raphEngine::component
     void MeshComponent::Update()
     {
         render();
-
-        ImGui::Begin(parent_object->get_name().c_str());
-
-        ImGui::Text("Transform");
-        ImGui::DragFloat3(
-            "Position", &this->parent_object->get_transform().get_position().x,
-            0.05);
-        ImGui::DragFloat3(
-            "Rotation", &this->parent_object->get_transform().get_rotation().x,
-            0.01);
-        ImGui::DragFloat3(
-            "Scale", &this->parent_object->get_transform().get_scale().x,
-            0.01);
-
-        ImGui::Text("Properties");
-        ImGui::Checkbox("cast shadows", &cast_shadows);
-
-        ImGui::End();
     }
+
+#ifdef EDITOR_BUILD
+    void MeshComponent::ImGuiPrint()
+    {
+        if (ImGui::TreeNode(get_name().c_str()))
+        {
+            ImGui::Checkbox("cast shadows", &cast_shadows);
+            int val = lods_->get_lod_count();
+            ImGui::InputInt("LOD Count", &val);
+            ImGui::TreePop();
+        }
+    }
+#endif
+
     void MeshComponent::render() const
     {
         lods_->get_lod_at(parent_object->get_transform().get_position())
             ->render();
-
     }
 
 } // namespace raphEngine::component

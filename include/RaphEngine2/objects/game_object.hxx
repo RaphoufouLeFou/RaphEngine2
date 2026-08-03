@@ -13,6 +13,7 @@ namespace raphEngine::objects
         std::unique_ptr<component::Component> c = std::make_unique<T>(args...);
         Logger::LogDebug("adding ", c->get_name());
         c->parent_object = this;
+        c->Start();
         T* ptr = dynamic_cast<T*>(c.get());
         components_.push_back(std::move(c));
         return ptr;

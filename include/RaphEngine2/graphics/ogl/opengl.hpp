@@ -17,11 +17,36 @@ namespace raphEngine::graphics::ogl
         bool Refresh() override;
 
         bool IsKeyPressed(int key) const override;
-
         glm::vec2 GetCursorPos() const override;
         void SetCursorPos(double x, double y) const override;
         bool GetMouseButtonPressed(int button) const override;
         void SetMouseVisibility(bool visible) const override;
         bool IsWindowFocused() const override;
+
+#ifdef EDITOR_BUILD
+        void ResizeViewportFramebuffer(int width, int height) override;
+        void* GetViewportTexture() const override
+        {
+            return (void*)(intptr_t)viewport_color_tex_;
+        }
+#endif
+
+    private:
+#ifdef EDITOR_BUILD
+        void CreateViewportFramebuffer(int width, int height);
+
+        // Multisampled target we actually render into
+        uint viewport_fbo_ms_ = 0;
+        uint viewport_color_rbo_ms_ = 0;
+        uint viewport_depth_rbo_ms_ = 0;
+
+        // Resolved single-sample target ImGui samples from
+        uint viewport_fbo_resolve_ = 0;
+        uint viewport_color_tex_ = 0;
+
+        int viewport_width_ = 0;
+        int viewport_height_ = 0;
+        int viewport_samples_ = 4; // match whatever GLFW_SAMPLES you were using
+#endif
     };
 } // namespace raphEngine::graphics::ogl

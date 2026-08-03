@@ -4,6 +4,9 @@
 #include <stdexcept>
 #include <string>
 #include <RaphEngine2/logger/logger.hpp>
+#include "imgui.h"
+
+#include "misc/cpp/imgui_stdlib.h"
 
 namespace raphEngine::objects
 {
@@ -16,6 +19,7 @@ namespace raphEngine::objects
 
     GameObject::GameObject(const std::string& name)
     {
+        id_ = spawned_game_objects_.size();
         name_ = name;
         transform_ = Transform();
         spawned_game_objects_.push_back(this);
@@ -23,8 +27,8 @@ namespace raphEngine::objects
 
     GameObject::GameObject()
     {
-        name_ =
-            "New GameObject " + std::to_string(spawned_game_objects_.size());
+        id_ = spawned_game_objects_.size();
+        name_ = "New GameObject " + std::to_string(id_);
         transform_ = Transform();
         spawned_game_objects_.push_back(this);
     }
@@ -35,6 +39,63 @@ namespace raphEngine::objects
         transform_ = other.transform_;
         spawned_game_objects_.push_back(this);
     }
+
+#ifdef EDITOR_BUILD
+
+    void GameObject::ImGui_update()
+    {
+        if (!has_started)
+        {
+            Awake();
+            Start();
+            has_started = true;
+        }
+
+        static GameObject* selected = nullptr;
+        bool sel = selected == this;
+        ImGui::Bullet();
+        if (ImGui::Selectable(name_.c_str(), &sel) && selected == this)
+        {
+            selected = nullptr;
+            sel = false;
+        }
+
+        if (sel)
+        {
+            selected = this;
+            std::string display_name = name_ + "###" + std::to_string(id_);
+            ImGui::Begin(display_name.c_str());
+
+            ImGui::Checkbox("Is active", &is_active);
+            ImGui::InputText("Name", &name_);
+            ImGui::InputInt("RayCast layer", &raycast_layer_);
+            ImGui::Checkbox("Has started", &has_started);
+
+            if (ImGui::CollapsingHeader("Transform"))
+            {
+                ImGui::DragFloat3("Position", &get_transform().get_position().x,
+                                  0.05);
+                ImGui::DragFloat3("Rotation", &get_transform().get_rotation().x,
+                                  0.01);
+                ImGui::DragFloat3("Scale", &get_transform().get_scale().x,
+                                  0.01);
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::CollapsingHeader("Components"))
+            {
+                for (auto& c : components_)
+                {
+                    c->ImGuiPrint();
+                }
+            }
+            ImGui::End();
+            // ImGui::TreePop();
+        }
+    }
+
+#endif
 
     GameObject::~GameObject()
     {

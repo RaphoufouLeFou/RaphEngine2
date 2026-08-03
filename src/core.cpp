@@ -7,12 +7,16 @@
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 
-#include "imgui.h"
+#ifdef EDITOR_BUILD
+#    include "imgui.h"
+#    include "imgui_internal.h"
+#endif
 
 namespace raphEngine
 {
     graphics::ogl::OpenGL renderer{};
-    
+
+    unsigned int Core::dock_id_right = 0;
 
     void Core::Init(const std::string& title)
     {
@@ -22,39 +26,76 @@ namespace raphEngine
         Settings::Register<GraphicsSettings>();
         Settings::Load("settings.json");
 
+#ifdef EDITOR_BUILD
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-        io.ConfigFlags |=
-            ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-        io.ConfigFlags |=
-            ImGuiConfigFlags_NoMouseCursorChange;
-        io.ConfigFlags |=
-            ImGuiConfigFlags_DockingEnable; // IF using Docking Branch
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         ImGui::StyleColorsDark();
+#endif
 
         renderer.Init(title);
-
-
     }
 
     void Core::Run()
     {
         Logger::LogDebug("running now from RaphEngine2!");
 
-        execute_starts();
-
         while (1)
         {
-
-
             renderer.StartFrame();
+
+#ifdef EDITOR_BUILD
             ImGui::NewFrame();
 
+            ImGuiID dockspace_id = ImGui::GetID("My Dockspace");
+            ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+            // Create settings
+            if (ImGui::DockBuilderGetNode(dockspace_id) == nullptr)
+            {
+                ImGui::DockBuilderAddNode(dockspace_id,
+                                          ImGuiDockNodeFlags_DockSpace);
+                ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
+                ImGuiID dock_id_left = 0;
+                ImGuiID dock_id_main = dockspace_id;
+                ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Left, 0.12f,
+                                            &dock_id_left, &dock_id_main);
+
+                ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Right, 0.20f,
+                                            &dock_id_right, &dock_id_main);
+                ImGui::DockBuilderDockWindow("Layout", dock_id_left);
+                for (auto& go : objects::GameObject::spawned_game_objects_)
+                {
+                    std::string display_name =
+                        go->get_name() + "###" + std::to_string(go->id_);
+                    ImGui::DockBuilderDockWindow(display_name.c_str(),
+                                                 dock_id_right);
+                }
+                ImGui::DockBuilderDockWindow("Viewport", dock_id_main);
+
+                ImGui::DockBuilderFinish(dockspace_id);
+            }
+
             ImGui::DockSpaceOverViewport(
-                0, ImGui::GetMainViewport(),
-                ImGuiDockNodeFlags_PassthruCentralNode);
+                dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
+
+            ImGui::Begin("Viewport");
+            graphics::GraphicApi::viewport_focused = ImGui::IsWindowFocused();
+            ImVec2 avail = ImGui::GetContentRegionAvail();
+            renderer.ResizeViewportFramebuffer((int)avail.x, (int)avail.y);
+            ImGui::Image(renderer.GetViewportTexture(), avail, ImVec2(0, 1),
+                         ImVec2(1, 0));
+            ImGui::End();
+
+            ImGuiIO& io = ImGui::GetIO();
+            if (graphics::GraphicApi::viewport_focused)
+                io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+            else
+                io.ConfigFlags &= ~ImGuiConfigFlags_NoMouseCursorChange;
+#endif
 
             double start = Time::GetTime();
             execute_updates();
@@ -62,8 +103,9 @@ namespace raphEngine
 
             renderer.Render();
 
+#ifdef EDITOR_BUILD
             ImGui::Render();
-
+#endif
             bool still_alive = renderer.Refresh();
 
             if (!still_alive)
@@ -76,30 +118,26 @@ namespace raphEngine
         Settings::Save("settings.json");
         Logger::LogDebug("exiting now!");
 
-
+#ifdef EDITOR_BUILD
         ImGui::DestroyContext();
-    }
-
-    void Core::execute_starts()
-    {
-        for (auto& go : objects::GameObject::spawned_game_objects_)
-        {
-            go->Awake();
-        }
-
-        for (auto& go : objects::GameObject::spawned_game_objects_)
-        {
-            go->Start();
-            go->start_components();
-        }
+#endif
     }
 
     void Core::execute_updates()
     {
+#ifdef EDITOR_BUILD
+        ImGui::Begin("Layout");
+#endif
         for (auto& go : objects::GameObject::spawned_game_objects_)
         {
+#ifdef EDITOR_BUILD
+            go->ImGui_update();
+#endif
             go->Update();
         }
+#ifdef EDITOR_BUILD
+        ImGui::End();
+#endif
     }
 
     void Core::execute_components_updates()

@@ -24,7 +24,9 @@ namespace raphEngine::component
 
         void Start() override;
         void Update() override;
-
+#ifdef EDITOR_BUILD
+        void ImGuiPrint() override;
+#endif
         void set_as_active_camera();
         void calculate_matrices();
         const glm::vec3& get_position() const;

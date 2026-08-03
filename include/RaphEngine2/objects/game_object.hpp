@@ -20,8 +20,8 @@ namespace raphEngine::objects
 {
 
     template <class T>
-    concept Comp = requires(T a) {
-        { a } -> std::convertible_to<component::Component>;
+    concept Comp = requires(T* a) {
+        { a } -> std::convertible_to<component::Component*>;
     };
 
     class RAPHENGINE_API GameObject
@@ -38,10 +38,8 @@ namespace raphEngine::objects
 
         virtual void Awake()
         {}
-        virtual void Start()
-        {}
-        virtual void Update()
-        {}
+        virtual void Start() {};
+        virtual void Update() {};
 
         std::string& get_name();
         objects::Transform& get_transform();
@@ -84,10 +82,18 @@ namespace raphEngine::objects
     protected:
         friend raphEngine::Core;
 
+        bool is_active = true;
         std::string name_;
         objects::Transform transform_;
         std::vector<std::unique_ptr<component::Component>> components_;
 
+    private:
+        bool has_started = false;
+        unsigned long id_ = 0;
+
+#ifdef EDITOR_BUILD
+        void ImGui_update();
+#endif
     };
 } // namespace raphEngine::objects
 

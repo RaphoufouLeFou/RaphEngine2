@@ -1,16 +1,15 @@
 #include <RaphEngine2/graphics/graphic_api.hpp>
 #include <RaphEngine2/inputs/mouse.hpp>
 
-#include "imgui.h"
-
 namespace raphEngine::inputs
 {
     bool Mouse::IsMouseButtonPressed(MouseButton button)
     {
-        ImGuiIO& io = ImGui::GetIO();
-        if (io.WantCaptureMouse)
+#ifdef EDITOR_BUILD
+        if (!graphics::GraphicApi::viewport_focused)
             return false;
-        
+#endif
+
         return graphics::GraphicApi::get_api()->GetMouseButtonPressed(
             (int)button);
     }

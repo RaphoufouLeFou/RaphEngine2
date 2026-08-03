@@ -40,9 +40,7 @@ namespace raphEngine::objects
         spawned_game_objects_.push_back(this);
     }
 
-#ifdef EDITOR_BUILD
-
-    void GameObject::ImGui_update()
+    void GameObject::pre_update()
     {
         if (!has_started)
         {
@@ -50,21 +48,31 @@ namespace raphEngine::objects
             Start();
             has_started = true;
         }
+    }
 
-        static GameObject* selected = nullptr;
-        bool sel = selected == this;
+#ifdef EDITOR_BUILD
+
+    static GameObject* selected = nullptr;
+    void GameObject::ImGui_layout()
+    {
+        inspected = selected == this;
         ImGui::Bullet();
-        if (ImGui::Selectable(name_.c_str(), &sel) && selected == this)
+        if (ImGui::Selectable(name_.c_str(), &inspected) && selected == this)
         {
             selected = nullptr;
-            sel = false;
+            inspected = false;
         }
-
-        if (sel)
+        if (inspected)
         {
             selected = this;
+        }
+    }
+
+    void GameObject::ImGui_update()
+    {
+        if (inspected)
+        {
             std::string display_name = name_ + "###" + std::to_string(id_);
-            ImGui::Begin(display_name.c_str());
 
             ImGui::Checkbox("Is active", &is_active);
             ImGui::InputText("Name", &name_);
@@ -90,7 +98,7 @@ namespace raphEngine::objects
                     c->ImGuiPrint();
                 }
             }
-            ImGui::End();
+            // ImGui::End();
             // ImGui::TreePop();
         }
     }

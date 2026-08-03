@@ -90,8 +90,11 @@ namespace raphEngine::objects
     private:
         bool has_started = false;
         unsigned long id_ = 0;
+        bool inspected = false;
+        void pre_update();
 
 #ifdef EDITOR_BUILD
+        void ImGui_layout();
         void ImGui_update();
 #endif
     };

@@ -16,8 +16,6 @@ namespace raphEngine
 {
     graphics::ogl::OpenGL renderer{};
 
-    unsigned int Core::dock_id_right = 0;
-
     void Core::Init(const std::string& title)
     {
         Logger::ConfigureLogger("log.txt", Logger::DEBUG);
@@ -60,20 +58,31 @@ namespace raphEngine
                                           ImGuiDockNodeFlags_DockSpace);
                 ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
                 ImGuiID dock_id_left = 0;
+                ImGuiID dock_id_right = 0;
+                ImGuiID dock_id_down = 0;
                 ImGuiID dock_id_main = dockspace_id;
+                ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Down, 0.20f,
+                                            &dock_id_down, &dock_id_main);
+
                 ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Left, 0.12f,
                                             &dock_id_left, &dock_id_main);
 
                 ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Right, 0.20f,
                                             &dock_id_right, &dock_id_main);
                 ImGui::DockBuilderDockWindow("Layout", dock_id_left);
-                for (auto& go : objects::GameObject::spawned_game_objects_)
+
+                ImGui::DockBuilderDockWindow("Down", dock_id_down);
+                /*
+                for (auto& go :
+                objects::GameObject::spawned_game_objects_)
                 {
                     std::string display_name =
                         go->get_name() + "###" + std::to_string(go->id_);
                     ImGui::DockBuilderDockWindow(display_name.c_str(),
                                                  dock_id_right);
                 }
+                */
+                ImGui::DockBuilderDockWindow("Inspector", dock_id_right);
                 ImGui::DockBuilderDockWindow("Viewport", dock_id_main);
 
                 ImGui::DockBuilderFinish(dockspace_id);
@@ -81,6 +90,27 @@ namespace raphEngine
 
             ImGui::DockSpaceOverViewport(
                 dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
+
+            ImGui::Begin("Down");
+            ImGui::End();
+
+            ImGui::BeginMainMenuBar();
+            if (ImGui::BeginMenu("File"))
+            {
+                ImGui::Text("File menu");
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Edit"))
+            {
+                ImGui::Text("Edit menu");
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Help"))
+            {
+                ImGui::Text("Help menu");
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
 
             ImGui::Begin("Viewport");
             graphics::GraphicApi::viewport_focused = ImGui::IsWindowFocused();
@@ -127,9 +157,18 @@ namespace raphEngine
     {
 #ifdef EDITOR_BUILD
         ImGui::Begin("Layout");
+        for (auto& go : objects::GameObject::spawned_game_objects_)
+        {
+            go->ImGui_layout();
+        }
+        ImGui::End();
+
+        ImGui::Begin("Inspector");
+
 #endif
         for (auto& go : objects::GameObject::spawned_game_objects_)
         {
+            go->pre_update();
 #ifdef EDITOR_BUILD
             go->ImGui_update();
 #endif

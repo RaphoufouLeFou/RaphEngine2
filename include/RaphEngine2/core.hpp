@@ -11,7 +11,6 @@ namespace raphEngine
     public:
         static void Init(const std::string& title = "Untitled");
         static void Run();
-        static unsigned int dock_id_right;
 
     private:
         static void execute_updates();

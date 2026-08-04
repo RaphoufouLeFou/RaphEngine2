@@ -1,4 +1,5 @@
 #include "graphics/ogl/opengl.hpp"
+#include "graphics/debug.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
@@ -160,6 +161,8 @@ namespace raphEngine::graphics::ogl
             object->render();
 
         GLShadowRenderer::debug_draw_lights();
+
+        Debug::getInstance()->RenderAllLines();
 
 #ifdef EDITOR_BUILD
         glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_ms_);

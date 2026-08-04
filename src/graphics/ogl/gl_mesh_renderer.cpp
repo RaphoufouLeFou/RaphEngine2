@@ -44,7 +44,6 @@ namespace raphEngine::graphics
 
         const auto* dir_light = ShadowRenderer::GetDirectionalLight();
 
-
         if (dir_light)
         {
             sh->setValue("lightIntensity", dir_light->intensity_);
@@ -52,11 +51,11 @@ namespace raphEngine::graphics
                 "lightDir",
                 Utils::GetDirectionFromRotation(
                     dir_light->parent_object->get_transform().get_rotation()));
-            
         }
-        else {
+        else
+        {
             sh->setValue("lightIntensity", 0.0f);
-            sh->setValue("lightDir",glm::vec3(0));
+            sh->setValue("lightDir", glm::vec3(0));
         }
 
         sh->setValue("viewPos",
@@ -92,7 +91,7 @@ namespace raphEngine::graphics
             sh->setValue(names[i], i);
         }
 
-            glActiveTexture(GL_TEXTURE4);
+        glActiveTexture(GL_TEXTURE4);
         sh->setValue("shadowMap", 4);
         glBindTexture(
             GL_TEXTURE_2D_ARRAY,

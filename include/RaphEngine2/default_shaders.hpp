@@ -149,6 +149,19 @@ void main()
 
 )";
 
+inline const char* debug_line_vs_shader = R"(
+#version 330 core
+
+layout(location = 0) in vec3 aPos;
+
+uniform mat4 u_MVP;
+
+void main()
+{
+    gl_Position = u_MVP * vec4(aPos, 1.0);
+}
+)";
+
 inline const char* default_shadow_fs_shader = R"(
 #version 410 core
 
@@ -170,6 +183,19 @@ void main()
     gl_Position = projection * view * vec4(aPos, 1.0);
 }
 
+)";
+
+inline const char* debug_line_fs_shader = R"(
+#version 330 core
+
+out vec4 FragColor;
+
+uniform vec3 u_Color;
+
+void main()
+{
+    FragColor = vec4(u_Color, 1.0);
+}
 )";
 
 inline const char* default_shadow_vs_shader = R"(

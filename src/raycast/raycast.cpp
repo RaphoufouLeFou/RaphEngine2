@@ -2,6 +2,7 @@
 #include "RaphEngine2/raycast/raycast.hpp"
 #include "component/camera_component.hpp"
 #include "component/mesh_component.hpp"
+#include "graphics/debug.hpp"
 #include "graphics/graphic_api.hpp"
 #include "inputs/mouse.hpp"
 
@@ -109,6 +110,8 @@ namespace raphEngine
                                 glm::vec3& out_normal,
                                 objects::GameObject** objOut, int layer)
     {
+        graphics::Debug::getInstance()->DrawLine(
+            origin, origin + direction * 1000.0f, { 1, 0, 0 }, true);
         glm::vec3 oldIntersectionPoint = glm::vec3(0);
         bool hitFound = false;
 
@@ -223,6 +226,7 @@ namespace raphEngine
         glm::vec3 direction = GetDirectionFromScreen(screenPos);
         glm::vec3 camPos =
             component::CameraComponent::active_camera->get_position();
+
         return FromPoint(camPos, direction, OutRayInfo, layer);
     }
     bool RayCast::FromMouse(RayInfo* OutRayInfo, int layer)

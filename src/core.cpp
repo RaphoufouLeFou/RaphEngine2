@@ -2,6 +2,7 @@
 
 #include "RaphEngine2/time_utils.hpp"
 #include "graphics/ogl/opengl.hpp"
+#include "graphics/debug.hpp"
 #include "logger/logger.hpp"
 #include "objects/game_object.hpp"
 #include "settings/graphics.hpp"
@@ -35,6 +36,7 @@ namespace raphEngine
 #endif
 
         renderer.Init(title);
+        graphics::Debug::getInstance()->Init();
     }
 
     void Core::Run()
@@ -64,7 +66,7 @@ namespace raphEngine
                 ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Down, 0.20f,
                                             &dock_id_down, &dock_id_main);
 
-                ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Left, 0.12f,
+                ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Left, 0.20f,
                                             &dock_id_left, &dock_id_main);
 
                 ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Right, 0.20f,
@@ -131,6 +133,8 @@ namespace raphEngine
             execute_updates();
             execute_components_updates();
 
+            graphics::Debug::getInstance()->DrawLine(glm::vec3(0, 0, 0),
+                                                     glm::vec3(100, 2, 3));
             renderer.Render();
 
 #ifdef EDITOR_BUILD

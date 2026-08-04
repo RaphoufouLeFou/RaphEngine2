@@ -116,6 +116,11 @@ namespace raphEngine
 
             ImGui::Begin("Viewport");
             graphics::GraphicApi::viewport_focused = ImGui::IsWindowFocused();
+
+            ImVec2 viewportScreenPos = ImGui::GetCursorScreenPos();
+            graphics::GraphicApi::viewport_pos_x = viewportScreenPos.x;
+            graphics::GraphicApi::viewport_pos_y = viewportScreenPos.y;
+
             ImVec2 avail = ImGui::GetContentRegionAvail();
             renderer.ResizeViewportFramebuffer((int)avail.x, (int)avail.y);
             ImGui::Image(renderer.GetViewportTexture(), avail, ImVec2(0, 1),

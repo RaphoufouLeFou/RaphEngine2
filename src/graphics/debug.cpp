@@ -3,7 +3,6 @@
 #include <RaphEngine2/export.hpp>
 #include <memory>
 
-#include "RaphEngine2/graphics/ogl/gl_mesh_renderer.hpp"
 #include "graphics/ogl/gl_debug.hpp"
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"

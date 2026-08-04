@@ -51,6 +51,10 @@ namespace raphEngine::graphics
 #ifdef EDITOR_BUILD
         static inline int viewport_res_x = 0;
         static inline int viewport_res_y = 0;
+
+        static inline float viewport_pos_x = 0.0f;
+        static inline float viewport_pos_y = 0.0f;
+
         static inline bool viewport_focused = false;
 #endif
 

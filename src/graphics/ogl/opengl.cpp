@@ -280,6 +280,12 @@ namespace raphEngine::graphics::ogl
     {
         double x, y;
         glfwGetCursorPos(window, &x, &y);
+
+#ifdef EDITOR_BUILD
+        x -= graphics::GraphicApi::viewport_pos_x;
+        y -= graphics::GraphicApi::viewport_pos_y;
+#endif
+
         return glm::vec2(x, y);
     }
 

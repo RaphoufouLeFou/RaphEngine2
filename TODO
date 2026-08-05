@@ -15,7 +15,7 @@ Handle big terrains
 Add vegetation
 Add water planes
 Add smooth lod transitions
-Implement ray casting
+Fix ray casting
 Add a particle system
 Add a scene manager
 Add bloom
@@ -29,6 +29,8 @@ God rays ?
 Add vulkan / D3D11 / D3D12
 Assets compressions
 Glass/Transparency
-Reflections ?
+Reflections (screen space)
 Start coding the Editor
 Add a guizmo
+Trains
+In-game console (ImGui)

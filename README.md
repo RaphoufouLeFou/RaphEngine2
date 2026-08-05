@@ -1,9 +1,9 @@
 # RaphEngine2
-RaphEngine2 is the second version of the original RaphEngine (as the name suggests).
-It's a game engine, built to handle management games (in the style of cities skyline or transport fever).
-The engine is multi-platform (Currently Windows + Linux).
-For now, it uses OpenGL as the graphics API, but the graphics backend can be easely changed for another API.
-To use the game engine a create your own game with it, I suggest you to take a look at the [RaphEngine2-example](https://github.com/RaphoufouLeFou/RaphEngine2-example) github. You will find a game example, and some more documentation (TODO).
+RaphEngine2 is the second version of the original RaphEngine (as the name suggests).<br>
+It's a game engine, built to handle management games (in the style of cities skyline or transport fever).<br>
+The engine is multi-platform (Currently Windows + Linux).<br>
+For now, it uses OpenGL as the graphics API, but the graphics backend can be easely changed for another API.<br>
+To use the game engine a create your own game with it, I suggest you to take a look at the [RaphEngine2-example](https://github.com/RaphoufouLeFou/RaphEngine2-example) github. You will find a game example, and some more documentation (TODO).<br>
 
 
 ## Features
@@ -52,7 +52,8 @@ And more little things.
 
 # Project status
 
-The project is currently in developement. ETA: in a few years
+Started the 12th of febuary 2026.<br>
+The project is currently in active developement. ETA: in a few years
 
 # How to build
 

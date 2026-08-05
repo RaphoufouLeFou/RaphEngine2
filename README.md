@@ -1,5 +1,54 @@
 # RaphEngine2
-A home-made game engine in c++
+RaphEngine2 is the second version of the original RaphEngine (as the name suggests).
+It's a game engine, built to handle management games (in the style of cities skyline or transport fever).
+The engine is multi-platform (Currently Windows + Linux).
+For now, it uses OpenGL as the graphics API, but the graphics backend can be easely changed for another API.
+To use the game engine a create your own game with it, I suggest you to take a look at the [RaphEngine2-example](https://github.com/RaphoufouLeFou/RaphEngine2-example) github. You will find a game example, and some more documentation (TODO).
+
+
+## Features
+
+As of today, the engine handle :
+- Mesh/Texture loading
+- LODs
+- Smooth shadow and shadows LODs
+- Raycasts
+- Settings
+- Customs shaders
+- ImGui
+- Logger
+- The game loop
+- Input system
+
+And more little things.
+
+## In the TODO list (Not in order)
+
+- Add the UI (RmlUI)
+- Spot and point lights
+- Instancing
+- Culling
+- Add some skyboxes
+- Handle big terrains
+- Vegetation
+- Smooth lod transitions
+- Particle system
+- Scene manager
+- Bloom
+- Terrain painting
+- Sound system
+- Animations
+- Shader clouds
+- God rays
+- Add vulkan / D3D11 / D3D12
+- Assets compressions
+- Glass/Transparency
+- Reflections
+
+## Some screenshots
+
+![Engine](images/raphengine2.png)
+
 
 # Project status
 
@@ -8,6 +57,15 @@ The project is currently in developement. ETA: in a few years
 # How to build
 
 ## Linux
+
+### <ins>TLDR<ins>
+
+To build shared library on linux, simply execute
+```shell
+./compile.sh
+```
+
+### <ins>Now if you want the detailed step, it's here:<ins>
 
 To build the shared library, go to the root folder, and execute
 ```shell
@@ -33,6 +91,13 @@ mv ./build/editor/RaphEditor ./
 You can start the editor with `./RaphEditor`
 
 ## Windows
+
+### <ins>TLDR<ins>
+
+To build shared library on linux, simply execute
+```shell
+compile.bat
+```
 
 ### <ins>Build the library<ins>
 

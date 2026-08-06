@@ -76,6 +76,9 @@ set_target_properties(RaphEngine2 PROPERTIES
 # dependencies
 # ========================
 
+find_package(TBB REQUIRED)
+target_link_libraries(RaphEngine2 PUBLIC TBB::tbb)
+
 #imgui
 
 target_include_directories(RaphEngine2

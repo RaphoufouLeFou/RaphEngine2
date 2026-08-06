@@ -10,6 +10,7 @@ namespace raphEngine::objects
     template <Comp T, class... Args>
     T* GameObject::add_component(Args&&... args)
     {
+        Logger::LogDebug("adding a component to ", name_);
         std::unique_ptr<component::Component> c = std::make_unique<T>(args...);
         Logger::LogDebug("adding ", c->get_name());
         c->parent_object = this;

@@ -8,9 +8,9 @@
 #include <glm/glm.hpp>
 
 #include "component.hpp"
-#include "component/mesh_component.hpp"
-#include "objects/mesh.hpp"
-#include "utils.hpp"
+#include "RaphEngine2/component/mesh_component.hpp"
+#include "RaphEngine2/objects/mesh.hpp"
+#include "RaphEngine2/utils.hpp"
 
 namespace raphEngine::component
 {

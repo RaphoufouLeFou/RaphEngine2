@@ -1,7 +1,9 @@
+#include <execution>
 #include <objects/game_object.hpp>
 #include <string>
 #include "RaphEngine2/raycast/raycast.hpp"
 #include "component/camera_component.hpp"
+#include "component/collider_component.hpp"
 #include "component/mesh_component.hpp"
 #include "graphics/debug.hpp"
 #include "graphics/graphic_api.hpp"
@@ -122,80 +124,40 @@ namespace raphEngine
                 objects::GameObject::spawned_game_objects_[i];
             if (obj->raycast_layer_ != layer)
                 continue;
-            auto mesh_component =
-                obj->get_first_component_of_type<component::MeshComponent>();
+            auto collider_component = obj->get_first_component_of_type<
+                component::ColliderComponent>();
 
-            if (mesh_component == nullptr)
+            if (collider_component == nullptr)
                 continue;
-            /*
-                        if (obj->colliders.size() == 0)
-                            continue;
-                        if (obj->activeSelf == false)
-                            continue;
-            */
 
-            auto& meshes = mesh_component->lods_->get_lod_at_level(0)->meshes_;
-            int meshCount = static_cast<int>(meshes.size());
+            if (!obj->is_active)
+                continue;
 
-            for (int j = 0; j < meshCount; j++)
-            {
-                auto& mesh = meshes[j];
-                glm::mat4 model = obj->get_transform().get_model_matrix()
-                    * mesh->get_model_matrix();
-                glm::mat4 InvModel = glm::inverse(model);
-                // Normal matrix = transpose(inverse(model)); InvModel is
-                // already inverse(model), so just transpose it. Needed so
-                // normals stay correct under rotation and non-uniform scale.
-                glm::mat3 normalMatrix = glm::transpose(glm::mat3(InvModel));
-                glm::vec3 LocalOrigin = InvModel * glm::vec4(origin, 1);
-                glm::vec3 LocalDirection =
-                    GetNewDirection(origin, LocalOrigin, direction, InvModel);
+            glm::mat4 model = obj->get_transform().get_model_matrix();
+            glm::mat4 InvModel = glm::inverse(model);
+            glm::mat3 normalMatrix = glm::transpose(glm::mat3(InvModel));
+            glm::vec3 LocalOrigin = InvModel * glm::vec4(origin, 1);
+            glm::vec3 LocalDirection =
+                GetNewDirection(origin, LocalOrigin, direction, InvModel);
 
-                /*                const glm::vec3 Scale =
-                   obj->get_transform().get_scale(); float maxScale =
-                   fmax(fmax(Scale.x, Scale.y), Scale.z);
+            // TODO: calculate bounding box intersection
 
-                                if (!InInfluenceSphere(LocalOrigin,
-                   LocalDirection, model * glm::vec4(mesh.InfSpehereCenter, 1),
-                                                       maxScale *
-                   mesh.InfSphereRadius)) continue;
-                */
+            std::mutex hitMutex;
 
-                const auto& verts = mesh->get_vertices();
-                const auto& indices = mesh->get_indices();
-                bool isIndexed = !indices.empty();
-                size_t triSource = isIndexed ? indices.size() : verts.size();
-                int triCount = static_cast<int>(triSource / 3);
-
-                for (int k = 0; k < triCount; k++)
-                {
-                    unsigned int i0, i1, i2;
-                    if (isIndexed)
-                    {
-                        i0 = indices[k * 3];
-                        i1 = indices[k * 3 + 1];
-                        i2 = indices[k * 3 + 2];
-                    }
-                    else
-                    {
-                        i0 = static_cast<unsigned int>(k * 3);
-                        i1 = static_cast<unsigned int>(k * 3 + 1);
-                        i2 = static_cast<unsigned int>(k * 3 + 2);
-                    }
-
-                    Utils::Triangle objTri;
-                    objTri.a = verts[i0].position;
-                    objTri.b = verts[i1].position;
-                    objTri.c = verts[i2].position;
-
+            std::for_each(
+                std::execution::par, collider_component->collider_mesh.begin(),
+                collider_component->collider_mesh.end(),
+                [&](const auto& objTri) {
                     glm::vec3 localHitPoint;
                     if (!ray_intersects_triangle(LocalOrigin, LocalDirection,
                                                  objTri, localHitPoint))
-                        continue;
+                        return;
 
                     glm::vec3 worldHitPoint =
                         model * glm::vec4(localHitPoint, 1);
-                    if (hitFound == false
+
+                    std::lock_guard<std::mutex> lock(hitMutex);
+                    if (!hitFound
                         || glm::distance(worldHitPoint, origin)
                             < glm::distance(oldIntersectionPoint, origin))
                     {
@@ -207,8 +169,7 @@ namespace raphEngine
                             cross(objTri.b - objTri.a, objTri.c - objTri.a));
                         out_normal = normalize(normalMatrix * localNormal);
                     }
-                }
-            }
+                });
         }
         out_intersection_point = oldIntersectionPoint;
         if (hitFound)

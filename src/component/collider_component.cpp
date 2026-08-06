@@ -56,6 +56,7 @@ namespace raphEngine::component
 
     void ColliderComponent::add_tri_to_collider_mesh(const objects::Mesh* mesh)
     {
+        glm::mat4 Model = mesh->get_model_matrix();
         const auto& verts = mesh->get_vertices();
         const auto& indices = mesh->get_indices();
         bool isIndexed = !indices.empty();
@@ -81,9 +82,11 @@ namespace raphEngine::component
             }
 
             Utils::Triangle objTri;
-            objTri.a = verts[i0].position;
-            objTri.b = verts[i1].position;
-            objTri.c = verts[i2].position;
+
+            objTri.a = Model * glm::vec4(verts[i0].position, 1);
+            objTri.b = Model * glm::vec4(verts[i1].position, 1);
+            objTri.c = Model * glm::vec4(verts[i2].position, 1);
+
             collider_mesh.push_back(objTri);
         }
     }

@@ -136,9 +136,8 @@ namespace raphEngine::graphics
 
         mesh_shader->setValue(
             "model",
-            mesh->model_matrix_
-                * mesh->parent_object->get_transform()
-                      .get_model_matrix() /* * mesh->ModelMatrix*/);
+            mesh->parent_object->get_transform().get_model_matrix()
+                * mesh->model_matrix_);
 
         bool HaveTexture = false;
         bool HaveNormalMap = false;

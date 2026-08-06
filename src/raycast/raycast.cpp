@@ -105,13 +105,14 @@ namespace raphEngine
         return glm::normalize(NewDirection);
     }
 
+    void RayCast::DebugUpdate()
+    {}
+
     bool RayCast::haveCollision(glm::vec3 origin, glm::vec3 direction,
                                 glm::vec3& out_intersection_point,
                                 glm::vec3& out_normal,
                                 objects::GameObject** objOut, int layer)
     {
-        graphics::Debug::getInstance()->DrawLine(
-            origin, origin + direction * 1000.0f, { 1, 0, 0 }, true);
         glm::vec3 oldIntersectionPoint = glm::vec3(0);
         bool hitFound = false;
 
@@ -217,6 +218,16 @@ namespace raphEngine
             }
         }
         out_intersection_point = oldIntersectionPoint;
+        if (hitFound)
+        {
+            graphics::Debug::getInstance()->DrawLine(
+                origin, origin + direction * 2000.0f, { 0, 1, 0 }, true);
+        }
+        else
+        {
+            graphics::Debug::getInstance()->DrawLine(
+                origin, origin + direction * 2000.0f, { 1, 0, 0 }, true);
+        }
         return hitFound;
     }
 
@@ -232,6 +243,10 @@ namespace raphEngine
     bool RayCast::FromMouse(RayInfo* OutRayInfo, int layer)
     {
         glm::vec2 screenPos = inputs::Mouse::GetMousePos();
+#ifdef EDITOR_BUILD
+        screenPos.x -= graphics::GraphicApi::viewport_pos_x;
+        screenPos.y -= graphics::GraphicApi::viewport_pos_y;
+#endif
         return FromCamera(screenPos, OutRayInfo, layer);
     }
 

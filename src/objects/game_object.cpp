@@ -82,11 +82,16 @@ namespace raphEngine::objects
             if (ImGui::CollapsingHeader("Transform"))
             {
                 ImGui::DragFloat3("Position", &get_transform().get_position().x,
-                                  0.05);
+                                  1);
                 ImGui::DragFloat3("Rotation", &get_transform().get_rotation().x,
-                                  0.01);
-                ImGui::DragFloat3("Scale", &get_transform().get_scale().x,
-                                  0.01);
+                                  1);
+                ImGui::DragFloat3("Scale", &get_transform().get_scale().x, 1);
+                ImGui::Text("Model matrix");
+                glm::mat4 matrix = get_transform().get_model_matrix();
+                ImGui::InputFloat4("[0]", &matrix[0].x);
+                ImGui::InputFloat4("[1]", &matrix[1].x);
+                ImGui::InputFloat4("[2]", &matrix[2].x);
+                ImGui::InputFloat4("[3]", &matrix[3].x);
             }
 
             ImGui::Separator();

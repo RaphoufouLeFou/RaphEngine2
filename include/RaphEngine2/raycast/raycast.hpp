@@ -29,10 +29,12 @@ namespace raphEngine
         static bool FromPoint(glm::vec3 origin, glm::vec3 direction,
                               RayInfo* OutRayInfo, int layer = 0);
 
-    public:
+        static void DebugUpdate();
+
+    private:
         static bool haveCollision(glm::vec3 origin, glm::vec3 direction,
-                                    glm::vec3& out_intersection_point,
-                                    glm::vec3& out_normal,
-                                    objects::GameObject** objOut, int layer);
+                                  glm::vec3& out_intersection_point,
+                                  glm::vec3& out_normal,
+                                  objects::GameObject** objOut, int layer);
     };
-}
+} // namespace raphEngine

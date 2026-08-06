@@ -1,4 +1,3 @@
-
 #define GLM_ENABLE_EXPERIMENTAL
 #define STB_IMAGE_IMPLEMENTATION
 #include <GL/glew.h>
@@ -245,6 +244,11 @@ namespace raphEngine::objects
                 parent = parent->mParent;
             }
 
+            glm::mat4 m = kYupToZup * AiMatToGlm(globalTransform);
+            Logger::LogDebug("scaleX=", glm::length(glm::vec3(m[0])),
+                             " scaleY=", glm::length(glm::vec3(m[1])),
+                             " scaleZ=", glm::length(glm::vec3(m[2])));
+
             object_mesh->add_mesh(processMesh(
                 mesh, scene, filter, kYupToZup * AiMatToGlm(globalTransform)));
         }
@@ -263,6 +267,11 @@ namespace raphEngine::objects
             path,
             aiProcess_Triangulate | aiProcess_GenSmoothNormals
                 | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+
+        float unitScale = 1.0f;
+        if (scene->mMetaData)
+            scene->mMetaData->Get("UnitScaleFactor", unitScale);
+        Logger::LogDebug("UnitScaleFactor = ", unitScale);
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE
             || !scene->mRootNode)

@@ -250,8 +250,9 @@ namespace raphEngine::graphics
 
         shadow_shader->setValue(
             "model",
-            mesh->model_matrix_
-                * mesh->parent_object->get_transform().get_model_matrix());
+
+            mesh->parent_object->get_transform().get_model_matrix()
+                * mesh->model_matrix_);
 
         const graphics::GLMeshBuffers* mesh_buffers =
             dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers());

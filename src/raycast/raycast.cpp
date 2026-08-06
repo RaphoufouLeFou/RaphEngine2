@@ -8,6 +8,7 @@
 #include "inputs/mouse.hpp"
 #include "logger/logger.hpp"
 #include "time_utils.hpp"
+#include "utils.hpp"
 
 namespace raphEngine
 {
@@ -38,17 +39,10 @@ namespace raphEngine
         return rayDirection;
     }
 
-    typedef struct triangle
-    {
-        glm::vec3 a;
-        glm::vec3 b;
-        glm::vec3 c;
-    } triangle;
-
     // Moller-Trumbore ray/triangle intersection (adapted from Wikipedia)
     bool ray_intersects_triangle(const glm::vec3& ray_origin,
                                  const glm::vec3& ray_vector,
-                                 const triangle& tri,
+                                 const Utils::Triangle& tri,
                                  glm::vec3& out_intersection_point)
     {
         constexpr float epsilon = std::numeric_limits<float>::epsilon();
@@ -189,7 +183,7 @@ namespace raphEngine
                         i2 = static_cast<unsigned int>(k * 3 + 2);
                     }
 
-                    triangle objTri;
+                    Utils::Triangle objTri;
                     objTri.a = verts[i0].position;
                     objTri.b = verts[i1].position;
                     objTri.c = verts[i2].position;

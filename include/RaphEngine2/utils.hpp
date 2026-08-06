@@ -15,6 +15,13 @@ namespace raphEngine
     class RAPHENGINE_API Utils
     {
     public:
+        struct Triangle
+        {
+            glm::vec3 a;
+            glm::vec3 b;
+            glm::vec3 c;
+        };
+
         static glm::vec3 GetDirectionFromRotation(const glm::vec3& rotation);
     };
 } // namespace raphEngine

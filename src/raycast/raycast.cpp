@@ -139,21 +139,23 @@ namespace raphEngine
 
             auto& meshes = mesh_component->lods_->get_lod_at_level(0)->meshes_;
             int meshCount = static_cast<int>(meshes.size());
-            glm::mat4 model = obj->get_transform().get_model_matrix();
-            glm::mat4 InvModel = glm::inverse(model);
-            // Normal matrix = transpose(inverse(model)); InvModel is already
-            // inverse(model), so just transpose it. Needed so normals stay
-            // correct under rotation and non-uniform scale.
-            glm::mat3 normalMatrix = glm::transpose(glm::mat3(InvModel));
-            glm::vec3 LocalOrigin = InvModel * glm::vec4(origin, 1);
-            glm::vec3 LocalDirection =
-                GetNewDirection(origin, LocalOrigin, direction, InvModel);
 
             Logger::LogInfo("Starting to calculate raycast ", i, " with ",
                             meshCount, " meshes");
             for (int j = 0; j < meshCount; j++)
             {
                 auto& mesh = meshes[j];
+                glm::mat4 model = obj->get_transform().get_model_matrix()
+                    * mesh->get_model_matrix();
+                glm::mat4 InvModel = glm::inverse(model);
+                // Normal matrix = transpose(inverse(model)); InvModel is
+                // already inverse(model), so just transpose it. Needed so
+                // normals stay correct under rotation and non-uniform scale.
+                glm::mat3 normalMatrix = glm::transpose(glm::mat3(InvModel));
+                glm::vec3 LocalOrigin = InvModel * glm::vec4(origin, 1);
+                glm::vec3 LocalDirection =
+                    GetNewDirection(origin, LocalOrigin, direction, InvModel);
+
                 /*                const glm::vec3 Scale =
                    obj->get_transform().get_scale(); float maxScale =
                    fmax(fmax(Scale.x, Scale.y), Scale.z);
@@ -163,11 +165,7 @@ namespace raphEngine
                                                        maxScale *
                    mesh.InfSphereRadius)) continue;
                 */
-                // Support both indexed meshes (indices_ populated, vertices_
-                // shared) and non-indexed meshes (indices_ empty, vertices_
-                // laid out as flat triangle triples). Using indices_.size()
-                // unconditionally silently produces triCount == 0 -- and
-                // therefore zero hits -- on non-indexed meshes.
+
                 const auto& verts = mesh->get_vertices();
                 const auto& indices = mesh->get_indices();
                 bool isIndexed = !indices.empty();

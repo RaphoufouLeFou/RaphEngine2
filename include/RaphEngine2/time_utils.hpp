@@ -11,5 +11,7 @@ namespace raphEngine
     public:
         static double GetTime();
         static double deltaTime;
+        static void StartGlobalTimer();
+        static long long StopGlobalTimerAndGet_uS();
     };
 } // namespace raphEngine

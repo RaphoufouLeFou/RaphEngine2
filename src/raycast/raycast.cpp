@@ -1,10 +1,13 @@
 #include <objects/game_object.hpp>
+#include <string>
 #include "RaphEngine2/raycast/raycast.hpp"
 #include "component/camera_component.hpp"
 #include "component/mesh_component.hpp"
 #include "graphics/debug.hpp"
 #include "graphics/graphic_api.hpp"
 #include "inputs/mouse.hpp"
+#include "logger/logger.hpp"
+#include "time_utils.hpp"
 
 namespace raphEngine
 {
@@ -140,8 +143,6 @@ namespace raphEngine
             auto& meshes = mesh_component->lods_->get_lod_at_level(0)->meshes_;
             int meshCount = static_cast<int>(meshes.size());
 
-            Logger::LogInfo("Starting to calculate raycast ", i, " with ",
-                            meshCount, " meshes");
             for (int j = 0; j < meshCount; j++)
             {
                 auto& mesh = meshes[j];
@@ -251,6 +252,9 @@ namespace raphEngine
     bool RayCast::FromPoint(glm::vec3 origin, glm::vec3 direction,
                             RayInfo* OutRayInfo, int layer)
     {
+        Time::StartGlobalTimer();
+        static long long mean_time = 0;
+        static int hit_count = 0;
         glm::vec3 intersectionPoint;
         glm::vec3 normal;
         objects::GameObject* objOut = nullptr;
@@ -265,8 +269,21 @@ namespace raphEngine
             OutRayInfo->hitNormal.z = normal.z;
             OutRayInfo->hitObject = objOut;
             OutRayInfo->hitDistance = glm::distance(origin, intersectionPoint);
+            auto calcul_time = Time::StopGlobalTimerAndGet_uS();
+            mean_time += calcul_time;
+            hit_count++;
+            Logger::LogDebug("Resolved raycast with a time of ",
+                             std::to_string(calcul_time), " us (",
+                             mean_time / hit_count, " us in mean)");
             return true;
         }
+
+        auto calcul_time = Time::StopGlobalTimerAndGet_uS();
+        mean_time += calcul_time;
+        hit_count++;
+        Logger::LogDebug("Failed raycast with a time of ",
+                         std::to_string(calcul_time), " us (",
+                         mean_time / hit_count, " us in mean)");
         return false;
     }
 } // namespace raphEngine

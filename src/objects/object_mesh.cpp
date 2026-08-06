@@ -234,7 +234,6 @@ namespace raphEngine::objects
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
         {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-
             aiMatrix4x4 globalTransform = node->mTransformation;
             aiNode* parent = node->mParent;
 

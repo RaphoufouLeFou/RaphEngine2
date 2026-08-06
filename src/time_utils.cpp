@@ -16,4 +16,19 @@ namespace raphEngine
                 .count();
         return (double)microseconds / 1000;
     }
+    static auto t = std::chrono::high_resolution_clock::now();
+    void Time::StartGlobalTimer()
+    {
+        t = std::chrono::high_resolution_clock::now();
+    }
+
+    long long Time::StopGlobalTimerAndGet_uS()
+    {
+        auto now = std::chrono::high_resolution_clock::now();
+        long long microseconds =
+            std::chrono::duration_cast<std::chrono::microseconds>(now - t)
+                .count();
+        return microseconds;
+    }
+
 } // namespace raphEngine

@@ -14,6 +14,14 @@
 
 namespace raphEngine::component
 {
+    struct TriangleSOA
+    {
+        std::vector<float> ax, ay, az, bx, by, bz, cx, cy, cz;
+        std::vector<size_t> batch_starts; // cached once: 0, 8, 16, ...
+        size_t count = 0;
+        size_t paddedCount = 0;
+    };
+
     class RAPHENGINE_API ColliderComponent : public Component
     {
     public:
@@ -32,10 +40,19 @@ namespace raphEngine::component
         void ImGuiPrint() override;
 #endif
         std::vector<Utils::Triangle> collider_mesh;
-        glm::vec3 bounding_max;
-        glm::vec3 bounding_min;
+        glm::vec3 bounding_min{ 0.0f };
+        glm::vec3 bounding_max{ 0.0f };
+
+        void update_cached_transform(const glm::mat4& model);
+
+        glm::mat4 cached_model_{ 0.0f }; // != any real model matrix so the
+        glm::mat4 cached_inv_model_{ 1.0f }; // first raycast always recomputes
+        glm::mat3 cached_normal_matrix_{ 1.0f };
+
+        TriangleSOA collider_mesh_soa;
 
     private:
+        void build_soa_cache();
         void get_collider_from_mesh_component(const MeshComponent&);
         void add_tri_to_collider_mesh(const objects::Mesh*);
         void calculate_bounding_box();

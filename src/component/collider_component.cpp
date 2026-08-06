@@ -52,11 +52,13 @@ namespace raphEngine::component
             add_tri_to_collider_mesh(object_mesh->meshes_[i].get());
         }
         calculate_bounding_box();
+        build_soa_cache();
     }
 
     void ColliderComponent::add_tri_to_collider_mesh(const objects::Mesh* mesh)
     {
-        glm::mat4 Model = mesh->get_model_matrix();
+        const glm::mat4 meshModel = mesh->get_model_matrix();
+
         const auto& verts = mesh->get_vertices();
         const auto& indices = mesh->get_indices();
         bool isIndexed = !indices.empty();
@@ -82,11 +84,12 @@ namespace raphEngine::component
             }
 
             Utils::Triangle objTri;
-
-            objTri.a = Model * glm::vec4(verts[i0].position, 1);
-            objTri.b = Model * glm::vec4(verts[i1].position, 1);
-            objTri.c = Model * glm::vec4(verts[i2].position, 1);
-
+            objTri.a =
+                glm::vec3(meshModel * glm::vec4(verts[i0].position, 1.0f));
+            objTri.b =
+                glm::vec3(meshModel * glm::vec4(verts[i1].position, 1.0f));
+            objTri.c =
+                glm::vec3(meshModel * glm::vec4(verts[i2].position, 1.0f));
             collider_mesh.push_back(objTri);
         }
     }
@@ -116,6 +119,56 @@ namespace raphEngine::component
                 bounding_max.z = std::max(bounding_max.z, p.z);
             }
         }
+    }
+
+    void ColliderComponent::update_cached_transform(const glm::mat4& model)
+    {
+        if (model == cached_model_)
+            return;
+
+        cached_model_ = model;
+        cached_inv_model_ = glm::inverse(model);
+        cached_normal_matrix_ = glm::transpose(glm::mat3(cached_inv_model_));
+    }
+
+    void ColliderComponent::build_soa_cache()
+    {
+#if defined(__AVX2__)
+        size_t count = collider_mesh.size();
+        size_t paddedCount = ((count + 7) / 8) * 8;
+
+        collider_mesh_soa.ax.assign(paddedCount, 0.0f);
+        collider_mesh_soa.ay.assign(paddedCount, 0.0f);
+        collider_mesh_soa.az.assign(paddedCount, 0.0f);
+        collider_mesh_soa.bx.assign(paddedCount, 0.0f);
+        collider_mesh_soa.by.assign(paddedCount, 0.0f);
+        collider_mesh_soa.bz.assign(paddedCount, 0.0f);
+        collider_mesh_soa.cx.assign(paddedCount, 0.0f);
+        collider_mesh_soa.cy.assign(paddedCount, 0.0f);
+        collider_mesh_soa.cz.assign(paddedCount, 0.0f);
+
+        for (size_t k = 0; k < count; k++)
+        {
+            const Utils::Triangle& t = collider_mesh[k];
+            collider_mesh_soa.ax[k] = t.a.x;
+            collider_mesh_soa.ay[k] = t.a.y;
+            collider_mesh_soa.az[k] = t.a.z;
+            collider_mesh_soa.bx[k] = t.b.x;
+            collider_mesh_soa.by[k] = t.b.y;
+            collider_mesh_soa.bz[k] = t.b.z;
+            collider_mesh_soa.cx[k] = t.c.x;
+            collider_mesh_soa.cy[k] = t.c.y;
+            collider_mesh_soa.cz[k] = t.c.z;
+        }
+
+        collider_mesh_soa.count = count;
+        collider_mesh_soa.paddedCount = paddedCount;
+
+        size_t numBatches = paddedCount / 8;
+        collider_mesh_soa.batch_starts.resize(numBatches);
+        for (size_t b = 0; b < numBatches; b++)
+            collider_mesh_soa.batch_starts[b] = b * 8;
+#endif
     }
 
     void ColliderComponent::Start()

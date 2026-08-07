@@ -9,19 +9,15 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <iostream>
-#include <memory>
 
 #include "graphics/ogl/gl_shadow_renderer.hpp"
 #include "RaphEngine2/component/camera_component.hpp"
 #include "graphics/mesh_renderer.hpp"
 #include "graphics/ogl/gl_mesh_buffers.hpp"
 #include "graphics/ogl/gl_shader.hpp"
-#include "graphics/graphic_api.hpp"
 #include "graphics/shader.hpp"
 #include "objects/mesh.hpp"
 #include "utils.hpp"
-#include "settings/graphics.hpp"
 #include <RaphEngine2/settings/settings.hpp>
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/graphics/shadow_renderer.hpp>

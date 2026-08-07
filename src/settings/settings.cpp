@@ -1,7 +1,6 @@
 #include "RaphEngine2/settings/settings.hpp"
 
 #include <fstream>
-#include <iostream>
 
 #include "logger/logger.hpp"
 

@@ -2,8 +2,6 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 
-#include <string>
-
 #include "export.hpp"
 
 #include <glm/glm.hpp>

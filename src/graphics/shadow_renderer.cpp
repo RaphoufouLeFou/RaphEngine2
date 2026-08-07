@@ -5,7 +5,6 @@
 
 #include "RaphEngine2/component/camera_component.hpp"
 #include "RaphEngine2/graphics/ogl/gl_shadow_renderer.hpp"
-#include "RaphEngine2/objects/mesh.hpp"
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 #include "graphics/graphic_api.hpp"
@@ -136,9 +135,10 @@ namespace raphEngine::graphics
 
         glm::vec3 light_rot = glm::vec3(0);
 
-        if(dir_light)
+        if (dir_light)
         {
-            light_rot = dir_light->parent_object->get_transform().get_rotation();
+            light_rot =
+                dir_light->parent_object->get_transform().get_rotation();
         }
 
         glm::mat4 baseLightView = glm::lookAt(

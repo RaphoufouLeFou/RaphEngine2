@@ -5,7 +5,6 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <iostream>
 #include <memory>
 
 #include "default_shaders.hpp"

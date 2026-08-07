@@ -1,11 +1,8 @@
 #include "component/camera_component.hpp"
 
 #include <RaphEngine2/graphics/shader.hpp>
-#include <initializer_list>
-#include <iostream>
-#include <memory>
-#include <vector>
-
+#include <RaphEngine2/objects/transform.hpp>
+#include <RaphEngine2/objects/game_object.hpp>
 #include "graphics/graphic_api.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -14,12 +11,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "objects/lod.hpp"
-#include "objects/mesh_info.hpp"
-
 #ifdef EDITOR_BUILD
 #    include "imgui.h"
-#    include "misc/cpp/imgui_stdlib.h"
 #endif
 
 namespace raphEngine::component

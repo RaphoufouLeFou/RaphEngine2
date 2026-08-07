@@ -1,12 +1,9 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
-#include <memory>
 
 #include "RaphEngine2/graphics/shadow_renderer.hpp"
 #include "RaphEngine2/objects/mesh.hpp"
-#include "RaphEngine2/settings/graphics.hpp"
-#include "gl_shader.hpp"
 
 namespace raphEngine::graphics
 {

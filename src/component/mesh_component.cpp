@@ -5,13 +5,12 @@
 #include <memory>
 #include <vector>
 
-#include "imgui.h"
-#include "misc/cpp/imgui_stdlib.h"
-
 #ifdef EDITOR_BUILD
-#    include "objects/lod.hpp"
-#    include "objects/mesh_info.hpp"
+#    include "imgui.h"
 #endif
+
+#include "objects/lod.hpp"
+#include "objects/mesh_info.hpp"
 
 namespace raphEngine::component
 {

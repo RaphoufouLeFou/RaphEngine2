@@ -5,8 +5,6 @@
 #include <memory>
 
 #include "RaphEngine2/graphics/shader.hpp"
-#include "RaphEngine2/renderable.hpp"
-#include "RaphEngine2/resources/model_resource.hpp"
 #include "mesh.hpp"
 #include "mesh_info.hpp"
 
@@ -25,10 +23,8 @@ namespace raphEngine::objects
         void render() const;
         std::vector<std::unique_ptr<objects::Mesh>> meshes_;
 
-        
         ObjectMesh(const ObjectMesh&) = delete;
         ObjectMesh& operator=(const ObjectMesh&) = delete;
-
 
     private:
         // TODO: replace the vec by the recource system

@@ -3,7 +3,6 @@
 #include <RaphEngine2/export.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float2.hpp>
-#include "RaphEngine2/objects/game_object.hpp"
 
 namespace raphEngine::objects
 {

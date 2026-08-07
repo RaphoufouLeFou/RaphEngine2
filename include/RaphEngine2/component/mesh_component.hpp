@@ -7,7 +7,6 @@
 #include "RaphEngine2/graphics/shader.hpp"
 #include "RaphEngine2/objects/lod.hpp"
 #include "RaphEngine2/objects/mesh_info.hpp"
-#include "RaphEngine2/renderable.hpp"
 #include "component.hpp"
 
 namespace raphEngine::objects

@@ -1,11 +1,9 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <memory>
 #include <string>
 
 #include "RaphEngine2/export.hpp"
-#include "RaphEngine2/renderable.hpp"
 
 namespace raphEngine::objects
 {

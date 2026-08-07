@@ -6,12 +6,10 @@
 #include <GLFW/glfw3.h>
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
-#include <iostream>
 
 #include "graphics/mesh_buffers.hpp"
 #include "objects/mesh.hpp"
 #include <RaphEngine2/logger/logger.hpp>
-
 
 namespace raphEngine::graphics
 {
@@ -60,7 +58,6 @@ namespace raphEngine::graphics
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(objects::Vertex),
                               (void*)offsetof(objects::Vertex, bitangent));
-
     }
 
 } // namespace raphEngine::graphics

@@ -1,6 +1,5 @@
 #include "RaphEngine2/renderable.hpp"
 
-#include <iostream>
 #include <vector>
 
 namespace raphEngine

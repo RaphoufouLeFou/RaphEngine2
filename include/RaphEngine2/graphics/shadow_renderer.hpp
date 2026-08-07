@@ -5,7 +5,6 @@
 #include "RaphEngine2/graphics/shader.hpp"
 #include "RaphEngine2/export.hpp"
 #include "RaphEngine2/objects/mesh.hpp"
-#include "RaphEngine2/settings/graphics.hpp"
 #include "RaphEngine2/component/light_component.hpp"
 
 namespace raphEngine::objects

@@ -3,7 +3,6 @@
 #include <RaphEngine2/graphics/shader.hpp>
 #include <cstddef>
 #include <initializer_list>
-#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -12,7 +11,6 @@
 #include "component/mesh_component.hpp"
 #include "graphics/debug.hpp"
 #include "objects/lod.hpp"
-#include "objects/mesh_info.hpp"
 #include "utils.hpp"
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/graphics/graphic_api.hpp>

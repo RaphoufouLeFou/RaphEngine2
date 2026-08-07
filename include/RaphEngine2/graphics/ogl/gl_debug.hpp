@@ -2,7 +2,6 @@
 
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>
-#include <vector>
 
 #include "graphics/debug.hpp"
 

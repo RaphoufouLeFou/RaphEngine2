@@ -1,20 +1,13 @@
 #include "component/light_component.hpp"
 
 #include <RaphEngine2/graphics/shader.hpp>
-#include <initializer_list>
-#include <iostream>
-#include <memory>
-#include <vector>
-
 #include <glm/glm.hpp>
-#include "objects/lod.hpp"
-#include "objects/mesh_info.hpp"
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/graphics/graphic_api.hpp>
+#include <RaphEngine2/objects/game_object.hpp>
 
 #ifdef EDITOR_BUILD
 #    include "imgui.h"
-#    include "misc/cpp/imgui_stdlib.h"
 #endif
 
 namespace raphEngine::component

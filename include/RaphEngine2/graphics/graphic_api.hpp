@@ -2,9 +2,7 @@
 
 #include <RaphEngine2/export.hpp>
 
-#include "RaphEngine2/objects/mesh.hpp"
 #include "RaphEngine2/renderable.hpp"
-#include "RaphEngine2/settings/graphics.hpp"
 #include "RaphEngine2/component/light_component.hpp"
 
 namespace raphEngine::graphics

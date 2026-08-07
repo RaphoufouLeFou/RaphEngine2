@@ -2,8 +2,6 @@
 
 #include <RaphEngine2/export.hpp>
 #include <string>
-#include <vector>
-
 #include <glm/glm.hpp>
 
 #include "component.hpp"

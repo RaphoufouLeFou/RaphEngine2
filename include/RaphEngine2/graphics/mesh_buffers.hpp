@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "RaphEngine2/objects/mesh.hpp"
-#include "RaphEngine2/settings/graphics.hpp"
 
 namespace raphEngine::objects
 {

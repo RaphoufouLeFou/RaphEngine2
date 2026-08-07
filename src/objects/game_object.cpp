@@ -3,6 +3,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <algorithm>
 #include <RaphEngine2/logger/logger.hpp>
 #include "imgui.h"
 

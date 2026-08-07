@@ -4,7 +4,6 @@
 #include <graphics/shader.hpp>
 #include <memory>
 #include <string>
-#include <vector>
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 #include "logger/logger.hpp"

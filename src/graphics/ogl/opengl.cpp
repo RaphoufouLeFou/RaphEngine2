@@ -1,5 +1,6 @@
 #include "graphics/ogl/opengl.hpp"
 #include "graphics/debug.hpp"
+#include "settings/graphics.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
@@ -109,11 +110,11 @@ namespace raphEngine::graphics::ogl
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-        // glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
 
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_LIGHTING);
-        glfwSwapInterval(1);
+        glfwSwapInterval(gfx.vSync);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

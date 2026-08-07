@@ -46,6 +46,7 @@ namespace raphEngine
 
         while (1)
         {
+            double start = Time::GetTime();
             renderer.StartFrame();
 
 #ifdef EDITOR_BUILD
@@ -95,6 +96,22 @@ namespace raphEngine
                 dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 
             ImGui::Begin("Down");
+            static auto t = Time::GetTime();
+            static double fps = 60;
+            static double fps_avr = 0;
+            static int avr_count = 0;
+
+            fps_avr += 1.0f / Time::deltaTime;
+            avr_count++;
+
+            if (Time::GetTime() - t > 1000)
+            {
+                fps = fps_avr / avr_count;
+                fps_avr = 0;
+                avr_count = 0;
+                t = Time::GetTime();
+            }
+            ImGui::Text("FPS: %f", fps);
             ImGui::End();
 
             ImGui::BeginMainMenuBar();
@@ -135,7 +152,6 @@ namespace raphEngine
                 io.ConfigFlags &= ~ImGuiConfigFlags_NoMouseCursorChange;
 #endif
 
-            double start = Time::GetTime();
             execute_updates();
             execute_components_updates();
 

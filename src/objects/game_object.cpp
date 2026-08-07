@@ -1,6 +1,6 @@
 #include "objects/game_object.hpp"
 
-#include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <RaphEngine2/logger/logger.hpp>
@@ -33,11 +33,16 @@ namespace raphEngine::objects
         spawned_game_objects_.push_back(this);
     }
 
-    GameObject::GameObject(GameObject& other)
+    GameObject::GameObject(const GameObject& other)
     {
         name_ = other.name_;
         transform_ = other.transform_;
         spawned_game_objects_.push_back(this);
+    }
+
+    std::shared_ptr<GameObject> instanciate(const GameObject& from)
+    {
+        return std::make_shared<GameObject>(from);
     }
 
     void GameObject::pre_update()

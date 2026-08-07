@@ -31,7 +31,7 @@ namespace raphEngine::objects
     public:
         GameObject();
         GameObject(const std::string& name);
-        GameObject(GameObject& other);
+        GameObject(const GameObject& other);
         ~GameObject();
 
         void greed();
@@ -44,7 +44,7 @@ namespace raphEngine::objects
         std::string& get_name();
         objects::Transform& get_transform();
 
-        std::shared_ptr<GameObject> instanciate();
+        std::shared_ptr<GameObject> instanciate(const GameObject&);
 
         template <Comp T, class... Args>
         T* add_component(Args&&... args);

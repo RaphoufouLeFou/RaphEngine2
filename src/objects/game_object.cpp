@@ -85,7 +85,8 @@ namespace raphEngine::objects
                                   1);
                 ImGui::DragFloat3("Rotation", &get_transform().get_rotation().x,
                                   1);
-                ImGui::DragFloat3("Scale", &get_transform().get_scale().x, 1);
+                ImGui::DragFloat3("Scale", &get_transform().get_scale().x,
+                                  0.1f);
                 ImGui::Text("Model matrix");
                 glm::mat4 matrix = get_transform().get_model_matrix();
                 ImGui::InputFloat4("[0]", &matrix[0].x);

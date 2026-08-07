@@ -19,7 +19,6 @@
 
 #ifdef EDITOR_BUILD
 #    include "imgui.h"
-#    include "misc/cpp/imgui_stdlib.h"
 #endif
 
 namespace raphEngine::component
@@ -177,13 +176,14 @@ namespace raphEngine::component
 
     void ColliderComponent::Update()
     {
-        DebugDrawBoundingBox();
+        if (show_bounding_box)
+            DebugDrawBoundingBox();
     }
 
     void ColliderComponent::DebugDrawBoundingBox(const glm::vec3& color)
     {
-        // 8 corners of the box
-        const glm::vec3 corners[8] = {
+        // 8 corners of the box, in local space
+        const glm::vec3 local_corners[8] = {
             { bounding_min.x, bounding_min.y, bounding_min.z }, // 0
             { bounding_max.x, bounding_min.y, bounding_min.z }, // 1
             { bounding_max.x, bounding_max.y, bounding_min.z }, // 2
@@ -193,6 +193,15 @@ namespace raphEngine::component
             { bounding_max.x, bounding_max.y, bounding_max.z }, // 6
             { bounding_min.x, bounding_max.y, bounding_max.z } // 7
         };
+
+        const glm::mat4 model =
+            parent_object->get_transform().get_model_matrix();
+
+        glm::vec3 corners[8];
+        for (int i = 0; i < 8; ++i)
+        {
+            corners[i] = glm::vec3(model * glm::vec4(local_corners[i], 1.0f));
+        }
 
         graphics::Debug* debug = graphics::Debug::getInstance();
 
@@ -220,7 +229,9 @@ namespace raphEngine::component
     {
         if (ImGui::TreeNode(get_name().c_str()))
         {
-            ImGui::Text("Collider infos");
+            ImGui::Checkbox("Show bounding box", &show_bounding_box);
+            ImGui::InputFloat3("Bounding max", &bounding_max.x);
+            ImGui::InputFloat3("Bounding min", &bounding_min.x);
             ImGui::TreePop();
         }
     }

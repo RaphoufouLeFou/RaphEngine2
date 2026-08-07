@@ -45,6 +45,8 @@ namespace raphEngine::component
         glm::vec3 bounding_min{ 0.0f };
         glm::vec3 bounding_max{ 0.0f };
 
+        bool show_bounding_box = false;
+
         void update_cached_transform(const glm::mat4& model);
 
         glm::mat4 cached_model_{ 0.0f }; // != any real model matrix so the

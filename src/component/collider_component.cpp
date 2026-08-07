@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <glm/glm.hpp>
 #include "component/mesh_component.hpp"
+#include "graphics/debug.hpp"
 #include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
 #include "utils.hpp"
@@ -175,7 +176,44 @@ namespace raphEngine::component
     {}
 
     void ColliderComponent::Update()
-    {}
+    {
+        DebugDrawBoundingBox();
+    }
+
+    void ColliderComponent::DebugDrawBoundingBox(const glm::vec3& color)
+    {
+        // 8 corners of the box
+        const glm::vec3 corners[8] = {
+            { bounding_min.x, bounding_min.y, bounding_min.z }, // 0
+            { bounding_max.x, bounding_min.y, bounding_min.z }, // 1
+            { bounding_max.x, bounding_max.y, bounding_min.z }, // 2
+            { bounding_min.x, bounding_max.y, bounding_min.z }, // 3
+            { bounding_min.x, bounding_min.y, bounding_max.z }, // 4
+            { bounding_max.x, bounding_min.y, bounding_max.z }, // 5
+            { bounding_max.x, bounding_max.y, bounding_max.z }, // 6
+            { bounding_min.x, bounding_max.y, bounding_max.z } // 7
+        };
+
+        graphics::Debug* debug = graphics::Debug::getInstance();
+
+        // Bottom face (z = min)
+        debug->DrawLine(corners[0], corners[1], color);
+        debug->DrawLine(corners[1], corners[2], color);
+        debug->DrawLine(corners[2], corners[3], color);
+        debug->DrawLine(corners[3], corners[0], color);
+
+        // Top face (z = max)
+        debug->DrawLine(corners[4], corners[5], color);
+        debug->DrawLine(corners[5], corners[6], color);
+        debug->DrawLine(corners[6], corners[7], color);
+        debug->DrawLine(corners[7], corners[4], color);
+
+        // Vertical edges connecting bottom to top
+        debug->DrawLine(corners[0], corners[4], color);
+        debug->DrawLine(corners[1], corners[5], color);
+        debug->DrawLine(corners[2], corners[6], color);
+        debug->DrawLine(corners[3], corners[7], color);
+    }
 
 #ifdef EDITOR_BUILD
     void ColliderComponent::ImGuiPrint()

@@ -9,7 +9,7 @@ Shadows for point lights
 Add instancing
 Hide object not visibles
 Swap the shader from var to filename
-Implement the ressource system
+Implement the ressource system (font, texture, mesh, prefab ?)
 Add some skyboxes
 Handle big terrains
 Add vegetation

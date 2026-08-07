@@ -21,7 +21,7 @@ namespace raphEngine::objects
     {
         id_ = spawned_game_objects_.size();
         name_ = name;
-        transform_ = Transform();
+        transform_.parent_object = this;
         spawned_game_objects_.push_back(this);
     }
 
@@ -29,7 +29,7 @@ namespace raphEngine::objects
     {
         id_ = spawned_game_objects_.size();
         name_ = "New GameObject " + std::to_string(id_);
-        transform_ = Transform();
+        transform_.parent_object = this;
         spawned_game_objects_.push_back(this);
     }
 
@@ -37,6 +37,8 @@ namespace raphEngine::objects
     {
         name_ = other.name_;
         transform_ = other.transform_;
+        transform_.parent_object = this;
+        transform_.set_parent(other.transform_.get_parent());
         spawned_game_objects_.push_back(this);
     }
 
@@ -61,15 +63,39 @@ namespace raphEngine::objects
     void GameObject::ImGui_layout()
     {
         inspected = selected == this;
-        ImGui::Bullet();
-        if (ImGui::Selectable(name_.c_str(), &inspected) && selected == this)
+        if (transform_.get_children().size() == 0)
         {
-            selected = nullptr;
-            inspected = false;
+            ImGui::Bullet();
+            if (ImGui::Selectable(name_.c_str(), &inspected)
+                && selected == this)
+            {
+                selected = nullptr;
+                inspected = false;
+            }
+            if (inspected)
+            {
+                selected = this;
+            }
         }
-        if (inspected)
+        else
         {
-            selected = this;
+            bool unfolded = ImGui::TreeNode(name_.c_str());
+
+            if (inspected)
+            {
+                selected = this;
+            }
+
+            if (unfolded)
+            {
+                // ImGui::Indent();
+                for (auto* t : transform_.get_children())
+                {
+                    t->parent_object->ImGui_layout();
+                }
+                // ImGui::Unindent();
+                ImGui::TreePop();
+            }
         }
     }
 

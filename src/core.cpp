@@ -5,6 +5,7 @@
 #include "graphics/debug.hpp"
 #include "logger/logger.hpp"
 #include "objects/game_object.hpp"
+#include "objects/transform.hpp"
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 
@@ -166,9 +167,9 @@ namespace raphEngine
     {
 #ifdef EDITOR_BUILD
         ImGui::Begin("Layout");
-        for (auto& go : objects::GameObject::spawned_game_objects_)
+        for (auto& t : objects::Transform::root_childs)
         {
-            go->ImGui_layout();
+            t->parent_object->ImGui_layout();
         }
         ImGui::End();
 

@@ -13,6 +13,9 @@ namespace raphEngine::graphics
     public:
         GLMeshRenderer();
         void render(const raphEngine::objects::Mesh* mesh) const override;
+        void renderInstanced(
+            const objects::Mesh* mesh,
+            const std::vector<glm::mat4>& worldMatrices) const override;
 
     private:
         GlShader* shader_;

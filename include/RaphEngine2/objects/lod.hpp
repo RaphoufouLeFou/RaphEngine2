@@ -30,9 +30,8 @@ namespace raphEngine::objects
         Lod(const Lod&) = delete;
         Lod& operator=(const Lod&) = delete;
 
-
     private:
-        std::vector<std::unique_ptr<ObjectMesh>> lod_meshes_;
+        std::vector<std::shared_ptr<ObjectMesh>> lod_meshes_;
         std::vector<float> transitions_distances_;
 
         void calculate_transitions_distances(int lod_count,

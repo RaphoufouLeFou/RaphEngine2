@@ -14,8 +14,11 @@ namespace raphEngine::graphics
         unsigned int vao_;
         unsigned int vbo_;
         unsigned int ebo_;
+        unsigned int instance_vbo_;
 
         void GenerateBuffers() override;
+        void EnsureInstanceBuffer();
+        void UploadInstanceData(const std::vector<glm::mat4>& matrices);
 
     private:
         raphEngine::objects::Mesh* mesh_;

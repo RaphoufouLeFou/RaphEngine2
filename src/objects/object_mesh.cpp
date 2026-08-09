@@ -1,3 +1,4 @@
+#include "objects/object_mesh.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #define STB_IMAGE_IMPLEMENTATION
 #include <GL/glew.h>
@@ -281,6 +282,27 @@ namespace raphEngine::objects
         std::string directory = path.substr(0, path.find_last_of('/'));
 
         processNode(object_mesh, scene->mRootNode, scene, filter);
+    }
+
+    std::unordered_map<std::string, std::shared_ptr<ObjectMesh>>
+        ObjectMesh::object_mesh_cache_;
+
+    std::shared_ptr<ObjectMesh>
+    ObjectMesh::get_or_create(objects::GameObject* parent_object,
+                              const MeshInfo& info, graphics::Shader* shader,
+                              const bool* cast_shadow)
+    {
+        if (object_mesh_cache_.contains(info.mesh_path))
+        {
+            Logger::LogWarning("Saved a mesh !");
+            return object_mesh_cache_.at(info.mesh_path);
+        }
+
+        ObjectMesh* obj =
+            new ObjectMesh{ parent_object, info, shader, cast_shadow };
+        std::shared_ptr<ObjectMesh> res(obj);
+        object_mesh_cache_[info.mesh_path] = res;
+        return res;
     }
 
     ObjectMesh::ObjectMesh(objects::GameObject* parent_object,

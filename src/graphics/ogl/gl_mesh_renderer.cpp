@@ -183,4 +183,32 @@ namespace raphEngine::graphics
                        static_cast<unsigned int>(mesh->get_indices().size()),
                        GL_UNSIGNED_INT, 0);
     }
+
+    void GLMeshRenderer::renderInstanced(
+        const objects::Mesh* mesh,
+        const std::vector<glm::mat4>& worldMatrices) const
+    {
+        const GlShader* mesh_shader =
+            dynamic_cast<const GlShader*>(mesh->get_shader());
+        if (mesh_shader != current_active_shader_)
+        {
+            current_active_shader_ = mesh_shader;
+            mesh_shader->use();
+        }
+        SetupShader(
+            mesh_shader); // once for the whole batch now, not per-instance
+
+        for (size_t i = 0; i < mesh->get_textures().size(); i++)
+        { /* same texture-binding loop as render(), also now once per batch */
+        }
+
+        auto* buffers = const_cast<graphics::GLMeshBuffers*>(
+            dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers()));
+        buffers->UploadInstanceData(worldMatrices);
+
+        glBindVertexArray(buffers->vao_);
+        glDrawElementsInstanced(
+            GL_TRIANGLES, static_cast<unsigned int>(mesh->get_indices().size()),
+            GL_UNSIGNED_INT, 0, static_cast<GLsizei>(worldMatrices.size()));
+    }
 } // namespace raphEngine::graphics

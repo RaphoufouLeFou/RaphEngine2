@@ -3,6 +3,8 @@
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 #include "RaphEngine2/graphics/shader.hpp"
 #include "mesh.hpp"
@@ -13,9 +15,11 @@ namespace raphEngine::objects
     class RAPHENGINE_API ObjectMesh
     {
     public:
-        ObjectMesh() = default;
-        ObjectMesh(objects::GameObject* parent_object, const MeshInfo& info,
-                   graphics::Shader* shader, const bool* cast_shadow);
+        ObjectMesh() = delete;
+
+        static std::shared_ptr<ObjectMesh>
+        get_or_create(objects::GameObject* parent_object, const MeshInfo& info,
+                      graphics::Shader* shader, const bool* cast_shadow);
 
         static std::vector<Texture> textures_loaded_;
         void add_mesh(std::unique_ptr<Mesh> mesh);
@@ -27,11 +31,15 @@ namespace raphEngine::objects
         ObjectMesh& operator=(const ObjectMesh&) = delete;
 
     private:
-        // TODO: replace the vec by the recource system
-        // resources::Resource* meshes_resource_;
+        ObjectMesh(objects::GameObject* parent_object, const MeshInfo& info,
+                   graphics::Shader* shader, const bool* cast_shadow);
 
         graphics::Shader* shader_;
         objects::GameObject* parent_object;
+
+        static std::unordered_map<std::string, std::shared_ptr<ObjectMesh>>
+            object_mesh_cache_;
+
         const bool* cast_shadow_;
     };
 } // namespace raphEngine::objects

@@ -17,6 +17,9 @@ namespace raphEngine::graphics
     {
     public:
         virtual void render(const raphEngine::objects::Mesh* mesh) const = 0;
+        virtual void
+        renderInstanced(const objects::Mesh* mesh,
+                        const std::vector<glm::mat4>& worldMatrices) const = 0;
         static MeshRenderer* getInstance();
 
     private:

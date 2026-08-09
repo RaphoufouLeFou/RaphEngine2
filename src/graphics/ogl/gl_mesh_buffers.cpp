@@ -60,4 +60,31 @@ namespace raphEngine::graphics
                               (void*)offsetof(objects::Vertex, bitangent));
     }
 
+    void GLMeshBuffers::EnsureInstanceBuffer()
+    {
+        if (instance_vbo_ != 0)
+            return;
+        glBindVertexArray(vao_);
+        glGenBuffers(1, &instance_vbo_);
+        glBindBuffer(GL_ARRAY_BUFFER, instance_vbo_);
+        for (int i = 0; i < 4; ++i)
+        {
+            glEnableVertexAttribArray(5 + i);
+            glVertexAttribPointer(5 + i, 4, GL_FLOAT, GL_FALSE,
+                                  sizeof(glm::mat4),
+                                  (void*)(sizeof(glm::vec4) * i));
+            glVertexAttribDivisor(5 + i, 1);
+        }
+        glBindVertexArray(0);
+    }
+
+    void
+    GLMeshBuffers::UploadInstanceData(const std::vector<glm::mat4>& matrices)
+    {
+        EnsureInstanceBuffer();
+        glBindBuffer(GL_ARRAY_BUFFER, instance_vbo_);
+        glBufferData(GL_ARRAY_BUFFER, matrices.size() * sizeof(glm::mat4),
+                     matrices.data(), GL_DYNAMIC_DRAW);
+    }
+
 } // namespace raphEngine::graphics

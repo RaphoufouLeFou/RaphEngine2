@@ -158,7 +158,7 @@ namespace raphEngine::graphics::ogl
         glViewport(0, 0, res_x, res_y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        for (auto* object : render_pool)
+        for (const Renderable* object : render_pool)
             object->render();
 
         GLShadowRenderer::debug_draw_lights();

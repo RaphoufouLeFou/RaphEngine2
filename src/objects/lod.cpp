@@ -65,7 +65,7 @@ namespace raphEngine::objects
         lod_meshes_.reserve(meshes.size());
         for (const auto& info : meshes)
         {
-            lod_meshes_.push_back(std::make_unique<ObjectMesh>(
+            lod_meshes_.push_back(ObjectMesh::get_or_create(
                 parent_object, info, shader.get(), cast_shadow));
         }
         calculate_transitions_distances(meshes.size());
@@ -78,7 +78,7 @@ namespace raphEngine::objects
 
         for (const auto& info : meshes)
         {
-            lod_meshes_.push_back(std::make_unique<ObjectMesh>(
+            lod_meshes_.push_back(ObjectMesh::get_or_create(
                 parent_object, info, shader.get(), cast_shadow));
         }
         calculate_transitions_distances(meshes.size());
@@ -87,7 +87,7 @@ namespace raphEngine::objects
     Lod::Lod(objects::GameObject* parent_object, MeshInfo mesh,
              std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow)
     {
-        lod_meshes_.push_back(std::make_unique<ObjectMesh>(
+        lod_meshes_.push_back(ObjectMesh::get_or_create(
             parent_object, mesh, shader.get(), cast_shadow));
         calculate_transitions_distances(1);
     }

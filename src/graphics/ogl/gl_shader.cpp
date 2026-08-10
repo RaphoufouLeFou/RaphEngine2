@@ -39,6 +39,9 @@ namespace raphEngine::graphics
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
 
+        Logger::LogDebug("instanceModel bound at location: ",
+                         glGetAttribLocation(id_, "instanceModel"));
+
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fragmentCode, NULL);
         glCompileShader(fragment);

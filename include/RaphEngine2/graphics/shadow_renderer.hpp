@@ -20,6 +20,10 @@ namespace raphEngine::graphics
     public:
         virtual void
         render_shadows(const raphEngine::objects::Mesh* mesh) const = 0;
+        virtual void render_shadows_instanced(
+            const std::vector<const raphEngine::objects::Mesh*>& meshes)
+            const = 0;
+
         static ShadowRenderer* getInstance();
         static const component::LightComponent* GetDirectionalLight();
 
@@ -39,6 +43,7 @@ namespace raphEngine::graphics
         static std::vector<glm::mat4> getLightSpaceMatrices();
 
         static std::shared_ptr<Shader> shadow_shader;
+        static std::shared_ptr<Shader> shadow_shader_instanced;
 
     private:
         static std::unique_ptr<ShadowRenderer> instance_;

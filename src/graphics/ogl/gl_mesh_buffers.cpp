@@ -17,6 +17,10 @@ namespace raphEngine::graphics
     GLMeshBuffers::GLMeshBuffers(raphEngine::objects::Mesh* mesh)
     {
         mesh_ = mesh;
+        vao_ = 0;
+        vbo_ = 0;
+        ebo_ = 0;
+        instance_vbo_ = 0;
         GenerateBuffers();
     }
 

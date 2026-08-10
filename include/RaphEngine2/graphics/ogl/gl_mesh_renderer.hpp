@@ -14,8 +14,12 @@ namespace raphEngine::graphics
         GLMeshRenderer();
         void render(const raphEngine::objects::Mesh* mesh) const override;
         void renderInstanced(
-            const objects::Mesh* mesh,
-            const std::vector<glm::mat4>& worldMatrices) const override;
+            const std::vector<const objects::Mesh*>& meshes) const override;
+
+        void invalidate_active_shader()
+        {
+            current_active_shader_ = nullptr;
+        }
 
     private:
         GlShader* shader_;

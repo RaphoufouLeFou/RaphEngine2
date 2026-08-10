@@ -2,11 +2,13 @@
 
 #include "graphics/mesh_renderer.hpp"
 #include "graphics/shadow_renderer.hpp"
+#include "resources/model_resource.hpp" // complete type needed for ~Mesh()
 
 namespace raphEngine::objects
 {
     Mesh::Mesh()
     {}
+    Mesh::~Mesh() = default;
 
     const std::vector<Vertex>& Mesh::get_vertices() const
     {
@@ -66,8 +68,20 @@ namespace raphEngine::objects
     void Mesh::generate_mesh_buffers()
     {
         buffers_ = graphics::MeshBuffers::getMeshBuffer(this);
+        material_hash_ = compute_material_hash();
     }
 
+    void Mesh::set_source(std::shared_ptr<resources::ModelResource> model,
+                          size_t submesh_index)
+    {
+        source_model_ = std::move(model);
+        submesh_index_ = submesh_index;
+    }
+
+    graphics::MeshSourceKey Mesh::get_source_key() const
+    {
+        return { source_model_.get(), submesh_index_ };
+    }
     void Mesh::render() const
     {
         graphics::MeshRenderer::getInstance()->render(this);
@@ -76,6 +90,19 @@ namespace raphEngine::objects
     void Mesh::render_shadow() const
     {
         graphics::ShadowRenderer::getInstance()->render_shadows(this);
+    }
+
+    BatchKey Mesh::get_batch_key() const
+    {
+        return { buffers_.get(), shader_, material_hash_ };
+    }
+
+    uint64_t Mesh::compute_material_hash() const
+    {
+        uint64_t h = 0;
+        for (auto& tex : get_textures())
+            h = h * 1099511628211ull ^ static_cast<uint64_t>(tex.id);
+        return h;
     }
 
     glm::vec3 Mesh::get_lower_bounds() const
@@ -121,5 +148,4 @@ namespace raphEngine::objects
 
         return higher_bounds;
     }
-
 } // namespace raphEngine::objects

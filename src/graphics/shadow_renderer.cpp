@@ -21,6 +21,7 @@ namespace raphEngine::graphics
                                                                10.0f, 3.1f };
 
     std::shared_ptr<Shader> ShadowRenderer::shadow_shader = nullptr;
+    std::shared_ptr<Shader> ShadowRenderer::shadow_shader_instanced = nullptr;
 
     const component::LightComponent* ShadowRenderer::GetDirectionalLight()
     {

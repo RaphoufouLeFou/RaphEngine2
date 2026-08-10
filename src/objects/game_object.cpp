@@ -64,7 +64,7 @@ namespace raphEngine::objects
     void GameObject::ImGui_layout()
     {
         inspected = selected == this;
-        if (transform_.get_children().size() == 0)
+        if (transform_.get_children().size() == 0 || true)
         {
             ImGui::Bullet();
             if (ImGui::Selectable(name_.c_str(), &inspected)
@@ -89,15 +89,16 @@ namespace raphEngine::objects
 
             if (unfolded)
             {
-                // ImGui::Indent();
-                for (auto* t : transform_.get_children())
-                {
-                    t->parent_object->ImGui_layout();
-                }
-                // ImGui::Unindent();
                 ImGui::TreePop();
             }
         }
+
+        ImGui::Indent();
+        for (auto* t : transform_.get_children())
+        {
+            t->parent_object->ImGui_layout();
+        }
+        ImGui::Unindent();
     }
 
     void GameObject::ImGui_update()

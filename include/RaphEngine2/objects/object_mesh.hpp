@@ -1,9 +1,7 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
-#include <glm/glm.hpp>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
 #include "RaphEngine2/graphics/shader.hpp"
@@ -21,9 +19,7 @@ namespace raphEngine::objects
         get_or_create(objects::GameObject* parent_object, const MeshInfo& info,
                       graphics::Shader* shader, const bool* cast_shadow);
 
-        static std::vector<Texture> textures_loaded_;
         void add_mesh(std::unique_ptr<Mesh> mesh);
-
         void render() const;
         std::vector<std::unique_ptr<objects::Mesh>> meshes_;
 
@@ -36,10 +32,6 @@ namespace raphEngine::objects
 
         graphics::Shader* shader_;
         objects::GameObject* parent_object;
-
-        static std::unordered_map<std::string, std::shared_ptr<ObjectMesh>>
-            object_mesh_cache_;
-
         const bool* cast_shadow_;
     };
 } // namespace raphEngine::objects

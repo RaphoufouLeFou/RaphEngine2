@@ -23,6 +23,9 @@
 
 namespace raphEngine::graphics
 {
+
+    const GlShader* GLShadowRenderer::current_active_shadow_shader_ = nullptr;
+
     GLShadowRenderer::GLShadowRenderer()
     {}
 
@@ -245,6 +248,13 @@ namespace raphEngine::graphics
             return;
         }
 
+        const GlShader* sh = dynamic_cast<const GlShader*>(shadow_shader.get());
+        if (current_active_shadow_shader_ != sh)
+        {
+            current_active_shadow_shader_ = sh;
+            shadow_shader->use();
+        }
+
         shadow_shader->setValue(
             "model",
 
@@ -259,6 +269,44 @@ namespace raphEngine::graphics
         glDrawElements(GL_TRIANGLES,
                        static_cast<unsigned int>(mesh->get_indices().size()),
                        GL_UNSIGNED_INT, 0);
+    }
+
+    void GLShadowRenderer::render_shadows_instanced(
+        const std::vector<const raphEngine::objects::Mesh*>& meshes) const
+    {
+        if (!shadow_shader_instanced)
+        {
+            shadow_shader_instanced = Shader::loadShader(
+                default_instanced_shadow_vs_shader, default_shadow_fs_shader,
+                default_shadow_gs_shader);
+        }
+
+        const GlShader* sh =
+            dynamic_cast<const GlShader*>(shadow_shader_instanced.get());
+        if (current_active_shadow_shader_ != sh)
+        {
+            current_active_shadow_shader_ = sh;
+            shadow_shader_instanced->use();
+        }
+
+        const objects::Mesh* first = meshes.front();
+
+        std::vector<glm::mat4> worlds;
+        worlds.reserve(meshes.size());
+        for (const objects::Mesh* m : meshes)
+            worlds.push_back(
+                m->parent_object->get_transform().get_model_matrix()
+                * m->model_matrix_);
+
+        auto* buffers = const_cast<graphics::GLMeshBuffers*>(
+            dynamic_cast<const graphics::GLMeshBuffers*>(first->get_buffers()));
+        buffers->UploadInstanceData(worlds);
+
+        glBindVertexArray(buffers->vao_);
+        glDrawElementsInstanced(
+            GL_TRIANGLES,
+            static_cast<unsigned int>(first->get_indices().size()),
+            GL_UNSIGNED_INT, 0, static_cast<GLsizei>(worlds.size()));
     }
 
 } // namespace raphEngine::graphics

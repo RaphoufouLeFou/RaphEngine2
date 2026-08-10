@@ -1,308 +1,42 @@
 #include "objects/object_mesh.hpp"
-#define GLM_ENABLE_EXPERIMENTAL
-#define STB_IMAGE_IMPLEMENTATION
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
-#include <RaphEngine2/logger/logger.hpp>
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+
 #include <memory>
 
+#include <RaphEngine2/logger/logger.hpp>
 #include "RaphEngine2/graphics/graphic_api.hpp"
 #include "objects/mesh.hpp"
 #include "resources/model_resource.hpp"
-#include "stb_image.h"
 
 namespace raphEngine::objects
 {
-
-    std::vector<Texture> ObjectMesh::textures_loaded_ = std::vector<Texture>();
-
-    unsigned int TextureFromFile(const char* path, const std::string& directory,
-                                 bool filter)
-    {
-        std::string filename = std::string(path);
-        if (directory != "")
-            filename = directory + '/' + filename;
-        int index = filename.find("assets");
-        if (index != -1)
-            filename = filename.substr(index);
-        unsigned int textureID;
-        glGenTextures(1, &textureID);
-
-        int width, height, nrComponents;
-        unsigned char* data =
-            stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
-
-        if (data)
-        {
-            GLenum format = GL_RGBA;
-            if (nrComponents == 1)
-                format = GL_RED;
-            else if (nrComponents == 3)
-                format = GL_RGB;
-            else if (nrComponents == 4)
-                format = GL_RGBA;
-
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-                         GL_UNSIGNED_BYTE, data);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            if (filter)
-            {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                                GL_LINEAR_MIPMAP_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                                GL_LINEAR);
-            }
-            else
-            {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                                GL_LINEAR_MIPMAP_NEAREST);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                                GL_NEAREST);
-            }
-
-            glGenerateMipmap(GL_TEXTURE_2D);
-
-            Logger::LogDebug("Texture loaded at path: ", filename.c_str());
-            stbi_image_free(data);
-        }
-        else
-        {
-            Logger::LogWarning("Texture failed to load at path: ",
-                               filename.c_str());
-            stbi_image_free(data);
-        }
-
-        return textureID;
-    }
-
-    std::vector<Texture> loadMaterialTextures(aiMaterial* mat,
-                                              aiTextureType type,
-                                              Texture::TextureType typeName,
-                                              bool filter)
-    {
-        std::vector<Texture> textures;
-        for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-        {
-            aiString str;
-            mat->GetTexture(type, i, &str);
-            // check if texture was loaded before and if so, continue to next
-            // iteration: skip loading a new texture
-            bool skip = false;
-            for (unsigned int j = 0; j < ObjectMesh::textures_loaded_.size();
-                 j++)
-            {
-                if (std::strcmp(ObjectMesh::textures_loaded_[j].path.data(),
-                                str.C_Str())
-                        == 0
-                    && ObjectMesh::textures_loaded_[j].bilinear == filter)
-                {
-                    textures.push_back(ObjectMesh::textures_loaded_[j]);
-                    skip = true; // a texture with the same filepath has already
-                                 // been loaded, continue to next one.
-                                 // (optimization)
-                    break;
-                }
-            }
-            if (!skip)
-            { // if texture hasn't been loaded already, load it
-                Texture texture;
-                texture.id = TextureFromFile(str.C_Str(), "", filter);
-                texture.type = typeName;
-                texture.path = str.C_Str();
-                texture.bilinear = filter;
-                textures.push_back(texture);
-                ObjectMesh::textures_loaded_.push_back(
-                    texture); // store it as texture loaded for entire model, to
-                              // ensure we won't unnecessary load duplicate
-                              // textures.
-            }
-        }
-        return textures;
-    }
-
-    std::unique_ptr<Mesh> processMesh(aiMesh* mesh, const aiScene* scene,
-                                      bool filter, const glm::mat4& ModelMat)
-    {
-        std::unique_ptr<Mesh> final_mesh = std::make_unique<Mesh>();
-
-        std::vector<Vertex>& vertices = final_mesh->get_vertices();
-        std::vector<unsigned int>& indices = final_mesh->get_indices();
-        std::vector<Texture>& textures = final_mesh->get_textures();
-
-        vertices.reserve(mesh->mNumVertices);
-
-        for (unsigned int i = 0; i < mesh->mNumVertices; i++)
-        {
-            Vertex vertex;
-
-            vertex.position.x = mesh->mVertices[i].x;
-            vertex.position.y = mesh->mVertices[i].y;
-            vertex.position.z = mesh->mVertices[i].z;
-
-            if (mesh->HasNormals())
-            {
-                vertex.normal.x = mesh->mNormals[i].x;
-                vertex.normal.y = mesh->mNormals[i].y;
-                vertex.normal.z = mesh->mNormals[i].z;
-            }
-
-            if (mesh->mTextureCoords[0])
-            {
-                vertex.tex_coords.x = mesh->mTextureCoords[0][i].x;
-                vertex.tex_coords.y = mesh->mTextureCoords[0][i].y;
-
-                vertex.tangent.x = mesh->mTangents[i].x;
-                vertex.tangent.y = mesh->mTangents[i].y;
-                vertex.tangent.z = mesh->mTangents[i].z;
-
-                vertex.bitangent.x = mesh->mBitangents[i].x;
-                vertex.bitangent.y = mesh->mBitangents[i].y;
-                vertex.bitangent.z = mesh->mBitangents[i].z;
-            }
-            else
-                vertex.tex_coords = glm::vec2(0.0f, 0.0f);
-
-            vertices.push_back(vertex);
-        }
-
-        for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-        {
-            aiFace face = mesh->mFaces[i];
-            for (unsigned int j = 0; j < face.mNumIndices; j++)
-                indices.push_back(face.mIndices[j]);
-        }
-        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-
-        std::vector<Texture> diffuseMaps = loadMaterialTextures(
-            material, aiTextureType_DIFFUSE, Texture::DIFFUSE, filter);
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-
-        std::vector<Texture> specularMaps = loadMaterialTextures(
-            material, aiTextureType_SPECULAR, Texture::SPECULAR, filter);
-        textures.insert(textures.end(), specularMaps.begin(),
-                        specularMaps.end());
-
-        std::vector<Texture> normalMaps = loadMaterialTextures(
-            material, aiTextureType_NORMALS, Texture::NORMAL, filter);
-        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-
-        std::vector<Texture> heightMaps = loadMaterialTextures(
-            material, aiTextureType_HEIGHT, Texture::HEIGHT, filter);
-        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-
-        final_mesh->set_model_matrix(ModelMat);
-        return final_mesh;
-    }
-
-    glm::mat4 AiMatToGlm(const aiMatrix4x4& from)
-    {
-        glm::mat4 to;
-        to[0][0] = from.a1;
-        to[1][0] = from.a2;
-        to[2][0] = from.a3;
-        to[3][0] = from.a4;
-        to[0][1] = from.b1;
-        to[1][1] = from.b2;
-        to[2][1] = from.b3;
-        to[3][1] = from.b4;
-        to[0][2] = from.c1;
-        to[1][2] = from.c2;
-        to[2][2] = from.c3;
-        to[3][2] = from.c4;
-        to[0][3] = from.d1;
-        to[1][3] = from.d2;
-        to[2][3] = from.d3;
-        to[3][3] = from.d4;
-        return to;
-    }
-
-    static const glm::mat4 kYupToZup = glm::rotate(
-        glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-
-    void processNode(ObjectMesh* object_mesh, aiNode* node,
-                     const aiScene* scene, bool filter)
-    {
-        for (unsigned int i = 0; i < node->mNumMeshes; i++)
-        {
-            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            aiMatrix4x4 globalTransform = node->mTransformation;
-            aiNode* parent = node->mParent;
-
-            while (parent != nullptr)
-            {
-                globalTransform = parent->mTransformation * globalTransform;
-                parent = parent->mParent;
-            }
-
-            glm::mat4 m = kYupToZup * AiMatToGlm(globalTransform);
-            Logger::LogDebug("scaleX=", glm::length(glm::vec3(m[0])),
-                             " scaleY=", glm::length(glm::vec3(m[1])),
-                             " scaleZ=", glm::length(glm::vec3(m[2])));
-
-            object_mesh->add_mesh(processMesh(
-                mesh, scene, filter, kYupToZup * AiMatToGlm(globalTransform)));
-        }
-
-        for (unsigned int i = 0; i < node->mNumChildren; i++)
-        {
-            processNode(object_mesh, node->mChildren[i], scene, filter);
-        }
-    }
-
     void loadModel(ObjectMesh* object_mesh, std::string const& path,
                    bool filter)
     {
-        Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(
-            path,
-            aiProcess_Triangulate | aiProcess_GenSmoothNormals
-                | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        auto model = resources::ModelResource::get_or_load(path, filter);
 
-        float unitScale = 1.0f;
-        if (scene->mMetaData)
-            scene->mMetaData->Get("UnitScaleFactor", unitScale);
-        Logger::LogDebug("UnitScaleFactor = ", unitScale);
-
-        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE
-            || !scene->mRootNode)
+        for (size_t i = 0; i < model->get_submeshes().size(); ++i)
         {
-            Logger::LogError("assimp: ", importer.GetErrorString());
-            return;
+            const auto& data = model->get_submeshes()[i];
+
+            auto mesh = std::make_unique<Mesh>();
+            mesh->get_vertices() = data.vertices;
+            mesh->get_indices() = data.indices;
+            mesh->get_textures() = data.textures;
+            mesh->set_model_matrix(data.local_matrix);
+            mesh->set_source(model, i);
+
+            object_mesh->add_mesh(std::move(mesh));
         }
-        std::string directory = path.substr(0, path.find_last_of('/'));
-
-        processNode(object_mesh, scene->mRootNode, scene, filter);
     }
-
-    std::unordered_map<std::string, std::shared_ptr<ObjectMesh>>
-        ObjectMesh::object_mesh_cache_;
 
     std::shared_ptr<ObjectMesh>
     ObjectMesh::get_or_create(objects::GameObject* parent_object,
                               const MeshInfo& info, graphics::Shader* shader,
                               const bool* cast_shadow)
     {
-        if (object_mesh_cache_.contains(info.mesh_path))
-        {
-            Logger::LogWarning("Saved a mesh !");
-            return object_mesh_cache_.at(info.mesh_path);
-        }
-
         ObjectMesh* obj =
             new ObjectMesh{ parent_object, info, shader, cast_shadow };
-        std::shared_ptr<ObjectMesh> res(obj);
-        object_mesh_cache_[info.mesh_path] = res;
-        return res;
+        return std::shared_ptr<ObjectMesh>(obj);
     }
 
     ObjectMesh::ObjectMesh(objects::GameObject* parent_object,
@@ -312,17 +46,12 @@ namespace raphEngine::objects
         this->parent_object = parent_object;
         shader_ = shader;
         cast_shadow_ = cast_shadow;
-
         Logger::LogDebug("loading new mesh for ", parent_object->get_name());
         loadModel(this, info.mesh_path, info.bilinear);
     }
 
     void ObjectMesh::add_mesh(std::unique_ptr<Mesh> mesh)
     {
-        // auto* truc =
-        // dynamic_cast<resources::ModelResource*>(meshes_resource_);
-        // truc->meshes_.push_back(std::move(mesh));
-
         mesh->set_shader(shader_);
         mesh->cast_shadows = cast_shadow_;
         mesh->parent_object = this->parent_object;
@@ -333,9 +62,6 @@ namespace raphEngine::objects
     void ObjectMesh::render() const
     {
         for (size_t i = 0; i < meshes_.size(); i++)
-        {
             graphics::GraphicApi::AddToRenderPool(meshes_[i].get());
-        }
     }
-
 } // namespace raphEngine::objects

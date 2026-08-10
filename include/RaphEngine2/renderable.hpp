@@ -3,6 +3,11 @@
 #include <RaphEngine2/export.hpp>
 #include <vector>
 
+namespace raphEngine::objects
+{
+    class Mesh;
+}
+
 namespace raphEngine
 {
     class RAPHENGINE_API Renderable
@@ -11,6 +16,10 @@ namespace raphEngine
         Renderable();
         virtual void render() const = 0;
         virtual void render_shadow() const = 0;
+        virtual const objects::Mesh* as_mesh() const
+        {
+            return nullptr;
+        }
 
     private:
         static std::vector<Renderable*> render_list_;

@@ -10,4 +10,3 @@
 #include "objects/object_mesh.hpp"
 #include "objects/transform.hpp"
 #include "renderable.hpp"
-#include "resources/resource.hpp"

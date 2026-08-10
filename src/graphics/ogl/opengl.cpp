@@ -1,4 +1,5 @@
 #include "graphics/ogl/opengl.hpp"
+#include <string>
 #include "graphics/debug.hpp"
 #include "settings/graphics.hpp"
 
@@ -144,13 +145,57 @@ namespace raphEngine::graphics::ogl
 
     void OpenGL::Render()
     {
+        // shadow pass: keyed by geometry only — material/shader is irrelevant
+        // to depth-only rendering
+        std::unordered_map<const graphics::MeshBuffers*,
+                           std::vector<const objects::Mesh*>>
+            shadow_batches;
+        std::vector<const Renderable*> shadow_unbatched;
+
+        // color pass: keyed by geometry + shader + material
+        std::unordered_map<objects::BatchKey, std::vector<const objects::Mesh*>,
+                           objects::BatchKeyHash>
+            color_batches;
+        std::vector<const Renderable*> color_unbatched;
+
+        for (const Renderable* object : render_pool)
+        {
+            if (const objects::Mesh* mesh = object->as_mesh())
+            {
+                color_batches[mesh->get_batch_key()].push_back(mesh);
+
+                if (*mesh->cast_shadows)
+                    shadow_batches[mesh->get_buffers()].push_back(mesh);
+            }
+            else
+            {
+                color_unbatched.push_back(object);
+                shadow_unbatched.push_back(object);
+            }
+        }
+        /*
+                Logger::LogDebug("Drawing ",
+           std::to_string(color_unbatched.size()), " unbatched");
+                Logger::LogDebug("Drawing ",
+           std::to_string(color_batches.size()), " batched");
+        */
         GLShadowRenderer::prepare_shadows();
         if (ShadowRenderer::GetDirectionalLight()->cast_shadows_)
         {
-            for (auto* object : render_pool)
+            for (auto& [buffers, meshes] : shadow_batches)
+            {
+                if (meshes.size() > 1)
+                    GLShadowRenderer::getInstance()->render_shadows_instanced(
+                        meshes);
+                else
+                    meshes.front()->render_shadow();
+            }
+            for (const Renderable* object : shadow_unbatched)
                 object->render_shadow();
         }
         GLShadowRenderer::cleanup_shadows();
+        dynamic_cast<GLMeshRenderer*>(GLMeshRenderer::getInstance())
+            ->invalidate_active_shader();
 
 #ifdef EDITOR_BUILD
         glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);
@@ -158,11 +203,17 @@ namespace raphEngine::graphics::ogl
         glViewport(0, 0, res_x, res_y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        for (const Renderable* object : render_pool)
+        for (auto& [key, meshes] : color_batches)
+        {
+            if (meshes.size() > 1)
+                GLMeshRenderer::getInstance()->renderInstanced(meshes);
+            else
+                meshes.front()->render();
+        }
+        for (const Renderable* object : color_unbatched)
             object->render();
 
         GLShadowRenderer::debug_draw_lights();
-
         Debug::getInstance()->RenderAllLines();
 
 #ifdef EDITOR_BUILD
@@ -171,7 +222,6 @@ namespace raphEngine::graphics::ogl
         glBlitFramebuffer(0, 0, viewport_width_, viewport_height_, 0, 0,
                           viewport_width_, viewport_height_,
                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
     }

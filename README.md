@@ -19,6 +19,7 @@ As of today, the engine handle :
 - Logger
 - The game loop
 - Input system
+- Instancing
 
 And more little things.
 
@@ -26,7 +27,6 @@ And more little things.
 
 - Add the UI (RmlUI)
 - Spot and point lights
-- Instancing
 - Culling
 - Add some skyboxes
 - Handle big terrains

@@ -39,9 +39,6 @@ namespace raphEngine::graphics
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
 
-        Logger::LogDebug("instanceModel bound at location: ",
-                         glGetAttribLocation(id_, "instanceModel"));
-
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fragmentCode, NULL);
         glCompileShader(fragment);
@@ -103,83 +100,92 @@ namespace raphEngine::graphics
         }
     }
 
+    GLint GlShader::getUniformLocation(const std::string& name) const
+    {
+        if (auto it = uniform_location_cache_.find(name);
+            it != uniform_location_cache_.end())
+            return it->second;
+
+        GLint location = glGetUniformLocation(id_, name.c_str());
+        uniform_location_cache_[name] =
+            location; // caches -1 too — an
+                      // absent uniform is just as stable as a present one
+        return location;
+    }
+
     void GlShader::setValue(const std::string& name, bool value) const
     {
-        glUniform1i(glGetUniformLocation(id_, name.c_str()),
-                    static_cast<int>(value));
+        glUniform1i(getUniformLocation(name), static_cast<int>(value));
     }
 
     void GlShader::setValue(const std::string& name, int value) const
     {
-        glUniform1i(glGetUniformLocation(id_, name.c_str()), value);
+        glUniform1i(getUniformLocation(name), value);
     }
 
     void GlShader::setValue(const std::string& name, float value) const
     {
-        glUniform1f(glGetUniformLocation(id_, name.c_str()), value);
+        glUniform1f(getUniformLocation(name), value);
     }
 
     void GlShader::setValue(const std::string& name,
                             const glm::vec2& value) const
     {
-        glUniform2fv(glGetUniformLocation(id_, name.c_str()), 1, &value.x);
+        glUniform2fv(getUniformLocation(name), 1, &value.x);
     }
 
     void GlShader::setValue(const std::string& name,
                             const glm::vec3& value) const
     {
-        glUniform3fv(glGetUniformLocation(id_, name.c_str()), 1, &value.x);
+        glUniform3fv(getUniformLocation(name), 1, &value.x);
     }
 
     void GlShader::setValue(const std::string& name,
                             const glm::vec4& value) const
     {
-        glUniform4fv(glGetUniformLocation(id_, name.c_str()), 1, &value[0]);
+        glUniform4fv(getUniformLocation(name), 1, &value[0]);
     }
 
     void GlShader::setValue(const std::string& name,
                             const glm::mat2& value) const
     {
-        glUniformMatrix2fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE,
-                           &value[0][0]);
+        glUniformMatrix2fv(getUniformLocation(name), 1, GL_FALSE, &value[0][0]);
     }
 
     void GlShader::setValue(const std::string& name,
                             const glm::mat3& value) const
     {
-        glUniformMatrix3fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE,
-                           &value[0][0]);
+        glUniformMatrix3fv(getUniformLocation(name), 1, GL_FALSE, &value[0][0]);
     }
 
     void GlShader::setValue(const std::string& name,
                             const glm::mat4& value) const
     {
-        glUniformMatrix4fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE,
-                           &value[0][0]);
+        glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &value[0][0]);
     }
 
     void GlShader::setValueArray(const std::string& name, size_t count,
                                  const int* array) const
     {
-        glUniform3iv(glGetUniformLocation(id_, name.c_str()), count, array);
+        glUniform3iv(getUniformLocation(name), count, array);
     }
 
     void GlShader::setValueArray(const std::string& name, size_t count,
                                  const float* array) const
     {
-        glUniform3fv(glGetUniformLocation(id_, name.c_str()), count, array);
+        glUniform3fv(getUniformLocation(name), count, array);
     }
 
     void GlShader::setValueArray(const std::string& name, size_t count,
                                  const glm::vec2* array) const
     {
-        glUniform2fv(glGetUniformLocation(id_, name.c_str()), count, &array->x);
+        glUniform2fv(getUniformLocation(name), count, &array->x);
     }
 
     void GlShader::setValueArray(const std::string& name, size_t count,
                                  const glm::vec3* array) const
     {
-        glUniform3fv(glGetUniformLocation(id_, name.c_str()), count, &array->x);
+        glUniform3fv(getUniformLocation(name), count, &array->x);
     }
 
 } // namespace raphEngine::graphics

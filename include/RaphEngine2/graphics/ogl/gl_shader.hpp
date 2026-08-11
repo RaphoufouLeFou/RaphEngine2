@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "graphics/shader.hpp"
@@ -51,5 +52,8 @@ namespace raphEngine::graphics
         static std::vector<GlShader*> loadedShaders_;
         unsigned int id_;
         void checkCompileErrors(unsigned int shader, const std::string& type);
+
+        mutable std::unordered_map<std::string, int> uniform_location_cache_;
+        int getUniformLocation(const std::string& name) const;
     };
 } // namespace raphEngine::graphics

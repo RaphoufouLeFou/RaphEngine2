@@ -164,12 +164,14 @@ void main()
 
 inline const char* default_instanced_shadow_vs_shader = R"(
 #version 410 core
-layout (location = 0) in vec3 position;
-layout (location = 5) in mat4 instanceModel;
+layout(location = 0) in vec3 aPos;
+layout(location = 5) in mat4 instanceModel;
 
-void main() 
+uniform mat4 lightSpaceMatrix;
+
+void main()
 {
-    gl_Position = instanceModel * vec4(position, 1.0); 
+    gl_Position = lightSpaceMatrix * instanceModel * vec4(aPos, 1.0);
 }
 )";
 
@@ -211,15 +213,15 @@ void main()
 
 inline const char* default_shadow_vs_shader = R"(
 #version 410 core
-layout (location = 0) in vec3 aPos;
+layout(location = 0) in vec3 aPos;
 
+uniform mat4 lightSpaceMatrix; // set once per cascade draw call, not per-instance
 uniform mat4 model;
 
 void main()
 {
-    gl_Position = model * vec4(aPos, 1.0);
+    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
 }
-
 )";
 
 inline const char* default_shadow_gs_shader = R"(

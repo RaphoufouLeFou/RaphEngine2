@@ -18,8 +18,7 @@ namespace raphEngine
                  { "Resolution", resolution },
                  { "Shadow", shadow },
                  { "vSync", vSync },
-                 { "AA", antiAlisaing }
-                 };
+                 { "AA", antiAlisaing } };
     }
 
     void GraphicsSettings::FromJson(const nlohmann::json& j)
@@ -33,7 +32,7 @@ namespace raphEngine
         if (j.contains("Shadow"))
             j.at("Shadow").get_to(shadow);
         if (j.contains("vSync"))
-            j.at("vSync").get_to(vSync);        
+            j.at("vSync").get_to(vSync);
         if (j.contains("AA"))
             j.at("AA").get_to(antiAlisaing);
     }

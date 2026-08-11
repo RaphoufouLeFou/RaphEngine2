@@ -30,8 +30,8 @@ namespace raphEngine::graphics::ogl
         GraphicApi::res_y = height;
 
 #ifdef EDITOR_BUILD
-        GraphicApi::viewport_res_x = width; // <-- new
-        GraphicApi::viewport_res_y = height; // <-- new
+        GraphicApi::viewport_res_x = width;
+        GraphicApi::viewport_res_y = height;
 #endif
     }
 
@@ -157,7 +157,6 @@ namespace raphEngine::graphics::ogl
                            objects::BatchKeyHash>
             color_batches;
         std::vector<const Renderable*> color_unbatched;
-
         for (const Renderable* object : render_pool)
         {
             if (const objects::Mesh* mesh = object->as_mesh())
@@ -179,21 +178,37 @@ namespace raphEngine::graphics::ogl
                 Logger::LogDebug("Drawing ",
            std::to_string(color_batches.size()), " batched");
         */
+
+        std::vector<GLShadowRenderer::PreparedInstancedShadowBatch>
+            prepared_shadow_instances;
+        for (auto& [buffers, meshes] : shadow_batches)
+        {
+            if (meshes.size() > 1)
+                prepared_shadow_instances.push_back(
+                    GLShadowRenderer::upload_shadow_instances(meshes));
+        }
+
         GLShadowRenderer::prepare_shadows();
         if (ShadowRenderer::GetDirectionalLight()->cast_shadows_)
         {
-            for (auto& [buffers, meshes] : shadow_batches)
+            for (size_t layer = 0;
+                 layer < GLShadowRenderer::get_cascade_count(); ++layer)
             {
-                if (meshes.size() > 1)
-                    GLShadowRenderer::getInstance()->render_shadows_instanced(
-                        meshes);
-                else
-                    meshes.front()->render_shadow();
+                GLShadowRenderer::begin_cascade_layer(layer);
+
+                for (auto& prepared : prepared_shadow_instances)
+                    GLShadowRenderer::draw_shadow_instances(prepared);
+
+                for (auto& [buffers, meshes] : shadow_batches)
+                    if (meshes.size() == 1)
+                        meshes.front()->render_shadow();
+
+                for (const Renderable* object : shadow_unbatched)
+                    object->render_shadow();
             }
-            for (const Renderable* object : shadow_unbatched)
-                object->render_shadow();
         }
         GLShadowRenderer::cleanup_shadows();
+
         dynamic_cast<GLMeshRenderer*>(GLMeshRenderer::getInstance())
             ->invalidate_active_shader();
 

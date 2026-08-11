@@ -25,6 +25,8 @@ namespace raphEngine::graphics
 {
 
     const GlShader* GLShadowRenderer::current_active_shadow_shader_ = nullptr;
+    std::vector<glm::mat4> GLShadowRenderer::current_light_matrices_;
+    glm::mat4 GLShadowRenderer::current_cascade_light_matrix_ = glm::mat4(1.0f);
 
     GLShadowRenderer::GLShadowRenderer()
     {}
@@ -41,6 +43,7 @@ namespace raphEngine::graphics
     void GLShadowRenderer::drawCascadeVolumeVisualizers(
         const std::vector<glm::mat4>& lightMatrices, Shader* shader)
     {
+        // unchanged from your file
         Logger::LogDebug("Debug drawing...");
         visualizerVAOs.resize(8);
         visualizerEBOs.resize(8);
@@ -61,9 +64,7 @@ namespace raphEngine::graphics
             const auto corners = getFrustumCornersWorldSpace(lightMatrices[i]);
             std::vector<glm::vec3> vec3s;
             for (const auto& v : corners)
-            {
                 vec3s.push_back(glm::vec3(v));
-            }
 
             glGenVertexArrays(1, &visualizerVAOs[i]);
             glGenBuffers(1, &visualizerVBOs[i]);
@@ -101,6 +102,10 @@ namespace raphEngine::graphics
 
     void GLShadowRenderer::generate_shadows_buffer()
     {
+        // unchanged — the whole-array glFramebufferTexture attach here is
+        // now just initial setup; begin_cascade_layer() re-targets a single
+        // layer every frame via glFramebufferTextureLayer before anything
+        // actually renders, so this stays valid as-is.
         glGenFramebuffers(1, &depthMapFBO);
 
         glGenTextures(1, &depthMap);
@@ -134,9 +139,7 @@ namespace raphEngine::graphics
 
         int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
-        {
             Logger::LogWarning("Framebuffer is not complete! Status: ", status);
-        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -150,39 +153,110 @@ namespace raphEngine::graphics
 
     void GLShadowRenderer::prepare_shadows()
     {
-        // 0. UBO setup
         int res = Settings::Get<GraphicsSettings>().getShadowResolution();
 
-        const auto lightMatrices = getLightSpaceMatrices();
+        // cached both for the UBO the color pass samples against, and for
+        // begin_cascade_layer()'s per-layer lookups below
+        current_light_matrices_ = getLightSpaceMatrices();
 
         glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
-        for (size_t i = 0; i < lightMatrices.size(); i++)
+        for (size_t i = 0; i < current_light_matrices_.size(); i++)
         {
             glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4x4),
-                            sizeof(glm::mat4x4), &lightMatrices[i]);
+                            sizeof(glm::mat4x4), &current_light_matrices_[i]);
         }
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glViewport(0, 0, res, res);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        if (!shadow_shader)
-        {
-            shadow_shader = Shader::loadShader(default_shadow_vs_shader,
-                                               default_shadow_fs_shader,
-                                               default_shadow_gs_shader);
-        }
+        // whole-array glClear removed — each cascade layer is cleared
+        // individually in begin_cascade_layer() instead
 
-        shadow_shader->use();
+        if (!shadow_shader)
+            shadow_shader = Shader::loadShader(default_shadow_vs_shader,
+                                               default_shadow_fs_shader);
+        if (!shadow_shader_instanced)
+            shadow_shader_instanced = Shader::loadShader(
+                default_instanced_shadow_vs_shader, default_shadow_fs_shader);
 
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(2.5f, 10.0f);
+    }
+
+    void GLShadowRenderer::begin_cascade_layer(size_t layer)
+    {
+        current_cascade_light_matrix_ = current_light_matrices_.at(layer);
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMap,
+                                  0, static_cast<GLint>(layer));
+        glClear(GL_DEPTH_BUFFER_BIT);
+    }
+
+    size_t GLShadowRenderer::get_cascade_count()
+    {
+        return current_light_matrices_.size();
+    }
+
+    GLShadowRenderer::PreparedInstancedShadowBatch
+    GLShadowRenderer::upload_shadow_instances(
+        const std::vector<const raphEngine::objects::Mesh*>& meshes)
+    {
+        if (meshes.empty())
+            return PreparedInstancedShadowBatch{ nullptr, 0, 0 };
+
+        const objects::Mesh* first = meshes.front();
+
+        std::vector<glm::mat4> worlds;
+        worlds.reserve(meshes.size());
+        for (const objects::Mesh* m : meshes)
+            worlds.push_back(
+                m->parent_object->get_transform().get_model_matrix()
+                * m->model_matrix_);
+
+        auto* buffers = const_cast<graphics::GLMeshBuffers*>(
+            dynamic_cast<const graphics::GLMeshBuffers*>(first->get_buffers()));
+        buffers->UploadInstanceData(worlds);
+
+        return PreparedInstancedShadowBatch{
+            buffers, static_cast<unsigned int>(first->get_indices().size()),
+            worlds.size()
+        };
+    }
+
+    void GLShadowRenderer::draw_shadow_instances(
+        const PreparedInstancedShadowBatch& batch)
+    {
+        if (!batch.buffers)
+            return;
+
+        if (!shadow_shader_instanced)
+        {
+            Logger::LogError(
+                "Cant draw instanced shadows with no instanced shadow shader!");
+            return;
+        }
+
+        const GlShader* sh =
+            dynamic_cast<const GlShader*>(shadow_shader_instanced.get());
+        if (current_active_shadow_shader_ != sh)
+        {
+            current_active_shadow_shader_ = sh;
+            shadow_shader_instanced->use();
+        }
+
+        shadow_shader_instanced->setValue("lightSpaceMatrix",
+                                          current_cascade_light_matrix_);
+
+        glBindVertexArray(batch.buffers->vao_);
+        glDrawElementsInstanced(GL_TRIANGLES, batch.index_count,
+                                GL_UNSIGNED_INT, 0,
+                                static_cast<GLsizei>(batch.instance_count));
     }
 
     std::shared_ptr<Shader> debugCascadeShader = nullptr;
 
     void GLShadowRenderer::debug_draw_lights()
     {
+        // unchanged from your file
         if (!debugCascadeShader)
         {
             debugCascadeShader = Shader::loadShader(debug_cascade_vs_shader,
@@ -223,6 +297,7 @@ namespace raphEngine::graphics
 
     void GLShadowRenderer::cleanup_shadows()
     {
+        // unchanged
         glDisable(GL_POLYGON_OFFSET_FILL);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -244,9 +319,7 @@ namespace raphEngine::graphics
         }
 
         if (!*mesh->cast_shadows)
-        {
             return;
-        }
 
         const GlShader* sh = dynamic_cast<const GlShader*>(shadow_shader.get());
         if (current_active_shadow_shader_ != sh)
@@ -255,9 +328,10 @@ namespace raphEngine::graphics
             shadow_shader->use();
         }
 
+        shadow_shader->setValue("lightSpaceMatrix",
+                                current_cascade_light_matrix_);
         shadow_shader->setValue(
             "model",
-
             mesh->parent_object->get_transform().get_model_matrix()
                 * mesh->model_matrix_);
 
@@ -265,7 +339,6 @@ namespace raphEngine::graphics
             dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers());
 
         glBindVertexArray(mesh_buffers->vao_);
-
         glDrawElements(GL_TRIANGLES,
                        static_cast<unsigned int>(mesh->get_indices().size()),
                        GL_UNSIGNED_INT, 0);
@@ -274,39 +347,8 @@ namespace raphEngine::graphics
     void GLShadowRenderer::render_shadows_instanced(
         const std::vector<const raphEngine::objects::Mesh*>& meshes) const
     {
-        if (!shadow_shader_instanced)
-        {
-            shadow_shader_instanced = Shader::loadShader(
-                default_instanced_shadow_vs_shader, default_shadow_fs_shader,
-                default_shadow_gs_shader);
-        }
-
-        const GlShader* sh =
-            dynamic_cast<const GlShader*>(shadow_shader_instanced.get());
-        if (current_active_shadow_shader_ != sh)
-        {
-            current_active_shadow_shader_ = sh;
-            shadow_shader_instanced->use();
-        }
-
-        const objects::Mesh* first = meshes.front();
-
-        std::vector<glm::mat4> worlds;
-        worlds.reserve(meshes.size());
-        for (const objects::Mesh* m : meshes)
-            worlds.push_back(
-                m->parent_object->get_transform().get_model_matrix()
-                * m->model_matrix_);
-
-        auto* buffers = const_cast<graphics::GLMeshBuffers*>(
-            dynamic_cast<const graphics::GLMeshBuffers*>(first->get_buffers()));
-        buffers->UploadInstanceData(worlds);
-
-        glBindVertexArray(buffers->vao_);
-        glDrawElementsInstanced(
-            GL_TRIANGLES,
-            static_cast<unsigned int>(first->get_indices().size()),
-            GL_UNSIGNED_INT, 0, static_cast<GLsizei>(worlds.size()));
+        auto batch = upload_shadow_instances(meshes);
+        draw_shadow_instances(batch);
     }
 
 } // namespace raphEngine::graphics

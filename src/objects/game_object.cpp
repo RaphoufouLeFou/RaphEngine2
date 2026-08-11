@@ -43,9 +43,23 @@ namespace raphEngine::objects
         spawned_game_objects_.push_back(this);
     }
 
-    std::shared_ptr<GameObject> instanciate(const GameObject& from)
+    std::shared_ptr<GameObject> GameObject::instanciate(const GameObject& from)
     {
         return std::make_shared<GameObject>(from);
+    }
+
+    void GameObject::destroy_internal()
+    {
+        auto position = std::find(spawned_game_objects_.begin(),
+                                  spawned_game_objects_.end(), this);
+        if (position != spawned_game_objects_.end())
+            spawned_game_objects_.erase(position);
+    }
+
+    void GameObject::destroy(GameObject& object)
+    {
+        object.is_active = false;
+        object.destroy_internal();
     }
 
     void GameObject::pre_update()
@@ -146,10 +160,7 @@ namespace raphEngine::objects
 
     GameObject::~GameObject()
     {
-        auto position = std::find(spawned_game_objects_.begin(),
-                                  spawned_game_objects_.end(), this);
-        if (position != spawned_game_objects_.end())
-            spawned_game_objects_.erase(position);
+        destroy_internal();
     }
 
     component::Component* GameObject::get_component(size_t index)

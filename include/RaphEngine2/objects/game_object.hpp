@@ -45,8 +45,6 @@ namespace raphEngine::objects
         std::string& get_name();
         objects::Transform& get_transform();
 
-        std::shared_ptr<GameObject> instanciate(const GameObject&);
-
         template <Comp T, class... Args>
         T* add_component(Args&&... args);
 
@@ -71,10 +69,12 @@ namespace raphEngine::objects
         void start_components();
         void update_components();
 
+        static std::shared_ptr<GameObject> instanciate(const GameObject&);
         static GameObject* find(const std::string& name);
+        static void destroy(GameObject&);
 
         GameObject& operator=(const GameObject&) = delete;
-        GameObject& operator=(GameObject&&) = default;
+        GameObject& operator=(GameObject&&) = delete;
 
         int raycast_layer_ = 0;
         static std::vector<GameObject*> spawned_game_objects_;
@@ -90,10 +90,12 @@ namespace raphEngine::objects
     private:
         bool has_started = false;
         unsigned long id_ = 0;
-        bool inspected = false;
         void pre_update();
+        void destroy_internal();
 
 #ifdef EDITOR_BUILD
+        bool inspected = false;
+
         void ImGui_layout();
         void ImGui_update();
 #endif

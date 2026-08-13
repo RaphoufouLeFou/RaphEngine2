@@ -1,0 +1,129 @@
+
+name: CMake multi-platform
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  BUILD_TYPE: Release
+  IMGUI_TAG: v1.92.9b
+
+jobs:
+  build-ubuntu:
+    name: Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Ensure Dear ImGui is present
+
+        run: |
+          if [ ! -f "${{ github.workspace }}/imgui/imgui.cpp" ]; then
+            echo "imgui/ not found - cloning ${IMGUI_TAG}"
+            git clone --depth 1 --branch "${IMGUI_TAG}" https://github.com/ocornut/imgui.git "${{ github.workspace }}/imgui"
+          fi
+
+      - name: Install system dependencies
+
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libtbb-dev \
+            xorg-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            zlib1g-dev
+
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/build/_deps
+          key: ubuntu-fetchcontent-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            ubuntu-fetchcontent-
+
+      - name: Configure CMake
+        run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Build
+        run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }} --parallel
+
+  build-arch:
+    name: Arch Linux
+    runs-on: ubuntu-latest
+
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Install base packages
+        run: |
+          pacman -Syu --noconfirm --needed \
+            base-devel cmake git ninja mesa \
+            onetbb glm nlohmann-json glfw-x11 assimp
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Ensure Dear ImGui is present
+        run: |
+          if [ ! -f "${{ github.workspace }}/imgui/imgui.cpp" ]; then
+            echo "imgui/ not found - cloning ${IMGUI_TAG}"
+            git clone --depth 1 --branch "${IMGUI_TAG}" https://github.com/ocornut/imgui.git "${{ github.workspace }}/imgui"
+          fi
+
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/build/_deps
+          key: arch-fetchcontent-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            arch-fetchcontent-
+
+      - name: Configure CMake
+        run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Build
+        run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }} --parallel
+
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Ensure Dear ImGui is present
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${{ github.workspace }}/imgui/imgui.cpp")) {
+            Write-Host "imgui/ not found - cloning $env:IMGUI_TAG"
+            git clone --depth 1 --branch $env:IMGUI_TAG https://github.com/ocornut/imgui.git "${{ github.workspace }}/imgui"
+          }
+
+      - name: Install TBB via vcpkg
+
+        run: vcpkg install tbb:x64-windows
+
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/build/_deps
+          key: windows-fetchcontent-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            windows-fetchcontent-
+
+      - name: Configure CMake
+        run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
+
+      - name: Build
+        run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }} --parallel

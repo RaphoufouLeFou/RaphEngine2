@@ -2,8 +2,9 @@
 
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/renderable.hpp>
-
+#include "RaphEngine2/graphics/ogl/rmlui_renderer.hpp"
 #include "graphics/graphic_api.hpp"
+#include "graphics/ogl/rmlui_renderer.hpp"
 
 namespace raphEngine::graphics::ogl
 {
@@ -21,6 +22,10 @@ namespace raphEngine::graphics::ogl
         bool GetMouseButtonPressed(int button) const override;
         void SetMouseVisibility(bool visible) const override;
         bool IsWindowFocused() const override;
+        RmlUiRenderer& GetRmlUiRenderer()
+        {
+            return rmlui_renderer_;
+        }
 
 #ifdef EDITOR_BUILD
         void ResizeViewportFramebuffer(int width, int height) override;
@@ -29,6 +34,7 @@ namespace raphEngine::graphics::ogl
             return (void*)(intptr_t)viewport_color_tex_;
         }
 #endif
+        graphics::ogl::RmlUiRenderer rmlui_renderer_;
 
     private:
 #ifdef EDITOR_BUILD

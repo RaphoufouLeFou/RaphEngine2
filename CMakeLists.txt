@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.21.2)
 
 project(RaphEngine2 VERSION 1.0.0 LANGUAGES CXX)
 
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -40,6 +44,7 @@ add_library(RaphEngine2 SHARED ${RaphEngine2_SRC})
 target_compile_definitions(RaphEngine2
     PRIVATE
         RAPHENGINE_EXPORTS
+        GLFW_INCLUDE_NONE
 )
 
 target_compile_features(RaphEngine2 PUBLIC cxx_std_20)
@@ -52,7 +57,7 @@ else()
     target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -fPIC -mavx2 -mfma)
 endif()
 
-option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" OFF)
+option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" ON)
 
 if(RAPHENGINE2_ENABLE_ASAN AND NOT WIN32)
     target_compile_options(RaphEngine2 PRIVATE -fsanitize=address -fno-omit-frame-pointer -g)
@@ -147,6 +152,50 @@ if(NOT glfw3_FOUND)
 endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glfw)
+
+# freetype
+find_package(Freetype QUIET)
+
+if(NOT Freetype_FOUND)
+    FetchContent_Declare(
+        freetype
+        GIT_REPOSITORY https://github.com/freetype/freetype.git
+        GIT_TAG VER-2-13-3
+    )
+    FetchContent_MakeAvailable(freetype)
+endif()
+
+# RmlUi
+set(RMLUI_DEBUGGER OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    rmlui
+    GIT_REPOSITORY https://github.com/mikke89/RmlUi.git
+    GIT_TAG 6.2
+)
+FetchContent_MakeAvailable(rmlui)
+
+target_link_libraries(RaphEngine2 PRIVATE RmlUi::RmlUi)
+
+set(RMLUI_BACKEND_DIR ${rmlui_SOURCE_DIR}/Backends)
+
+target_sources(RaphEngine2 PRIVATE
+    ${RMLUI_BACKEND_DIR}/RmlUi_Platform_GLFW.cpp
+    ${RMLUI_BACKEND_DIR}/RmlUi_Renderer_GL3.cpp
+)
+
+if(NOT WIN32)
+    set_source_files_properties(
+        ${RMLUI_BACKEND_DIR}/RmlUi_Platform_GLFW.cpp
+        ${RMLUI_BACKEND_DIR}/RmlUi_Renderer_GL3.cpp
+        PROPERTIES COMPILE_OPTIONS "-Wno-error"
+    )
+endif()
+
+target_include_directories(RaphEngine2 PRIVATE ${RMLUI_BACKEND_DIR})
+target_compile_definitions(RaphEngine2 PRIVATE
+    "RMLUI_GL3_CUSTOM_LOADER=<GL/glew.h>"
+)
 
 # stb_image
 FetchContent_Declare(

@@ -95,7 +95,7 @@ You can start the editor with `./RaphEditor`
 
 ### <ins>TLDR<ins>
 
-To build shared library on linux, simply execute
+To build shared library on Windows, simply execute
 ```shell
 compile.bat
 ```

@@ -13,6 +13,7 @@
 #include <RaphEngine2/settings/settings.hpp>
 #include <RaphEngine2/graphics/ogl/gl_mesh_renderer.hpp>
 #include <RaphEngine2/graphics/ogl/gl_shadow_renderer.hpp>
+#include "inputs/rmlui_input.hpp"
 
 #ifdef EDITOR_BUILD
 #    include "imgui_impl_glfw.h"
@@ -28,6 +29,9 @@ namespace raphEngine::graphics::ogl
         glViewport(0, 0, width, height);
         GraphicApi::res_x = width;
         GraphicApi::res_y = height;
+
+        if (RmlUiRenderer::instance_)
+            RmlUiRenderer::instance_->Resize(width, height);
 
 #ifdef EDITOR_BUILD
         GraphicApi::viewport_res_x = width;
@@ -100,6 +104,13 @@ namespace raphEngine::graphics::ogl
             exit(EXIT_FAILURE);
             return;
         }
+
+        rmlui_renderer_.Init(window, res_x, res_y);
+        glfwSetCursorPosCallback(window, inputs::rmlui_cursor_pos_callback);
+        glfwSetMouseButtonCallback(window, inputs::rmlui_mouse_button_callback);
+        glfwSetScrollCallback(window, inputs::rmlui_scroll_callback);
+        glfwSetKeyCallback(window, inputs::rmlui_key_callback);
+        glfwSetCharCallback(window, inputs::rmlui_char_callback);
 
         glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
         // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -231,6 +242,9 @@ namespace raphEngine::graphics::ogl
         GLShadowRenderer::debug_draw_lights();
         Debug::getInstance()->RenderAllLines();
 
+        rmlui_renderer_
+            .Render(); // <-- new, draws RmlUi documents over the 3D scene
+
 #ifdef EDITOR_BUILD
         glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_ms_);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, viewport_fbo_resolve_);
@@ -259,6 +273,7 @@ namespace raphEngine::graphics::ogl
 
         if (!stay_open)
         {
+            rmlui_renderer_.Shutdown();
 #ifdef EDITOR_BUILD
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplGlfw_Shutdown();

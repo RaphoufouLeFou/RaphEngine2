@@ -152,6 +152,8 @@ namespace raphEngine
                 io.ConfigFlags &= ~ImGuiConfigFlags_NoMouseCursorChange;
 #endif
 
+            renderer.GetRmlUiRenderer().Update();
+
             execute_updates();
             execute_components_updates();
 

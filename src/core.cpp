@@ -234,4 +234,9 @@ namespace raphEngine
             go->update_components();
         }
     }
+
+    void Core::Quit()
+    {
+        renderer.RequestQuit();
+    }
 } // namespace raphEngine

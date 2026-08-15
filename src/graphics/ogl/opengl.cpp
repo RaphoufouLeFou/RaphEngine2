@@ -388,4 +388,9 @@ namespace raphEngine::graphics::ogl
         return glfwGetWindowAttrib(window, GLFW_FOCUSED);
     }
 
+    void OpenGL::RequestQuit()
+    {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+
 } // namespace raphEngine::graphics::ogl

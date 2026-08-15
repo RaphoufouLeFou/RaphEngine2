@@ -13,6 +13,7 @@ namespace raphEngine
         static void Run();
 
         static double GetFPS();
+        static void Quit();
 
     private:
         static void execute_updates();

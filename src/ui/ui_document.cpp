@@ -8,6 +8,28 @@ namespace raphEngine
         return static_cast<Rml::ElementDocument*>(p);
     }
 
+    class FunctionEventListener : public Rml::EventListener
+    {
+    public:
+        explicit FunctionEventListener(std::function<void()> callback)
+            : callback_(std::move(callback))
+        {}
+
+        void ProcessEvent(Rml::Event&) override
+        {
+            if (callback_)
+                callback_();
+        }
+
+        void OnDetach(Rml::Element*) override
+        {
+            delete this;
+        }
+
+    private:
+        std::function<void()> callback_;
+    };
+
     bool UIDocument::IsValid() const
     {
         return native_document_ != nullptr;
@@ -22,6 +44,12 @@ namespace raphEngine
     {
         if (auto* d = Doc(native_document_))
             d->Hide();
+    }
+
+    bool UIDocument::IsVisible() const
+    {
+        auto* d = Doc(native_document_);
+        return d && d->IsVisible();
     }
 
     void UIDocument::SetText(const std::string& element_id,
@@ -47,5 +75,19 @@ namespace raphEngine
         if (auto* d = Doc(native_document_))
             if (auto* el = d->GetElementById(element_id))
                 el->SetProperty("display", visible ? "block" : "none");
+    }
+
+    void UIDocument::OnClick(const std::string& element_id,
+                             std::function<void()> callback)
+    {
+        auto* d = Doc(native_document_);
+        if (!d)
+            return;
+        auto* el = d->GetElementById(element_id);
+        if (!el)
+            return;
+
+        el->AddEventListener("click",
+                             new FunctionEventListener(std::move(callback)));
     }
 } // namespace raphEngine

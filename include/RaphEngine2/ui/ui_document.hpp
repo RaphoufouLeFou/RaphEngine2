@@ -2,6 +2,7 @@
 #include <RaphEngine2/export.hpp>
 
 #include <string>
+#include <functional>
 
 namespace raphEngine
 {
@@ -14,12 +15,15 @@ namespace raphEngine
 
         void Show();
         void Hide();
+        bool IsVisible() const;
 
         void SetText(const std::string& element_id, const std::string& text);
         void SetAttribute(const std::string& element_id,
                           const std::string& attribute,
                           const std::string& value);
         void SetElementVisible(const std::string& element_id, bool visible);
+        void OnClick(const std::string& element_id,
+                     std::function<void()> callback);
 
     private:
         friend class UI;

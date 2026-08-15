@@ -2,26 +2,35 @@
 #include "logger/logger.hpp"
 
 #include <GL/glew.h>
-#include <GL/gl.h>
+#include <RmlUi/Core.h>
+#include <RmlUi_Platform_GLFW.h>
+#include <RmlUi_Renderer_GL3.h>
 #include <GLFW/glfw3.h>
 
 namespace raphEngine::graphics::ogl
 {
+    struct RmlUiRenderer::Impl
+    {
+        std::unique_ptr<SystemInterface_GLFW> system_interface;
+        std::unique_ptr<RenderInterface_GL3> render_interface;
+    };
+
+    RmlUiRenderer::RmlUiRenderer()
+        : impl_(std::make_unique<Impl>())
+    {}
+    RmlUiRenderer::~RmlUiRenderer() = default;
+
     void RmlUiRenderer::Init(GLFWwindow* window, int width, int height)
     {
         instance_ = this;
         window_ = window;
 
-        // Constructed here, not as members -- RenderInterface_GL3's constructor
-        // issues real GL calls (shader compilation), so it must not run until
-        // after glewInit() has actually loaded the GL function pointers.
-        system_interface_ = std::make_unique<SystemInterface_GLFW>();
-        system_interface_->SetWindow(window);
+        impl_->system_interface = std::make_unique<SystemInterface_GLFW>();
+        impl_->system_interface->SetWindow(window);
+        impl_->render_interface = std::make_unique<RenderInterface_GL3>();
 
-        render_interface_ = std::make_unique<RenderInterface_GL3>();
-
-        Rml::SetSystemInterface(system_interface_.get());
-        Rml::SetRenderInterface(render_interface_.get());
+        Rml::SetSystemInterface(impl_->system_interface.get());
+        Rml::SetRenderInterface(impl_->render_interface.get());
 
         if (!Rml::Initialise())
         {
@@ -31,19 +40,14 @@ namespace raphEngine::graphics::ogl
 
         context_ = Rml::CreateContext("main", Rml::Vector2i(width, height));
         if (!context_)
-        {
             Logger::LogError("Failed to create RmlUi context");
-            return;
-        }
     }
 
     void RmlUiRenderer::Shutdown()
     {
-        // Interfaces must stay alive until after Rml::Shutdown() per RmlUi's
-        // docs.
         Rml::Shutdown();
-        render_interface_.reset();
-        system_interface_.reset();
+        impl_->render_interface.reset();
+        impl_->system_interface.reset();
     }
 
     void RmlUiRenderer::Update()
@@ -54,27 +58,49 @@ namespace raphEngine::graphics::ogl
 
     void RmlUiRenderer::Render()
     {
-        if (!context_ || !render_interface_)
+        if (!context_ || !impl_->render_interface)
             return;
 
         glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        render_interface_->BeginFrame();
+        impl_->render_interface->BeginFrame();
         context_->Render();
-        render_interface_->EndFrame();
+        impl_->render_interface->EndFrame();
 
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
     }
 
     void RmlUiRenderer::Resize(int width, int height)
     {
         if (context_)
             context_->SetDimensions(Rml::Vector2i(width, height));
+        if (impl_->render_interface)
+            impl_->render_interface->SetViewport(width, height);
+    }
 
-        if (render_interface_)
-            render_interface_->SetViewport(width, height);
+    void RmlUiRenderer::LoadFont(const std::string& path)
+    {
+        if (!Rml::LoadFontFace(path))
+            Logger::LogError("Failed to load font: ", path);
+    }
+
+    Rml::ElementDocument* RmlUiRenderer::LoadDocument(const std::string& path)
+    {
+        if (!context_)
+            return nullptr;
+
+        Rml::ElementDocument* doc = context_->LoadDocument(path);
+        if (!doc)
+        {
+            Logger::LogError("Failed to load RmlUi document: ", path);
+            return nullptr;
+        }
+        doc->Show();
+        return doc;
     }
 
     bool RmlUiRenderer::IsInputEnabled() const

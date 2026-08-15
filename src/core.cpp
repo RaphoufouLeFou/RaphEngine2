@@ -17,6 +17,12 @@
 namespace raphEngine
 {
     graphics::ogl::OpenGL renderer{};
+    static double current_fps_ = 60.0;
+
+    double Core::GetFPS()
+    {
+        return current_fps_;
+    }
 
     void Core::Init(const std::string& title)
     {
@@ -43,6 +49,10 @@ namespace raphEngine
     void Core::Run()
     {
         Logger::LogDebug("running now from RaphEngine2!");
+
+        static auto t = Time::GetTime();
+        static double fps_avr = 0;
+        static int avr_count = 0;
 
         while (1)
         {
@@ -153,6 +163,16 @@ namespace raphEngine
 #endif
 
             renderer.GetRmlUiRenderer().Update();
+
+            fps_avr += 1.0f / Time::deltaTime;
+            avr_count++;
+            if (Time::GetTime() - t > 1000)
+            {
+                current_fps_ = fps_avr / avr_count;
+                fps_avr = 0;
+                avr_count = 0;
+                t = Time::GetTime();
+            }
 
             execute_updates();
             execute_components_updates();

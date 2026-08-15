@@ -1,12 +1,15 @@
 #pragma once
-
 #include <RaphEngine2/export.hpp>
-#include <GL/glew.h>
-#include <RmlUi/Core.h>
-#include <RmlUi_Platform_GLFW.h>
-#include <RmlUi_Renderer_GL3.h>
-#include <GLFW/glfw3.h>
 #include <memory>
+#include <string>
+
+struct GLFWwindow;
+
+namespace Rml
+{
+    class Context;
+    class ElementDocument;
+} // namespace Rml
 
 namespace raphEngine::graphics::ogl
 {
@@ -15,8 +18,8 @@ namespace raphEngine::graphics::ogl
     public:
         static inline RmlUiRenderer* instance_ = nullptr;
 
-        RmlUiRenderer() = default;
-        ~RmlUiRenderer() = default;
+        RmlUiRenderer();
+        ~RmlUiRenderer();
 
         void Init(GLFWwindow* window, int width, int height);
         void Shutdown();
@@ -25,6 +28,9 @@ namespace raphEngine::graphics::ogl
         void Render();
         void Resize(int width, int height);
 
+        void LoadFont(const std::string& path);
+        Rml::ElementDocument* LoadDocument(const std::string& path);
+
         Rml::Context* GetContext() const
         {
             return context_;
@@ -32,8 +38,8 @@ namespace raphEngine::graphics::ogl
         bool IsInputEnabled() const;
 
     private:
-        std::unique_ptr<SystemInterface_GLFW> system_interface_;
-        std::unique_ptr<RenderInterface_GL3> render_interface_;
+        struct Impl;
+        std::unique_ptr<Impl> impl_;
         Rml::Context* context_ = nullptr;
         GLFWwindow* window_ = nullptr;
     };

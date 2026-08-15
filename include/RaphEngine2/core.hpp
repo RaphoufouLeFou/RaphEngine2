@@ -12,6 +12,8 @@ namespace raphEngine
         static void Init(const std::string& title = "Untitled");
         static void Run();
 
+        static double GetFPS();
+
     private:
         static void execute_updates();
 

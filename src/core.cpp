@@ -162,8 +162,6 @@ namespace raphEngine
                 io.ConfigFlags &= ~ImGuiConfigFlags_NoMouseCursorChange;
 #endif
 
-            renderer.GetRmlUiRenderer().Update();
-
             fps_avr += 1.0f / Time::deltaTime;
             avr_count++;
             if (Time::GetTime() - t > 1000)
@@ -179,6 +177,8 @@ namespace raphEngine
 
             graphics::Debug::getInstance()->DrawLine(glm::vec3(0, 0, 0),
                                                      glm::vec3(100, 2, 3));
+
+            renderer.GetRmlUiRenderer().Update();
             renderer.Render();
 
 #ifdef EDITOR_BUILD

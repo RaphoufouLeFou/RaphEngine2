@@ -1,9 +1,11 @@
 #include "graphics/ogl/rmlui_renderer.hpp"
+#include "graphics/graphic_api.hpp"
 #include "logger/logger.hpp"
 
 #include <GL/glew.h>
 #include <RmlUi/Core.h>
 #include <RmlUi_Platform_GLFW.h>
+#include <RmlUi/Debugger.h>
 #include <RmlUi_Renderer_GL3.h>
 #include <GLFW/glfw3.h>
 
@@ -41,6 +43,11 @@ namespace raphEngine::graphics::ogl
         context_ = Rml::CreateContext("main", Rml::Vector2i(width, height));
         if (!context_)
             Logger::LogError("Failed to create RmlUi context");
+
+        // #ifdef EDITOR_BUILD
+        Rml::Debugger::Initialise(context_);
+        // Rml::Debugger::SetVisible(true);
+        //  #endif
     }
 
     void RmlUiRenderer::Shutdown()

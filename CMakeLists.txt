@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.21.2)
 
 project(RaphEngine2 VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -57,7 +53,7 @@ else()
     target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -fPIC -mavx2 -mfma)
 endif()
 
-option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" ON)
+option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" OFF)
 
 if(RAPHENGINE2_ENABLE_ASAN AND NOT WIN32)
     target_compile_options(RaphEngine2 PRIVATE -fsanitize=address -fno-omit-frame-pointer -g)
@@ -83,6 +79,7 @@ set_target_properties(RaphEngine2 PROPERTIES
 
 find_package(TBB REQUIRED)
 target_link_libraries(RaphEngine2 PUBLIC TBB::tbb)
+
 
 #imgui
 
@@ -166,8 +163,6 @@ if(NOT Freetype_FOUND)
 endif()
 
 # RmlUi
-set(RMLUI_DEBUGGER OFF CACHE BOOL "" FORCE)
-
 FetchContent_Declare(
     rmlui
     GIT_REPOSITORY https://github.com/mikke89/RmlUi.git
@@ -175,7 +170,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(rmlui)
 
-target_link_libraries(RaphEngine2 PRIVATE RmlUi::RmlUi)
+target_link_libraries(RaphEngine2 PRIVATE $<BUILD_INTERFACE:RmlUi::RmlUi>)
 
 set(RMLUI_BACKEND_DIR ${rmlui_SOURCE_DIR}/Backends)
 

@@ -1,3 +1,4 @@
+#include "graphics/graphic_api.hpp"
 #include "graphics/ogl/rmlui_renderer.hpp"
 #include <RmlUi_Platform_GLFW.h>
 

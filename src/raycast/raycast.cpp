@@ -93,8 +93,6 @@ namespace raphEngine
         return (discriminant > 0);
     }
 
-    // Slab-method ray/AABB test, run in the SAME local space as the collider's
-    // triangles. Cheap broad-phase reject before touching a single triangle.
     bool RayIntersectsAABB(const glm::vec3& localOrigin,
                            const glm::vec3& localDirection,
                            const glm::vec3& boundsMin,
@@ -113,7 +111,7 @@ namespace raphEngine
             if (std::abs(d) < 1e-8f)
             {
                 if (o < lo || o > hi)
-                    return false; // parallel to this slab and outside it
+                    return false;
                 continue;
             }
 
@@ -143,7 +141,6 @@ namespace raphEngine
         return glm::normalize(NewDirection);
     }
 
-    // Result of finding the closest triangle hit within one object's collider.
     struct RayHit
     {
         bool valid = false;
@@ -158,8 +155,6 @@ namespace raphEngine
         float t = std::numeric_limits<float>::infinity();
     };
 
-    // Batched Moller-Trumbore over 8 triangles at once. `ox..dz` broadcast the
-    // single ray across all 8 lanes; each lane tests one triangle.
     static inline BatchHit
     RayIntersectTriangles8(const component::TriangleSOA& soa, size_t start,
                            __m256 ox, __m256 oy, __m256 oz, __m256 dx,
@@ -186,7 +181,6 @@ namespace raphEngine
         __m256 e2x = _mm256_sub_ps(cx, ax), e2y = _mm256_sub_ps(cy, ay),
                e2z = _mm256_sub_ps(cz, az);
 
-        // ray_cross_e2 = dir x edge2
         __m256 rx =
             _mm256_sub_ps(_mm256_mul_ps(dy, e2z), _mm256_mul_ps(dz, e2y));
         __m256 ry =
@@ -198,12 +192,9 @@ namespace raphEngine
             _mm256_add_ps(_mm256_mul_ps(e1x, rx), _mm256_mul_ps(e1y, ry)),
             _mm256_mul_ps(e1z, rz));
 
-        __m256 absDet =
-            _mm256_andnot_ps(signMask, det); // clear sign bit -> |det|
+        __m256 absDet = _mm256_andnot_ps(signMask, det);
         __m256 validDet = _mm256_cmp_ps(absDet, eps, _CMP_GT_OQ);
 
-        // Avoid dividing by ~0 on rejected lanes (keeps NaN/Inf out entirely,
-        // even though those lanes get masked out below anyway).
         __m256 safeDet = _mm256_blendv_ps(one, det, validDet);
         __m256 invDet = _mm256_div_ps(one, safeDet);
 
@@ -219,7 +210,6 @@ namespace raphEngine
             _mm256_cmp_ps(u, _mm256_sub_ps(zero, eps), _CMP_GE_OQ),
             _mm256_cmp_ps(u, _mm256_add_ps(one, eps), _CMP_LE_OQ));
 
-        // s_cross_e1 = s x edge1
         __m256 qx =
             _mm256_sub_ps(_mm256_mul_ps(sy, e1z), _mm256_mul_ps(sz, e1y));
         __m256 qy =
@@ -267,11 +257,6 @@ namespace raphEngine
     }
 #endif
 
-    // Closest triangle hit for one object's collider, in that object's local
-    // space. Uses AVX2 8-wide batches when available, otherwise falls back to
-    // a scalar loop -- both parallelized across triangles/batches with
-    // transform_reduce (no locks: each task keeps its own local best, and the
-    // reduction just picks the smallest t).
     RayHit
     RayIntersectClosestInCollider(const component::ColliderComponent& collider,
                                   const glm::vec3& localOrigin,
@@ -365,7 +350,6 @@ namespace raphEngine
             glm::vec3 LocalDirection =
                 GetNewDirection(origin, LocalOrigin, direction, InvModel);
 
-            // Broad phase: skip the whole object if the ray misses its AABB.
             float aabbEntryT;
             if (!RayIntersectsAABB(LocalOrigin, LocalDirection,
                                    collider_component->bounding_min,
@@ -383,8 +367,7 @@ namespace raphEngine
                 glm::vec3(model * glm::vec4(localHitPoint, 1.0f));
 
             glm::vec3 toHit = worldHitPoint - origin;
-            float distSq =
-                glm::dot(toHit, toHit); // avoid sqrt per-object comparison
+            float distSq = glm::dot(toHit, toHit);
 
             if (!hitFound || distSq < closestDistSq)
             {

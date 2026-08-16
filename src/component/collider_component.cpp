@@ -24,20 +24,13 @@ namespace raphEngine::component
 
     ColliderComponent::ColliderComponent()
     {
-        const MeshComponent* mesh =
-            parent_object->get_first_component_of_type<MeshComponent>();
-        if (!mesh)
-        {
-            Logger::LogError(
-                "Can't create a collider if there is no mesh on the object");
-            return;
-        }
-        get_collider_from_mesh_component(*mesh);
+        started = false;
     }
 
     ColliderComponent::ColliderComponent(const MeshComponent& mesh_source)
     {
         get_collider_from_mesh_component(mesh_source);
+        started = true;
     }
 
     void ColliderComponent::get_collider_from_mesh_component(
@@ -170,7 +163,20 @@ namespace raphEngine::component
     }
 
     void ColliderComponent::Start()
-    {}
+    {
+        if (!started)
+        {
+            const MeshComponent* mesh =
+                parent_object->get_first_component_of_type<MeshComponent>();
+            if (!mesh)
+            {
+                Logger::LogError("Can't create a collider if there is no mesh "
+                                 "on the object");
+                return;
+            }
+            get_collider_from_mesh_component(*mesh);
+        }
+    }
 
     void ColliderComponent::Update()
     {

@@ -50,7 +50,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 if(WIN32)
     target_compile_options(RaphEngine2 PRIVATE /W4 /permissive- /wd4251 /arch:AVX2)
 else()
-    target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -fPIC -mavx2 -mfma)
+    target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -fPIC -mavx2 -mfma -O3)
 endif()
 
 option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" OFF)

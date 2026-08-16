@@ -60,5 +60,7 @@ namespace raphEngine::component
         void get_collider_from_mesh_component(const MeshComponent&);
         void add_tri_to_collider_mesh(const objects::Mesh*);
         void calculate_bounding_box();
+
+        bool started = false;
     };
 } // namespace raphEngine::component

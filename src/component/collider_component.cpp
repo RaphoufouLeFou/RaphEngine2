@@ -38,72 +38,12 @@ namespace raphEngine::component
     {
         const auto object_mesh = mesh_source.lods_->get_lod_at_level(0);
         geometry_ = ColliderGeometryCache::get_or_build(object_mesh);
-    }
-
-    void ColliderComponent::add_tri_to_collider_mesh(const objects::Mesh* mesh)
-    {
-        const glm::mat4 meshModel = mesh->get_model_matrix();
-
-        const auto& verts = mesh->get_vertices();
-        const auto& indices = mesh->get_indices();
-        bool isIndexed = !indices.empty();
-        size_t triSource = isIndexed ? indices.size() : verts.size();
-        int triCount = static_cast<int>(triSource / 3);
-
-        collider_mesh.reserve(collider_mesh.size() + triCount);
-
-        for (int k = 0; k < triCount; k++)
-        {
-            unsigned int i0, i1, i2;
-            if (isIndexed)
-            {
-                i0 = indices[k * 3];
-                i1 = indices[k * 3 + 1];
-                i2 = indices[k * 3 + 2];
-            }
-            else
-            {
-                i0 = static_cast<unsigned int>(k * 3);
-                i1 = static_cast<unsigned int>(k * 3 + 1);
-                i2 = static_cast<unsigned int>(k * 3 + 2);
-            }
-
-            Utils::Triangle objTri;
-            objTri.a =
-                glm::vec3(meshModel * glm::vec4(verts[i0].position, 1.0f));
-            objTri.b =
-                glm::vec3(meshModel * glm::vec4(verts[i1].position, 1.0f));
-            objTri.c =
-                glm::vec3(meshModel * glm::vec4(verts[i2].position, 1.0f));
-            collider_mesh.push_back(objTri);
-        }
-    }
-
-    void ColliderComponent::calculate_bounding_box()
-    {
-        if (collider_mesh.size() == 0)
-        {
-            bounding_min = glm::vec3{ 0 };
-            bounding_max = glm::vec3{ 0 };
-            return;
-        }
-
-        bounding_min = collider_mesh.at(0).a;
-        bounding_max = bounding_min;
-
-        for (const Utils::Triangle& t : collider_mesh)
-        {
-            for (const auto& p : { t.a, t.b, t.c })
-            {
-                bounding_min.x = std::min(bounding_min.x, p.x);
-                bounding_min.y = std::min(bounding_min.y, p.y);
-                bounding_min.z = std::min(bounding_min.z, p.z);
-
-                bounding_max.x = std::max(bounding_max.x, p.x);
-                bounding_max.y = std::max(bounding_max.y, p.y);
-                bounding_max.z = std::max(bounding_max.z, p.z);
-            }
-        }
+        Logger::LogDebug(
+            "Collider geometry: ", geometry_->triangles.size(),
+            " triangles, bounds min=(", geometry_->bounding_min.x, ",",
+            geometry_->bounding_min.y, ",", geometry_->bounding_min.z,
+            ") max=(", geometry_->bounding_max.x, ",",
+            geometry_->bounding_max.y, ",", geometry_->bounding_max.z, ")");
     }
 
     void ColliderComponent::update_cached_transform(const glm::mat4& model)
@@ -114,46 +54,6 @@ namespace raphEngine::component
         cached_model_ = model;
         cached_inv_model_ = glm::inverse(model);
         cached_normal_matrix_ = glm::transpose(glm::mat3(cached_inv_model_));
-    }
-
-    void ColliderComponent::build_soa_cache()
-    {
-#if defined(__AVX2__)
-        size_t count = collider_mesh.size();
-        size_t paddedCount = ((count + 7) / 8) * 8;
-
-        collider_mesh_soa.ax.assign(paddedCount, 0.0f);
-        collider_mesh_soa.ay.assign(paddedCount, 0.0f);
-        collider_mesh_soa.az.assign(paddedCount, 0.0f);
-        collider_mesh_soa.bx.assign(paddedCount, 0.0f);
-        collider_mesh_soa.by.assign(paddedCount, 0.0f);
-        collider_mesh_soa.bz.assign(paddedCount, 0.0f);
-        collider_mesh_soa.cx.assign(paddedCount, 0.0f);
-        collider_mesh_soa.cy.assign(paddedCount, 0.0f);
-        collider_mesh_soa.cz.assign(paddedCount, 0.0f);
-
-        for (size_t k = 0; k < count; k++)
-        {
-            const Utils::Triangle& t = collider_mesh[k];
-            collider_mesh_soa.ax[k] = t.a.x;
-            collider_mesh_soa.ay[k] = t.a.y;
-            collider_mesh_soa.az[k] = t.a.z;
-            collider_mesh_soa.bx[k] = t.b.x;
-            collider_mesh_soa.by[k] = t.b.y;
-            collider_mesh_soa.bz[k] = t.b.z;
-            collider_mesh_soa.cx[k] = t.c.x;
-            collider_mesh_soa.cy[k] = t.c.y;
-            collider_mesh_soa.cz[k] = t.c.z;
-        }
-
-        collider_mesh_soa.count = count;
-        collider_mesh_soa.paddedCount = paddedCount;
-
-        size_t numBatches = paddedCount / 8;
-        collider_mesh_soa.batch_starts.resize(numBatches);
-        for (size_t b = 0; b < numBatches; b++)
-            collider_mesh_soa.batch_starts[b] = b * 8;
-#endif
     }
 
     void ColliderComponent::Start()
@@ -182,14 +82,22 @@ namespace raphEngine::component
     {
         // 8 corners of the box, in local space
         const glm::vec3 local_corners[8] = {
-            { bounding_min.x, bounding_min.y, bounding_min.z }, // 0
-            { bounding_max.x, bounding_min.y, bounding_min.z }, // 1
-            { bounding_max.x, bounding_max.y, bounding_min.z }, // 2
-            { bounding_min.x, bounding_max.y, bounding_min.z }, // 3
-            { bounding_min.x, bounding_min.y, bounding_max.z }, // 4
-            { bounding_max.x, bounding_min.y, bounding_max.z }, // 5
-            { bounding_max.x, bounding_max.y, bounding_max.z }, // 6
-            { bounding_min.x, bounding_max.y, bounding_max.z } // 7
+            { get_bounding_min().x, get_bounding_min().y,
+              get_bounding_min().z },
+            { get_bounding_max().x, get_bounding_min().y,
+              get_bounding_min().z },
+            { get_bounding_max().x, get_bounding_max().y,
+              get_bounding_min().z },
+            { get_bounding_min().x, get_bounding_max().y,
+              get_bounding_min().z },
+            { get_bounding_min().x, get_bounding_min().y,
+              get_bounding_max().z },
+            { get_bounding_max().x, get_bounding_min().y,
+              get_bounding_max().z },
+            { get_bounding_max().x, get_bounding_max().y,
+              get_bounding_max().z },
+            { get_bounding_min().x, get_bounding_max().y,
+              get_bounding_max().z },
         };
 
         const glm::mat4 model =

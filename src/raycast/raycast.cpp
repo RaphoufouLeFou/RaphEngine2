@@ -263,7 +263,7 @@ namespace raphEngine
                                   const glm::vec3& localDirection)
     {
 #if defined(__AVX2__)
-        const auto& soa = collider.collider_mesh_soa;
+        const auto& soa = collider.get_collider_mesh_soa();
         if (soa.batch_starts.empty())
             return {};
 
@@ -288,9 +288,10 @@ namespace raphEngine
         if (best.triIndex < 0)
             return {};
 
-        return RayHit{ true, best.t, collider.collider_mesh[best.triIndex] };
+        return RayHit{ true, best.t,
+                       collider.get_collider_mesh()[best.triIndex] };
 #else
-        const auto& tris = collider.collider_mesh;
+        const auto& tris = collider.get_collider_mesh();
 
         return std::transform_reduce(
             std::execution::par, tris.begin(), tris.end(), RayHit{},
@@ -336,7 +337,7 @@ namespace raphEngine
                 continue;
             if (!obj->is_active)
                 continue;
-            if (collider_component->collider_mesh.empty())
+            if (collider_component->get_collider_mesh().empty())
                 continue;
 
             glm::mat4 model = obj->get_transform().get_model_matrix();
@@ -351,12 +352,10 @@ namespace raphEngine
                 GetNewDirection(origin, LocalOrigin, direction, InvModel);
 
             float aabbEntryT;
-            if (collider_component->get_collider_mesh().empty())
-                continue;
 
             if (!RayIntersectsAABB(LocalOrigin, LocalDirection,
-                                   collider_component->bounding_min,
-                                   collider_component->bounding_max,
+                                   collider_component->get_bounding_min(),
+                                   collider_component->get_bounding_max(),
                                    aabbEntryT))
                 continue;
 

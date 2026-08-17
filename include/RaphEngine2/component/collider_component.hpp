@@ -34,9 +34,6 @@ namespace raphEngine::component
 #ifdef EDITOR_BUILD
         void ImGuiPrint() override;
 #endif
-        std::vector<Utils::Triangle> collider_mesh;
-        glm::vec3 bounding_min{ 0.0f };
-        glm::vec3 bounding_max{ 0.0f };
 
         bool show_bounding_box = false;
 

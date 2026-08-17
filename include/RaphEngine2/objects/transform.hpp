@@ -13,14 +13,17 @@ namespace raphEngine::objects
     public:
         Transform();
 
-        glm::vec3& get_position();
         const glm::vec3& get_position() const;
+        void set_position(const glm::vec3& p);
+        void translate(const glm::vec3& delta);
 
-        glm::vec3& get_rotation();
         const glm::vec3& get_rotation() const;
+        void set_rotation(const glm::vec3& p);
+        void rotate(const glm::vec3& delta);
 
-        glm::vec3& get_scale();
         const glm::vec3& get_scale() const;
+        void set_scale(const glm::vec3& p);
+        void scale_by(const glm::vec3& delta);
 
         const glm::mat4 get_model_matrix();
 

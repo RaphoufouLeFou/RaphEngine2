@@ -1,5 +1,10 @@
 #include "objects/transform.hpp"
+#include <atomic>
+#include <cmath>
 #include <cstddef>
+#include <string>
+#include "logger/logger.hpp"
+#include "time_utils.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <RaphEngine2/export.hpp>
@@ -20,21 +25,21 @@ namespace raphEngine::objects
         root_childs.push_back(this);
     }
 
-    glm::vec3& Transform::get_position()
-    {
-        can_have_moved = true;
-        return position_;
-    }
-
     const glm::vec3& Transform::get_position() const
     {
         return position_;
     }
 
-    glm::vec3& Transform::get_rotation()
+    void Transform::set_position(const glm::vec3& p)
     {
+        position_ = p;
         can_have_moved = true;
-        return rotation_;
+    }
+
+    void Transform::translate(const glm::vec3& delta)
+    {
+        position_ += delta;
+        can_have_moved = true;
     }
 
     const glm::vec3& Transform::get_rotation() const
@@ -42,15 +47,33 @@ namespace raphEngine::objects
         return rotation_;
     }
 
-    glm::vec3& Transform::get_scale()
+    void Transform::set_rotation(const glm::vec3& p)
     {
+        rotation_ = p;
         can_have_moved = true;
-        return scale_;
+    }
+
+    void Transform::rotate(const glm::vec3& delta)
+    {
+        rotation_ += delta;
+        can_have_moved = true;
     }
 
     const glm::vec3& Transform::get_scale() const
     {
         return scale_;
+    }
+
+    void Transform::set_scale(const glm::vec3& p)
+    {
+        scale_ = p;
+        can_have_moved = true;
+    }
+
+    void Transform::scale_by(const glm::vec3& delta)
+    {
+        scale_ += delta;
+        can_have_moved = true;
     }
 
     void Transform::calculate_matrix()
@@ -61,7 +84,10 @@ namespace raphEngine::objects
         model = glm::translate(model, position_);
         model = model * glm::toMat4(glm::quat(glm::radians(rotation_)));
         model = glm::scale(model, scale_);
-        model_matrix_ = model;
+        if (parent_)
+            model_matrix_ = parent_->get_model_matrix() * model;
+        else
+            model_matrix_ = model;
     }
 
     void Transform::set_parent(Transform* parent)
@@ -111,10 +137,7 @@ namespace raphEngine::objects
         {
             calculate_matrix();
         }
-        if (!parent_)
-            return model_matrix_;
-        else
-            return parent_->get_model_matrix() * model_matrix_;
+        return model_matrix_;
     }
 
 } // namespace raphEngine::objects

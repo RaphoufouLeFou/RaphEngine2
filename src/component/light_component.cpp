@@ -34,14 +34,17 @@ namespace raphEngine::component
     void LightComponent::set_direction(glm::vec3 direction)
     {
         direction = glm::normalize(direction);
+        auto& t = parent_object->get_transform();
 
-        glm::vec3& rotation = parent_object->get_transform().get_rotation();
+        glm::vec3 rotation = t.get_rotation();
 
-        parent_object->get_transform().get_position() = direction * 20.0f;
+        t.set_position(direction * 20.0f);
 
         rotation.x = std::asin(-direction.y);
         rotation.y = std::atan2(direction.x, -direction.z);
         rotation.z = 0.0f;
+
+        t.set_rotation(rotation);
     }
 
     void LightComponent::Start()

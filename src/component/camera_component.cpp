@@ -83,7 +83,7 @@ namespace raphEngine::component
         glm::vec3 up = glm::vec3(RotationMat * glm::vec4(0, 0, 1, 1));
         // glm::vec3 up = glm::cross(right, direction);
 
-        glm::vec3 pos = parent_object->get_transform().get_position();
+        const glm::vec3& pos = parent_object->get_transform().get_position();
 
         view_matrix_ = glm::lookAt(pos, pos + direction, up);
     }

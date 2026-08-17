@@ -404,7 +404,7 @@ namespace raphEngine
                              int layer)
     {
         glm::vec3 direction = GetDirectionFromScreen(screenPos);
-        glm::vec3 camPos =
+        const glm::vec3& camPos =
             component::CameraComponent::active_camera->get_position();
 
         return FromPoint(camPos, direction, OutRayInfo, layer);

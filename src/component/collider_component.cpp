@@ -37,13 +37,7 @@ namespace raphEngine::component
         const MeshComponent& mesh_source)
     {
         const auto object_mesh = mesh_source.lods_->get_lod_at_level(0);
-        size_t mesh_count = object_mesh->meshes_.size();
-        for (size_t i = 0; i < mesh_count; i++)
-        {
-            add_tri_to_collider_mesh(object_mesh->meshes_[i].get());
-        }
-        calculate_bounding_box();
-        build_soa_cache();
+        geometry_ = ColliderGeometryCache::get_or_build(object_mesh);
     }
 
     void ColliderComponent::add_tri_to_collider_mesh(const objects::Mesh* mesh)

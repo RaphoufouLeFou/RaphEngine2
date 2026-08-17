@@ -19,6 +19,7 @@ namespace raphEngine::graphics
 
 namespace raphEngine::resources
 {
+    struct SubmeshData;
     class ModelResource;
 } // namespace raphEngine::resources
 
@@ -103,8 +104,6 @@ namespace raphEngine::objects
         const graphics::MeshBuffers* get_buffers() const;
         void generate_mesh_buffers();
 
-        // Keeps the source resource alive for this Mesh's whole lifetime and
-        // gives MeshBuffers a stable, collision-proof cache key.
         void set_source(std::shared_ptr<resources::ModelResource> model,
                         size_t submesh_index);
         graphics::MeshSourceKey get_source_key() const;
@@ -113,13 +112,17 @@ namespace raphEngine::objects
         glm::vec3 get_higher_bounds() const;
 
         objects::GameObject* parent_object;
-        glm::mat4 model_matrix_;
+        // glm::mat4 model_matrix_;
+        resources::SubmeshData* data_;
         const bool* cast_shadows;
 
     protected:
-        std::vector<Vertex> vertices_;
-        std::vector<unsigned int> indices_;
-        std::vector<Texture> textures_;
+        /*
+            std::vector<Vertex> vertices_;
+            std::vector<unsigned int> indices_;
+            std::vector<Texture> textures_;
+        */
+
         bool outline_;
         std::shared_ptr<graphics::MeshBuffers> buffers_;
         graphics::Shader* shader_;

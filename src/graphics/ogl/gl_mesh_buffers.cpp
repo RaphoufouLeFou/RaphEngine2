@@ -26,7 +26,7 @@ namespace raphEngine::graphics
 
     void GLMeshBuffers::GenerateBuffers()
     {
-        // Logger::LogDebug("Generating buffers");
+        Logger::LogDebug("Generating buffers");
         glGenVertexArrays(1, &vao_);
         glGenBuffers(1, &vbo_);
         glGenBuffers(1, &ebo_);

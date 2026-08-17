@@ -16,13 +16,10 @@ namespace raphEngine::objects
 
         for (size_t i = 0; i < model->get_submeshes().size(); ++i)
         {
-            const auto& data = model->get_submeshes()[i];
+            auto& data = model->get_submeshes()[i];
 
             auto mesh = std::make_unique<Mesh>();
-            mesh->get_vertices() = data.vertices;
-            mesh->get_indices() = data.indices;
-            mesh->get_textures() = data.textures;
-            mesh->set_model_matrix(data.local_matrix);
+            mesh->data_ = &data;
             mesh->set_source(model, i);
 
             object_mesh->add_mesh(std::move(mesh));

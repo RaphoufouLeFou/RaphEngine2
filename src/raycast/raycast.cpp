@@ -351,6 +351,9 @@ namespace raphEngine
                 GetNewDirection(origin, LocalOrigin, direction, InvModel);
 
             float aabbEntryT;
+            if (collider_component->get_collider_mesh().empty())
+                continue;
+
             if (!RayIntersectsAABB(LocalOrigin, LocalDirection,
                                    collider_component->bounding_min,
                                    collider_component->bounding_max,

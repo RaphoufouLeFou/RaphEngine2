@@ -1,7 +1,10 @@
 Hide object not visibles
 Add some skyboxes
 Add Semi-shallow GameObject copies
+Add a scene manager
+prefab
 Proper object destruction
+Start coding the Editor
 Static lights
 tweak shadows
 Shadows for spot lights
@@ -14,9 +17,6 @@ Add water planes
 Add smooth lod transitions
 Fix ray casting
 Add a particle system
-Add a scene manager
-prefab
-Start coding the Editor
 In-game console (ImGui)
 Add a guizmo
 Add bloom

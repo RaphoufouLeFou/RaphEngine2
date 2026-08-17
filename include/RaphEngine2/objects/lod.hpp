@@ -35,7 +35,7 @@ namespace raphEngine::objects
         std::vector<float> transitions_distances_;
 
         void calculate_transitions_distances(int lod_count,
-                                             float exponent = 3.0f);
+                                             float exponent = 2.0f);
         const ObjectMesh* get_lod(size_t level) const;
     };
 } // namespace raphEngine::objects

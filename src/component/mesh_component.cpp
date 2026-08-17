@@ -44,6 +44,7 @@ namespace raphEngine::component
     {
         lods_ = std::make_unique<objects::Lod>(parent_object, meshes_, shader_,
                                                &cast_shadows);
+        meshes_.clear();
     }
 
     void MeshComponent::Update()

@@ -76,7 +76,7 @@ namespace raphEngine::objects
         GameObject& operator=(const GameObject&) = delete;
         GameObject& operator=(GameObject&&) = delete;
 
-        int raycast_layer_ = 0;
+        short raycast_layer_ = 0;
         static std::vector<GameObject*> spawned_game_objects_;
 
     protected:
@@ -89,7 +89,7 @@ namespace raphEngine::objects
 
     private:
         bool has_started = false;
-        unsigned long id_ = 0;
+        unsigned int id_ = 0;
         void pre_update();
         void destroy_internal();
 

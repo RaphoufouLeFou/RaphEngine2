@@ -19,7 +19,7 @@ namespace raphEngine::objects
         float dx = std::abs(c2.x - c1.x);
         float dy = std::abs(c2.y - c1.y);
         float dz = std::abs(c2.z - c1.z);
-        return dx * dy * dz;
+        return (dx * dx + dy * dy + dz * dz) * 16;
     }
 
     const ObjectMesh* Lod::get_lod_at(const glm::vec3& object_pos) const

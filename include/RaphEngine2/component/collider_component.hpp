@@ -11,17 +11,10 @@
 #include "RaphEngine2/component/mesh_component.hpp"
 #include "RaphEngine2/objects/mesh.hpp"
 #include "RaphEngine2/utils.hpp"
+#include "RaphEngine2/objects/collider_geometry.hpp"
 
 namespace raphEngine::component
 {
-    struct TriangleSOA
-    {
-        std::vector<float> ax, ay, az, bx, by, bz, cx, cy, cz;
-        std::vector<size_t> batch_starts; // cached once: 0, 8, 16, ...
-        size_t count = 0;
-        size_t paddedCount = 0;
-    };
-
     class RAPHENGINE_API ColliderComponent : public Component
     {
     public:
@@ -49,8 +42,25 @@ namespace raphEngine::component
 
         void update_cached_transform(const glm::mat4& model);
 
-        glm::mat4 cached_model_{ 0.0f }; // != any real model matrix so the
-        glm::mat4 cached_inv_model_{ 1.0f }; // first raycast always recomputes
+        const std::vector<Utils::Triangle>& get_collider_mesh() const
+        {
+            return geometry_->triangles;
+        }
+        const TriangleSOA& get_collider_mesh_soa() const
+        {
+            return geometry_->soa;
+        }
+        const glm::vec3& get_bounding_min() const
+        {
+            return geometry_->bounding_min;
+        }
+        const glm::vec3& get_bounding_max() const
+        {
+            return geometry_->bounding_max;
+        }
+
+        glm::mat4 cached_model_{ 0.0f };
+        glm::mat4 cached_inv_model_{ 1.0f };
         glm::mat3 cached_normal_matrix_{ 1.0f };
 
         TriangleSOA collider_mesh_soa;
@@ -60,6 +70,8 @@ namespace raphEngine::component
         void get_collider_from_mesh_component(const MeshComponent&);
         void add_tri_to_collider_mesh(const objects::Mesh*);
         void calculate_bounding_box();
+
+        std::shared_ptr<const ColliderGeometry> geometry_;
 
         bool started = false;
     };

@@ -24,16 +24,13 @@
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/graphics/shadow_renderer.hpp>
 #include <RaphEngine2/default_shaders.hpp>
+#include <RaphEngine2/resources/model_resource.hpp>
 
 namespace raphEngine::graphics
 {
 
     const GlShader* GLMeshRenderer::current_active_shader_ = nullptr;
 
-    // Lazily-loaded instanced sibling of the default mesh shader. Meshes using
-    // a custom (non-default) shader still render correctly as long as they
-    // never end up batched with size > 1 (see BatchKey grouping) — see caveat
-    // in the accompanying message.
     std::shared_ptr<Shader> default_mesh_shader_instanced = nullptr;
 
     GLMeshRenderer::GLMeshRenderer()
@@ -129,7 +126,7 @@ namespace raphEngine::graphics
         mesh_shader->setValue(
             "model",
             mesh->parent_object->get_transform().get_model_matrix()
-                * mesh->model_matrix_);
+                * mesh->get_model_matrix());
 
         bool HaveTexture = false;
         bool HaveNormalMap = false;
@@ -235,7 +232,7 @@ namespace raphEngine::graphics
         for (const objects::Mesh* m : meshes)
             worlds.push_back(
                 m->parent_object->get_transform().get_model_matrix()
-                * m->model_matrix_);
+                * m->get_model_matrix());
 
         auto* buffers = const_cast<graphics::GLMeshBuffers*>(
             dynamic_cast<const graphics::GLMeshBuffers*>(first->get_buffers()));

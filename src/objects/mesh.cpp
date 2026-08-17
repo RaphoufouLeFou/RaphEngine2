@@ -12,42 +12,42 @@ namespace raphEngine::objects
 
     const std::vector<Vertex>& Mesh::get_vertices() const
     {
-        return vertices_;
+        return data_->vertices;
     }
 
     std::vector<Vertex>& Mesh::get_vertices()
     {
-        return vertices_;
+        return data_->vertices;
     }
 
     const std::vector<unsigned int>& Mesh::get_indices() const
     {
-        return indices_;
+        return data_->indices;
     }
 
     std::vector<unsigned int>& Mesh::get_indices()
     {
-        return indices_;
+        return data_->indices;
     }
 
     const std::vector<Texture>& Mesh::get_textures() const
     {
-        return textures_;
+        return data_->textures;
     }
 
     std::vector<Texture>& Mesh::get_textures()
     {
-        return textures_;
+        return data_->textures;
     }
 
     void Mesh::set_model_matrix(const glm::mat4& model_matrix)
     {
-        model_matrix_ = model_matrix;
+        data_->local_matrix = model_matrix;
     }
 
     const glm::mat4& Mesh::get_model_matrix() const
     {
-        return model_matrix_;
+        return data_->local_matrix;
     }
 
     void Mesh::set_shader(graphics::Shader* shader)
@@ -107,14 +107,14 @@ namespace raphEngine::objects
 
     glm::vec3 Mesh::get_lower_bounds() const
     {
-        if (vertices_.size() == 0)
+        if (data_->vertices.size() == 0)
         {
             return glm::vec3{ 0 };
         }
 
-        glm::vec3 lower_bounds = vertices_.at(0).position;
+        glm::vec3 lower_bounds = data_->vertices.at(0).position;
 
-        for (const auto& v : vertices_)
+        for (const auto& v : data_->vertices)
         {
             if (lower_bounds.x > v.position.x)
                 lower_bounds.x = v.position.x;
@@ -129,14 +129,14 @@ namespace raphEngine::objects
 
     glm::vec3 Mesh::get_higher_bounds() const
     {
-        if (vertices_.size() == 0)
+        if (data_->vertices.size() == 0)
         {
             return glm::vec3{ 0 };
         }
 
-        glm::vec3 higher_bounds = vertices_.at(0).position;
+        glm::vec3 higher_bounds = data_->vertices.at(0).position;
 
-        for (const auto& v : vertices_)
+        for (const auto& v : data_->vertices)
         {
             if (higher_bounds.x > v.position.x)
                 higher_bounds.x = v.position.x;

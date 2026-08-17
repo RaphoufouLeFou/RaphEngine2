@@ -25,7 +25,7 @@ namespace raphEngine::resources
         static std::shared_ptr<ModelResource>
         get_or_load(const std::string& path, bool filter);
 
-        const std::vector<SubmeshData>& get_submeshes() const
+        std::vector<SubmeshData>& get_submeshes()
         {
             return submeshes_;
         }

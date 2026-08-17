@@ -210,7 +210,7 @@ namespace raphEngine::graphics
         for (const objects::Mesh* m : meshes)
             worlds.push_back(
                 m->parent_object->get_transform().get_model_matrix()
-                * m->model_matrix_);
+                * m->get_model_matrix());
 
         auto* buffers = const_cast<graphics::GLMeshBuffers*>(
             dynamic_cast<const graphics::GLMeshBuffers*>(first->get_buffers()));
@@ -333,7 +333,7 @@ namespace raphEngine::graphics
         shadow_shader->setValue(
             "model",
             mesh->parent_object->get_transform().get_model_matrix()
-                * mesh->model_matrix_);
+                * mesh->get_model_matrix());
 
         const graphics::GLMeshBuffers* mesh_buffers =
             dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers());

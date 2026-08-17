@@ -121,9 +121,6 @@ void main()
 
     vec3 color = vec3(191.0, 64.0, 191.0) / 255.0; // default purple
 
-    if ((fs_in.TexCoords.x > 0.5) != (fs_in.TexCoords.y > 0.5))
-        color = vec3(0.0);
-
     if (HaveTexture)
         color = texture(texture_diffuse, fs_in.TexCoords).rgb;
 

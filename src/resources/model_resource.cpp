@@ -231,6 +231,12 @@ namespace raphEngine::resources
             glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f),
                         glm::vec3(-1.0f, 0.0f, 0.0f));
 
+        // FBX's default unit is centimeters; this engine works in meters.
+        constexpr float kFbxUnitScale = 0.01f;
+
+        const glm::mat4 kImportCorrection =
+            kYupToZup * glm::scale(glm::mat4(1.0f), glm::vec3(kFbxUnitScale));
+
         void processNode(std::vector<SubmeshData>& out, aiNode* node,
                          const aiScene* scene, bool filter)
         {
@@ -244,7 +250,7 @@ namespace raphEngine::resources
                     globalTransform = parent->mTransformation * globalTransform;
                     parent = parent->mParent;
                 }
-                glm::mat4 m = kYupToZup * AiMatToGlm(globalTransform);
+                glm::mat4 m = kImportCorrection * AiMatToGlm(globalTransform);
                 processMesh(mesh, scene, filter, m, out);
             }
             for (unsigned int i = 0; i < node->mNumChildren; i++)

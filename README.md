@@ -20,15 +20,16 @@ As of today, the engine handle :
 - The game loop
 - Input system
 - Instancing
+- UI (RmlUI)
+- Culling
 
 And more little things.
 
 ## In the TODO list (Not in order)
 
-- Add the UI (RmlUI)
+
 - Spot and point lights
-- Culling
-- Add some skyboxes
+- Skyboxes
 - Handle big terrains
 - Vegetation
 - Smooth lod transitions
@@ -44,6 +45,7 @@ And more little things.
 - Assets compressions
 - Glass/Transparency
 - Reflections
+- Smoke
 
 ## Some screenshots
 

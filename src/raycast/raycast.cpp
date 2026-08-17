@@ -389,6 +389,7 @@ namespace raphEngine
         if (objOut != nullptr)
             *objOut = closestObj;
 
+#if RAYCAST_DEBUG
         if (hitFound)
         {
             graphics::Debug::getInstance()->DrawLine(
@@ -399,6 +400,7 @@ namespace raphEngine
             graphics::Debug::getInstance()->DrawLine(
                 origin, origin + direction * 2000.0f, { 1, 0, 0 }, true);
         }
+#endif
         return hitFound;
     }
 

@@ -4,8 +4,8 @@ namespace raphEngine
 {
     glm::vec3 Utils::GetDirectionFromRotation(const glm::vec3& rotation)
     {
-        float pitch = rotation.x;
-        float yaw = rotation.y;
+        float pitch = glm::radians(rotation.x);
+        float yaw = glm::radians(rotation.y);
 
         glm::vec3 direction;
         direction.x = cos(pitch) * sin(yaw);
@@ -13,5 +13,10 @@ namespace raphEngine
         direction.z = -cos(pitch) * cos(yaw);
 
         return glm::normalize(direction);
+    }
+
+    glm::vec3 Utils::GetForwardFromModelMatrix(const glm::mat4& model)
+    {
+        return glm::normalize(glm::vec3(model[1]));
     }
 } // namespace raphEngine

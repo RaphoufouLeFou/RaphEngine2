@@ -76,7 +76,7 @@ namespace raphEngine::objects
         GameObject& operator=(const GameObject&) = delete;
         GameObject& operator=(GameObject&&) = delete;
 
-        short raycast_layer_ = 0;
+        int raycast_layer_ = 0;
         static std::vector<GameObject*> spawned_game_objects_;
 
     protected:
@@ -96,6 +96,7 @@ namespace raphEngine::objects
 #ifdef EDITOR_BUILD
         bool inspected = false;
 
+        friend Transform;
         void ImGui_layout();
         void ImGui_update();
 #endif

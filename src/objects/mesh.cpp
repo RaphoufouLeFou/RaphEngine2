@@ -1,4 +1,5 @@
 #include "objects/mesh.hpp"
+#include <algorithm>
 
 #include "graphics/mesh_renderer.hpp"
 #include "graphics/shadow_renderer.hpp"
@@ -107,45 +108,54 @@ namespace raphEngine::objects
 
     glm::vec3 Mesh::get_lower_bounds() const
     {
-        if (data_->vertices.size() == 0)
-        {
-            return glm::vec3{ 0 };
-        }
-
-        glm::vec3 lower_bounds = data_->vertices.at(0).position;
-
-        for (const auto& v : data_->vertices)
-        {
-            if (lower_bounds.x > v.position.x)
-                lower_bounds.x = v.position.x;
-            if (lower_bounds.y > v.position.y)
-                lower_bounds.y = v.position.y;
-            if (lower_bounds.z > v.position.z)
-                lower_bounds.z = v.position.z;
-        }
-
-        return lower_bounds;
+        return data_->bounds_min;
     }
 
     glm::vec3 Mesh::get_higher_bounds() const
     {
-        if (data_->vertices.size() == 0)
+        return data_->bounds_max;
+    }
+
+    void Mesh::get_world_bounds(glm::vec3& out_min, glm::vec3& out_max) const
+    {
+        const glm::vec3& lo = data_->bounds_min;
+        const glm::vec3& hi = data_->bounds_max;
+        const glm::mat4 world =
+            parent_object->get_transform().get_model_matrix()
+            * get_model_matrix();
+
+        const glm::vec3 corners[8] = {
+            { lo.x, lo.y, lo.z }, { hi.x, lo.y, lo.z }, { lo.x, hi.y, lo.z },
+            { lo.x, lo.y, hi.z }, { hi.x, hi.y, lo.z }, { hi.x, lo.y, hi.z },
+            { lo.x, hi.y, hi.z }, { hi.x, hi.y, hi.z },
+        };
+
+        out_min = glm::vec3(std::numeric_limits<float>::max());
+        out_max = glm::vec3(std::numeric_limits<float>::lowest());
+        for (const auto& c : corners)
         {
-            return glm::vec3{ 0 };
+            glm::vec3 wc = glm::vec3(world * glm::vec4(c, 1.0f));
+            out_min = glm::min(out_min, wc);
+            out_max = glm::max(out_max, wc);
         }
+    }
 
-        glm::vec3 higher_bounds = data_->vertices.at(0).position;
+    void Mesh::get_world_sphere(glm::vec3& out_center, float& out_radius) const
+    {
+        const glm::mat4 world =
+            parent_object->get_transform().get_model_matrix()
+            * get_model_matrix();
 
-        for (const auto& v : data_->vertices)
-        {
-            if (higher_bounds.x > v.position.x)
-                higher_bounds.x = v.position.x;
-            if (higher_bounds.y > v.position.y)
-                higher_bounds.y = v.position.y;
-            if (higher_bounds.z > v.position.z)
-                higher_bounds.z = v.position.z;
-        }
+        out_center =
+            glm::vec3(world * glm::vec4(data_->local_sphere_center, 1.0f));
 
-        return higher_bounds;
+        // Conservative radius scale — max basis-vector length handles
+        // uniform and non-uniform scale without decomposing the matrix.
+        float sx = glm::length(glm::vec3(world[0]));
+        float sy = glm::length(glm::vec3(world[1]));
+        float sz = glm::length(glm::vec3(world[2]));
+        float max_scale = std::max({ sx, sy, sz });
+
+        out_radius = data_->local_sphere_radius * max_scale;
     }
 } // namespace raphEngine::objects

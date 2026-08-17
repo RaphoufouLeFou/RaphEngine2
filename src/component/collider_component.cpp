@@ -1,17 +1,13 @@
 #include "component/collider_component.hpp"
 
 #include <RaphEngine2/graphics/shader.hpp>
-#include <cstddef>
-#include <initializer_list>
 #include <memory>
 #include <vector>
 
-#include <algorithm>
 #include <glm/glm.hpp>
 #include "component/mesh_component.hpp"
 #include "graphics/debug.hpp"
 #include "objects/lod.hpp"
-#include "utils.hpp"
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/graphics/graphic_api.hpp>
 
@@ -136,8 +132,10 @@ namespace raphEngine::component
         if (ImGui::TreeNode(get_name().c_str()))
         {
             ImGui::Checkbox("Show bounding box", &show_bounding_box);
-            ImGui::InputFloat3("Bounding max", &bounding_max.x);
-            ImGui::InputFloat3("Bounding min", &bounding_min.x);
+            glm::vec3 bmax = get_bounding_max();
+            glm::vec3 bmin = get_bounding_min();
+            ImGui::InputFloat3("Bounding max", &bmax.x);
+            ImGui::InputFloat3("Bounding min", &bmin.x);
             ImGui::TreePop();
         }
     }

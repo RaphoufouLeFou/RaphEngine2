@@ -29,6 +29,11 @@ namespace raphEngine::graphics
             const std::vector<const raphEngine::objects::Mesh*>& meshes)
             const override;
 
+        static const glm::mat4& get_cascade_light_matrix(size_t layer)
+        {
+            return current_light_matrices_.at(layer);
+        }
+
         static void prepare_shadows();
         static void cleanup_shadows();
         static void generate_shadows_buffer();

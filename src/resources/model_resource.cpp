@@ -164,6 +164,20 @@ namespace raphEngine::resources
             }
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
+            if (!data.vertices.empty())
+            {
+                data.bounds_min = data.bounds_max = data.vertices[0].position;
+                for (const auto& v : data.vertices)
+                {
+                    data.bounds_min = glm::min(data.bounds_min, v.position);
+                    data.bounds_max = glm::max(data.bounds_max, v.position);
+                }
+                data.local_sphere_center =
+                    (data.bounds_min + data.bounds_max) * 0.5f;
+                data.local_sphere_radius =
+                    glm::length(data.bounds_max - data.local_sphere_center);
+            }
+
             auto diffuseMaps =
                 loadMaterialTextures(material, aiTextureType_DIFFUSE,
                                      objects::Texture::DIFFUSE, filter);

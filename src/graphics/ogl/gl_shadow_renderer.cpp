@@ -154,6 +154,7 @@ namespace raphEngine::graphics
     void GLShadowRenderer::prepare_shadows()
     {
         int res = Settings::Get<GraphicsSettings>().getShadowResolution();
+        current_active_shadow_shader_ = nullptr;
 
         // cached both for the UBO the color pass samples against, and for
         // begin_cascade_layer()'s per-layer lookups below

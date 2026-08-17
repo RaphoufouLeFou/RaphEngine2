@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "objects/mesh.hpp" // for objects::Vertex, objects::Texture
+#include "RaphEngine2/objects/mesh.hpp"
 
 namespace raphEngine::resources
 {
@@ -17,6 +17,10 @@ namespace raphEngine::resources
         std::vector<unsigned int> indices;
         std::vector<objects::Texture> textures;
         glm::mat4 local_matrix;
+        glm::vec3 bounds_min{ 0.0f };
+        glm::vec3 bounds_max{ 0.0f };
+        glm::vec3 local_sphere_center{ 0.0f };
+        float local_sphere_radius = 0.0f;
     };
 
     class RAPHENGINE_API ModelResource

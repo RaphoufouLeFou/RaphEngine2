@@ -41,6 +41,7 @@ namespace raphEngine::objects
 
     private:
         void calculate_matrix();
+        friend GameObject;
 
         glm::vec3 position_;
         glm::vec3 rotation_;

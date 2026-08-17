@@ -134,16 +134,16 @@ namespace raphEngine::graphics
 
         const auto* dir_light = ShadowRenderer::GetDirectionalLight();
 
-        glm::vec3 light_rot = glm::vec3(0);
+        glm::mat4 light_rot = glm::mat4(0);
 
         if (dir_light)
         {
             light_rot =
-                dir_light->parent_object->get_transform().get_rotation();
+                dir_light->parent_object->get_transform().get_model_matrix();
         }
 
         glm::mat4 baseLightView = glm::lookAt(
-            glm::vec3(0.0f), -Utils::GetDirectionFromRotation(light_rot),
+            glm::vec3(0.0f), -Utils::GetForwardFromModelMatrix(light_rot),
             glm::vec3(0.0f, 1.0f, 0.0f));
 
         glm::vec3 centerLightSpace =
@@ -158,7 +158,7 @@ namespace raphEngine::graphics
                            * glm::vec4(centerLightSpace, 1.0f));
 
         const auto lightView = glm::lookAt(
-            center, center - Utils::GetDirectionFromRotation(light_rot),
+            center, center - Utils::GetForwardFromModelMatrix(light_rot),
             glm::vec3(0.0f, 1.0f, 0.0f));
 
         const float minX = -radius;

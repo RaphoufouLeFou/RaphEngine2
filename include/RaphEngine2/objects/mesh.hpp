@@ -110,6 +110,8 @@ namespace raphEngine::objects
 
         glm::vec3 get_lower_bounds() const;
         glm::vec3 get_higher_bounds() const;
+        void get_world_bounds(glm::vec3& out_min, glm::vec3& out_max) const;
+        void get_world_sphere(glm::vec3& out_center, float& out_radius) const;
 
         objects::GameObject* parent_object;
         // glm::mat4 model_matrix_;

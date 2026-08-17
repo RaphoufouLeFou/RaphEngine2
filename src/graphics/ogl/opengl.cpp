@@ -1,6 +1,8 @@
 #include "graphics/ogl/opengl.hpp"
 #include <string>
+#include "component/camera_component.hpp"
 #include "graphics/debug.hpp"
+#include "graphics/frustum.hpp"
 #include "settings/graphics.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -13,6 +15,8 @@
 #include <RaphEngine2/settings/settings.hpp>
 #include <RaphEngine2/graphics/ogl/gl_mesh_renderer.hpp>
 #include <RaphEngine2/graphics/ogl/gl_shadow_renderer.hpp>
+#include "objects/mesh.hpp"
+#include "utils.hpp"
 #include "inputs/rmlui_input.hpp"
 
 #ifdef EDITOR_BUILD
@@ -156,26 +160,81 @@ namespace raphEngine::graphics::ogl
 
     void OpenGL::Render()
     {
-        // shadow pass: keyed by geometry only — material/shader is irrelevant
-        // to depth-only rendering
-        std::unordered_map<const graphics::MeshBuffers*,
-                           std::vector<const objects::Mesh*>>
-            shadow_batches;
+        component::CameraComponent* cam =
+            component::CameraComponent::active_camera;
+        if (!cam)
+        {
+            Logger::LogError("Cant render with no active camera!");
+            return;
+        }
+        cam->calculate_matrices();
+
+        float max_render_distance = cam->farPlane;
+
+        glm::vec3 camPos = cam->parent_object->get_transform().get_position();
+        glm::vec3 camForward = Utils::GetForwardFromModelMatrix(
+            cam->parent_object->get_transform().get_model_matrix());
+
+        const graphics::Cone camCone = graphics::Cone::FromCamera(
+            camPos, camForward, cam->projection_matrix_, max_render_distance);
+
+        GLShadowRenderer::prepare_shadows();
+
+        const auto* dir_light = ShadowRenderer::GetDirectionalLight();
+        const bool do_shadows = dir_light && dir_light->cast_shadows_;
+
+        std::vector<graphics::Frustum> cascadeFrustums;
+        size_t cascade_count =
+            do_shadows ? GLShadowRenderer::get_cascade_count() : 0;
+        cascadeFrustums.reserve(cascade_count);
+        for (size_t i = 0; i < cascade_count; i++)
+            cascadeFrustums.push_back(graphics::Frustum::FromMatrix(
+                GLShadowRenderer::get_cascade_light_matrix(i)));
+
+        std::vector<std::unordered_map<const graphics::MeshBuffers*,
+                                       std::vector<const objects::Mesh*>>>
+            shadow_batches_per_cascade(cascade_count);
         std::vector<const Renderable*> shadow_unbatched;
 
-        // color pass: keyed by geometry + shader + material
         std::unordered_map<objects::BatchKey, std::vector<const objects::Mesh*>,
                            objects::BatchKeyHash>
             color_batches;
         std::vector<const Renderable*> color_unbatched;
+
+        size_t total_meshes = 0, color_visible = 0, shadow_visible = 0;
+
         for (const Renderable* object : render_pool)
         {
             if (const objects::Mesh* mesh = object->as_mesh())
             {
-                color_batches[mesh->get_batch_key()].push_back(mesh);
+                total_meshes++;
 
-                if (*mesh->cast_shadows)
-                    shadow_batches[mesh->get_buffers()].push_back(mesh);
+                glm::vec3 sphereCenter;
+                float sphereRadius;
+                mesh->get_world_sphere(sphereCenter, sphereRadius);
+
+                if (camCone.Intersects(sphereCenter, sphereRadius))
+                {
+                    color_batches[mesh->get_batch_key()].push_back(mesh);
+                    color_visible++;
+                }
+
+                if (*mesh->cast_shadows && do_shadows)
+                {
+                    bool visible_anywhere = false;
+                    for (size_t i = 0; i < cascade_count; i++)
+                    {
+                        if (cascadeFrustums[i].IntersectsSphere(sphereCenter,
+                                                                sphereRadius))
+                        {
+                            shadow_batches_per_cascade[i][mesh->get_buffers()]
+                                .push_back(mesh);
+                            visible_anywhere = true;
+                        }
+                    }
+                    if (visible_anywhere)
+                        shadow_visible++;
+                }
             }
             else
             {
@@ -183,36 +242,37 @@ namespace raphEngine::graphics::ogl
                 shadow_unbatched.push_back(object);
             }
         }
-        /*
-                Logger::LogDebug("Drawing ",
-           std::to_string(color_unbatched.size()), " unbatched");
-                Logger::LogDebug("Drawing ",
-           std::to_string(color_batches.size()), " batched");
-        */
 
-        std::vector<GLShadowRenderer::PreparedInstancedShadowBatch>
-            prepared_shadow_instances;
-        for (auto& [buffers, meshes] : shadow_batches)
-        {
-            if (meshes.size() > 1)
-                prepared_shadow_instances.push_back(
-                    GLShadowRenderer::upload_shadow_instances(meshes));
-        }
+#if 0
+        Logger::LogDebug("Culling: ", color_visible, "/", total_meshes,
+                            " color, ", shadow_visible, "/", total_meshes,
+                            " shadow");
+#else
+        (void)color_visible;
+        (void)shadow_visible;
+        (void)total_meshes;
+#endif
 
-        GLShadowRenderer::prepare_shadows();
-        if (ShadowRenderer::GetDirectionalLight()->cast_shadows_)
+        if (do_shadows)
         {
-            for (size_t layer = 0;
-                 layer < GLShadowRenderer::get_cascade_count(); ++layer)
+            for (size_t layer = 0; layer < cascade_count; ++layer)
             {
                 GLShadowRenderer::begin_cascade_layer(layer);
 
-                for (auto& prepared : prepared_shadow_instances)
-                    GLShadowRenderer::draw_shadow_instances(prepared);
-
-                for (auto& [buffers, meshes] : shadow_batches)
-                    if (meshes.size() == 1)
+                for (auto& [buffers, meshes] :
+                     shadow_batches_per_cascade[layer])
+                {
+                    if (meshes.size() > 1)
+                    {
+                        auto prepared =
+                            GLShadowRenderer::upload_shadow_instances(meshes);
+                        GLShadowRenderer::draw_shadow_instances(prepared);
+                    }
+                    else
+                    {
                         meshes.front()->render_shadow();
+                    }
+                }
 
                 for (const Renderable* object : shadow_unbatched)
                     object->render_shadow();
@@ -242,8 +302,7 @@ namespace raphEngine::graphics::ogl
         GLShadowRenderer::debug_draw_lights();
         Debug::getInstance()->RenderAllLines();
 
-        rmlui_renderer_
-            .Render(); // <-- new, draws RmlUi documents over the 3D scene
+        rmlui_renderer_.Render();
 
 #ifdef EDITOR_BUILD
         glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_ms_);

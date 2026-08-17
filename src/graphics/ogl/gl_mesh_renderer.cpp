@@ -49,10 +49,10 @@ namespace raphEngine::graphics
         if (dir_light)
         {
             sh->setValue("lightIntensity", dir_light->intensity_);
-            sh->setValue(
-                "lightDir",
-                Utils::GetDirectionFromRotation(
-                    dir_light->parent_object->get_transform().get_rotation()));
+            sh->setValue("lightDir",
+                         Utils::GetForwardFromModelMatrix(
+                             dir_light->parent_object->get_transform()
+                                 .get_model_matrix()));
         }
         else
         {

@@ -7,6 +7,8 @@
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 #include <RaphEngine2/logger/logger.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 namespace raphEngine::graphics
@@ -50,23 +52,37 @@ namespace raphEngine::graphics
         return instance_.get();
     }
 
-    TextureLoader::RawTexture TextureLoader::load_texture_raw(const std::string& path)
+    TextureLoader::RawTexture
+    TextureLoader::load_texture_raw(const std::string& path)
     {
-      //  int index = path.find("assets");
-       // if (index != -1)
-       //     path = path.substr(index);
+        std::string filename = path;
+
+        int index = path.find("assets");
+        if (index != -1)
+            filename = path.substr(index);
 
         RawTexture res;
-        
-        res.data = stbi_load(path.c_str(), &res.width, &res.height, &res.nrChannels, 0);
+
+        res.data = stbi_load(filename.c_str(), &res.width, &res.height,
+                             &res.nrChannels, 0);
 
         return res;
     }
 
+    TextureLoader::RawTexture
+    TextureLoader::load_texture_raw_from_memory(const unsigned char* buffer,
+                                                size_t buffer_len)
+    {
+        RawTexture res;
+        res.data =
+            stbi_load_from_memory(buffer, static_cast<int>(buffer_len),
+                                  &res.width, &res.height, &res.nrChannels, 0);
+        return res;
+    }
 
     void TextureLoader::free_raw(RawTexture& raw_texture)
     {
-        if(!raw_texture.data)
+        if (!raw_texture.data)
         {
             Logger::LogError("Can't free a null raw texture data !");
             return;
@@ -75,4 +91,4 @@ namespace raphEngine::graphics
         raw_texture.data = nullptr;
     }
 
-}
+} // namespace raphEngine::graphics

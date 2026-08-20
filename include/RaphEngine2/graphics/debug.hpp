@@ -3,6 +3,7 @@
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
 #include <memory>
+#include <vector>
 
 namespace raphEngine::graphics
 {

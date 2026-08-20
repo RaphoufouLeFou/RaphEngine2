@@ -1,42 +1,125 @@
 #include "resources/model_resource.hpp"
 #include <RaphEngine2/graphics/texture_loader.hpp>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <cstdlib>
 #include <cstring>
 
 #include <RaphEngine2/logger/logger.hpp>
-#include "stb_image.h"
 
 namespace raphEngine::resources
 {
     namespace
     {
-        std::vector<objects::Texture>
-        loadMaterialTextures(aiMaterial* mat, aiTextureType type,
-                             objects::Texture::TextureType typeName,
-                             bool filter)
+        graphics::TextureLoader::RawTexture
+        loadEmbeddedRaw(const aiTexture* embedded)
+        {
+            graphics::TextureLoader::RawTexture raw{};
+
+            if (embedded->mHeight == 0)
+            {
+                const auto* bytes =
+                    reinterpret_cast<const unsigned char*>(embedded->pcData);
+                raw =
+                    graphics::TextureLoader::getInstance()
+                        ->load_texture_raw_from_memory(bytes, embedded->mWidth);
+            }
+            else
+            {
+                int w = static_cast<int>(embedded->mWidth);
+                int h = static_cast<int>(embedded->mHeight);
+                auto* rgba = static_cast<unsigned char*>(
+                    std::malloc(static_cast<size_t>(w) * h * 4));
+                if (rgba)
+                {
+                    const aiTexel* texels = embedded->pcData;
+                    for (int i = 0; i < w * h; i++)
+                    {
+                        rgba[i * 4 + 0] = texels[i].r;
+                        rgba[i * 4 + 1] = texels[i].g;
+                        rgba[i * 4 + 2] = texels[i].b;
+                        rgba[i * 4 + 3] = texels[i].a;
+                    }
+                }
+                raw.data = rgba;
+                raw.width = w;
+                raw.height = h;
+                raw.nrChannels = 4;
+            }
+
+            return raw;
+        }
+
+        std::vector<objects::Texture> loadMaterialTextures(
+            const std::string& model_path, const aiScene* scene,
+            aiMaterial* mat, aiTextureType type,
+            objects::Texture::TextureType typeName, bool filter)
         {
             std::vector<objects::Texture> textures;
             for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
             {
                 aiString str;
-                mat->GetTexture(type, i, &str);
+                if (mat->GetTexture(type, i, &str) != AI_SUCCESS)
+                {
+                    Logger::LogWarning("Failed to retrieve texture path ",
+                                       "(type ", (int)type, ", index ", i, ")");
+                    continue;
+                }
+
+                const char* raw_path = str.C_Str();
+                if (raw_path == nullptr || raw_path[0] == '\0')
+                {
+                    Logger::LogWarning("Texture entry has an empty path ",
+                                       "(type ", (int)type, ", index ", i,
+                                       ") — skipping");
+                    continue;
+                }
 
                 objects::Texture texture;
-                texture.id = graphics::TextureLoader::getInstance()->load_texture_cached(std::string(str.C_Str()), filter);
                 texture.type = typeName;
-                texture.path = str.C_Str();
                 texture.bilinear = filter;
+
+                if (const aiTexture* embedded =
+                        scene->GetEmbeddedTexture(raw_path))
+                {
+                    std::string cache_key = model_path + "#" + raw_path;
+
+                    auto raw = loadEmbeddedRaw(embedded);
+                    texture.id =
+                        graphics::TextureLoader::getInstance()
+                            ->upload_texture_cached(cache_key, raw, filter);
+
+                    if (raw.data)
+                    {
+                        graphics::TextureLoader::getInstance()->free_raw(raw);
+                        Logger::LogDebug("Embedded texture loaded: ",
+                                         cache_key);
+                    }
+                    else
+                    {
+                        Logger::LogWarning(
+                            "Embedded texture failed to decode: ", cache_key);
+                    }
+                    texture.path = cache_key;
+                }
+                else
+                {
+                    texture.id = graphics::TextureLoader::getInstance()
+                                     ->load_texture_cached(
+                                         std::string(raw_path), filter);
+                    texture.path = raw_path;
+                }
+
                 textures.push_back(texture);
             }
             return textures;
         }
 
-        void processMesh(aiMesh* mesh, const aiScene* scene, bool filter,
+        void processMesh(const std::string& model_path, aiMesh* mesh,
+                         const aiScene* scene, bool filter,
                          const glm::mat4& ModelMat,
                          std::vector<SubmeshData>& out)
         {
@@ -97,27 +180,27 @@ namespace raphEngine::resources
                     glm::length(data.bounds_max - data.local_sphere_center);
             }
 
-            auto diffuseMaps =
-                loadMaterialTextures(material, aiTextureType_DIFFUSE,
-                                     objects::Texture::DIFFUSE, filter);
+            auto diffuseMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_DIFFUSE,
+                objects::Texture::DIFFUSE, filter);
             data.textures.insert(data.textures.end(), diffuseMaps.begin(),
                                  diffuseMaps.end());
 
-            auto specularMaps =
-                loadMaterialTextures(material, aiTextureType_SPECULAR,
-                                     objects::Texture::SPECULAR, filter);
+            auto specularMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_SPECULAR,
+                objects::Texture::SPECULAR, filter);
             data.textures.insert(data.textures.end(), specularMaps.begin(),
                                  specularMaps.end());
 
-            auto normalMaps =
-                loadMaterialTextures(material, aiTextureType_NORMALS,
-                                     objects::Texture::NORMAL, filter);
+            auto normalMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_NORMALS,
+                objects::Texture::NORMAL, filter);
             data.textures.insert(data.textures.end(), normalMaps.begin(),
                                  normalMaps.end());
 
-            auto heightMaps =
-                loadMaterialTextures(material, aiTextureType_HEIGHT,
-                                     objects::Texture::HEIGHT, filter);
+            auto heightMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_HEIGHT,
+                objects::Texture::HEIGHT, filter);
             data.textures.insert(data.textures.end(), heightMaps.begin(),
                                  heightMaps.end());
 
@@ -150,14 +233,31 @@ namespace raphEngine::resources
             glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f),
                         glm::vec3(-1.0f, 0.0f, 0.0f));
 
-        // FBX's default unit is centimeters; this engine works in meters.
-        constexpr float kFbxUnitScale = 0.01f;
+        glm::mat4 computeImportCorrection(const aiScene* scene)
+        {
+            float relative_to_cm = 100.0f; // default: file is already meters
+            if (scene->mMetaData)
+                scene->mMetaData->Get("UnitScaleFactor", relative_to_cm);
 
-        const glm::mat4 kImportCorrection =
-            kYupToZup * glm::scale(glm::mat4(1.0f), glm::vec3(kFbxUnitScale));
+            if (relative_to_cm <= 0.0f)
+            {
+                Logger::LogWarning(
+                    "Invalid UnitScaleFactor (", relative_to_cm,
+                    ") in model metadata — ignoring, assuming meters.");
+                relative_to_cm = 100.0f;
+            }
 
-        void processNode(std::vector<SubmeshData>& out, aiNode* node,
-                         const aiScene* scene, bool filter)
+            const float to_meters = relative_to_cm * 0.01f;
+            Logger::LogInfo("Model unit-to-meter scale: ", to_meters);
+
+            return kYupToZup
+                * glm::scale(glm::mat4(1.0f), glm::vec3(to_meters));
+        }
+
+        void processNode(const std::string& model_path,
+                         std::vector<SubmeshData>& out, aiNode* node,
+                         const aiScene* scene, bool filter,
+                         const glm::mat4& import_correction)
         {
             for (unsigned int i = 0; i < node->mNumMeshes; i++)
             {
@@ -169,11 +269,12 @@ namespace raphEngine::resources
                     globalTransform = parent->mTransformation * globalTransform;
                     parent = parent->mParent;
                 }
-                glm::mat4 m = kImportCorrection * AiMatToGlm(globalTransform);
-                processMesh(mesh, scene, filter, m, out);
+                glm::mat4 m = import_correction * AiMatToGlm(globalTransform);
+                processMesh(model_path, mesh, scene, filter, m, out);
             }
             for (unsigned int i = 0; i < node->mNumChildren; i++)
-                processNode(out, node->mChildren[i], scene, filter);
+                processNode(model_path, out, node->mChildren[i], scene, filter,
+                            import_correction);
         }
     } // anonymous namespace
 
@@ -211,10 +312,9 @@ namespace raphEngine::resources
             return;
         }
 
-        float unitScale = 1.0f;
-        if (scene->mMetaData)
-            scene->mMetaData->Get("UnitScaleFactor", unitScale);
+        const glm::mat4 import_correction = computeImportCorrection(scene);
 
-        processNode(submeshes_, scene->mRootNode, scene, filter);
+        processNode(path, submeshes_, scene->mRootNode, scene, filter,
+                    import_correction);
     }
 } // namespace raphEngine::resources

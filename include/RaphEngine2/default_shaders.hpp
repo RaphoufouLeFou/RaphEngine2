@@ -1,5 +1,67 @@
 #pragma once
 
+inline const char* default_shadow_vs_shader = R"(
+#version 410 core
+layout(location = 0) in vec3 aPos;
+
+uniform mat4 lightSpaceMatrix; // set once per cascade draw call, not per-instance
+uniform mat4 model;
+
+void main()
+{
+    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
+}
+)";
+
+inline const char* debug_cascade_fs_shader = R"(
+#version 410 core
+out vec4 FragColor;
+
+uniform vec4 color;
+
+void main()
+{             
+    FragColor = color;
+}
+
+)";
+
+inline const char* default_shadow_gs_shader = R"(
+#version 410 core
+
+layout(triangles, invocations = 5) in;
+layout(triangle_strip, max_vertices = 3) out;
+
+layout (std140) uniform LightSpaceMatrices
+{
+    mat4 lightSpaceMatrices[16];
+};
+/*
+uniform mat4 lightSpaceMatrices[16];
+*/
+
+void main()
+{          
+	for (int i = 0; i < 3; ++i)
+	{
+		gl_Position = lightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
+		gl_Layer = gl_InvocationID;
+		EmitVertex();
+	}
+	EndPrimitive();
+}  
+
+)";
+
+inline const char* default_shadow_fs_shader = R"(
+#version 410 core
+
+void main()
+{             
+}
+
+)";
+
 inline const char* default_fs_shader = R"(
 #version 410 core
 
@@ -146,108 +208,6 @@ void main()
 
 )";
 
-inline const char* debug_line_vs_shader = R"(
-#version 330 core
-
-layout(location = 0) in vec3 aPos;
-
-uniform mat4 u_MVP;
-
-void main()
-{
-    gl_Position = u_MVP * vec4(aPos, 1.0);
-}
-)";
-
-inline const char* default_instanced_shadow_vs_shader = R"(
-#version 410 core
-layout(location = 0) in vec3 aPos;
-layout(location = 5) in mat4 instanceModel;
-
-uniform mat4 lightSpaceMatrix;
-
-void main()
-{
-    gl_Position = lightSpaceMatrix * instanceModel * vec4(aPos, 1.0);
-}
-)";
-
-inline const char* default_shadow_fs_shader = R"(
-#version 410 core
-
-void main()
-{             
-}
-
-)";
-
-inline const char* debug_cascade_vs_shader = R"(
-#version 410 core
-layout (location = 0) in vec3 aPos;
-
-uniform mat4 view;
-uniform mat4 projection;
-
-void main()
-{
-    gl_Position = projection * view * vec4(aPos, 1.0);
-}
-
-)";
-
-inline const char* debug_line_fs_shader = R"(
-#version 330 core
-
-out vec4 FragColor;
-
-uniform vec3 u_Color;
-
-void main()
-{
-    FragColor = vec4(u_Color, 1.0);
-}
-)";
-
-inline const char* default_shadow_vs_shader = R"(
-#version 410 core
-layout(location = 0) in vec3 aPos;
-
-uniform mat4 lightSpaceMatrix; // set once per cascade draw call, not per-instance
-uniform mat4 model;
-
-void main()
-{
-    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
-}
-)";
-
-inline const char* default_shadow_gs_shader = R"(
-#version 410 core
-
-layout(triangles, invocations = 5) in;
-layout(triangle_strip, max_vertices = 3) out;
-
-layout (std140) uniform LightSpaceMatrices
-{
-    mat4 lightSpaceMatrices[16];
-};
-/*
-uniform mat4 lightSpaceMatrices[16];
-*/
-
-void main()
-{          
-	for (int i = 0; i < 3; ++i)
-	{
-		gl_Position = lightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
-		gl_Layer = gl_InvocationID;
-		EmitVertex();
-	}
-	EndPrimitive();
-}  
-
-)";
-
 inline const char* default_instanced_vs_shader = R"(
 #version 410 core
 
@@ -297,6 +257,19 @@ void main()
     vs_out.TangentFragPos = TBN_T * vs_out.FragPos;
 
     gl_Position = projection * view * instanceModel * vec4(aPos, 1.0);
+}
+)";
+
+inline const char* debug_line_fs_shader = R"(
+#version 330 core
+
+out vec4 FragColor;
+
+uniform vec3 u_Color;
+
+void main()
+{
+    FragColor = vec4(u_Color, 1.0);
 }
 )";
 
@@ -353,15 +326,42 @@ void main()
 
 )";
 
-inline const char* debug_cascade_fs_shader = R"(
+inline const char* default_instanced_shadow_vs_shader = R"(
 #version 410 core
-out vec4 FragColor;
+layout(location = 0) in vec3 aPos;
+layout(location = 5) in mat4 instanceModel;
 
-uniform vec4 color;
+uniform mat4 lightSpaceMatrix;
 
 void main()
-{             
-    FragColor = color;
+{
+    gl_Position = lightSpaceMatrix * instanceModel * vec4(aPos, 1.0);
+}
+)";
+
+inline const char* debug_line_vs_shader = R"(
+#version 330 core
+
+layout(location = 0) in vec3 aPos;
+
+uniform mat4 u_MVP;
+
+void main()
+{
+    gl_Position = u_MVP * vec4(aPos, 1.0);
+}
+)";
+
+inline const char* debug_cascade_vs_shader = R"(
+#version 410 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * vec4(aPos, 1.0);
 }
 
 )";

@@ -5,8 +5,8 @@ Proper object destruction
 Start coding the Editor
 Static lights
 tweak shadows
-Shadows for spot lights
-Shadows for point lights
+spot lights
+point lights
 Swap the shader from var to filename
 Function to get user folder
 Handle big terrains

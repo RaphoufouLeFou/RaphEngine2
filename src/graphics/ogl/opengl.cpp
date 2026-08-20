@@ -3,6 +3,7 @@
 #include "component/camera_component.hpp"
 #include "graphics/debug.hpp"
 #include "graphics/frustum.hpp"
+#include "graphics/skybox.hpp"
 #include "settings/graphics.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -301,6 +302,8 @@ namespace raphEngine::graphics::ogl
 
         GLShadowRenderer::debug_draw_lights();
         Debug::getInstance()->RenderAllLines();
+
+        Skybox::getInstance()->render();
 
         rmlui_renderer_.Render();
 

@@ -1,9 +1,7 @@
 #include <RaphEngine2/graphics/ogl/gl_texture_loader.hpp>
 #include <RaphEngine2/export.hpp>
 #include "logger/logger.hpp"
-#include <vector>
 #include <string>
-#include <memory>
 
 #include <GL/glew.h>
 #include <GL/gl.h>

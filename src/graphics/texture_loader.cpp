@@ -69,6 +69,20 @@ namespace raphEngine::graphics
         return res;
     }
 
+    TextureLoader::RawTextureHDR
+    TextureLoader::load_texture_raw_hdr(const std::string& path)
+    {
+        std::string filename = path;
+        int index = path.find("assets");
+        if (index != -1)
+            filename = path.substr(index);
+
+        RawTextureHDR res;
+        res.data = stbi_loadf(filename.c_str(), &res.width, &res.height,
+                              &res.nrChannels, 0);
+        return res;
+    }
+
     TextureLoader::RawTexture
     TextureLoader::load_texture_raw_from_memory(const unsigned char* buffer,
                                                 size_t buffer_len)
@@ -91,4 +105,14 @@ namespace raphEngine::graphics
         raw_texture.data = nullptr;
     }
 
+    void TextureLoader::free_raw(RawTextureHDR& raw_texture)
+    {
+        if (!raw_texture.data)
+        {
+            Logger::LogError("Can't free a null raw texture data !");
+            return;
+        }
+        stbi_image_free(raw_texture.data);
+        raw_texture.data = nullptr;
+    }
 } // namespace raphEngine::graphics

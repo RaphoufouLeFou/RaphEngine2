@@ -13,6 +13,24 @@ void main()
 }
 )";
 
+inline const char* skybox_vs_shader = R"(
+#version 410 core
+layout(location = 0) in vec3 aPos;
+
+out vec3 TexCoords;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+void main()
+{
+    TexCoords = aPos;
+    vec4 pos = projection * view * vec4(aPos, 1.0);
+    gl_Position = pos.xyww;
+}
+
+)";
+
 inline const char* debug_cascade_fs_shader = R"(
 #version 410 core
 out vec4 FragColor;
@@ -50,6 +68,48 @@ void main()
 	}
 	EndPrimitive();
 }  
+
+)";
+
+inline const char* equirect_to_cubemap_vs_shader = R"(
+#version 410 core
+layout(location = 0) in vec3 aPos;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+out vec3 localPos;
+
+void main()
+{
+    localPos = aPos;
+    gl_Position = projection * view * vec4(localPos, 1.0);
+}
+
+)";
+
+inline const char* equirect_to_cubemap_fs_shader = R"(
+#version 410 core
+out vec4 FragColor;
+in vec3 localPos;
+
+uniform sampler2D equirectangularMap;
+
+const vec2 invAtan = vec2(0.1591, 0.3183);
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.y, v.x), asin(v.z));
+    uv *= invAtan;
+    uv += 0.5;
+    uv.y = 1.0 - uv.y;
+    return uv;
+}
+
+void main()
+{
+    vec2 uv = SampleSphericalMap(normalize(localPos));
+    FragColor = vec4(texture(equirectangularMap, uv).rgb, 1.0);
+}
 
 )";
 
@@ -337,6 +397,27 @@ void main()
 {
     gl_Position = lightSpaceMatrix * instanceModel * vec4(aPos, 1.0);
 }
+)";
+
+inline const char* skybox_fs_shader = R"(
+#version 410 core
+out vec4 FragColor;
+in vec3 TexCoords;
+
+uniform samplerCube skybox;
+uniform float exposure;
+
+void main()
+{
+    vec3 hdrColor = texture(skybox, TexCoords).rgb;
+
+    vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
+
+    mapped = pow(mapped, vec3(1.0 / 2.2));
+
+    FragColor = vec4(mapped, 1.0);
+}
+
 )";
 
 inline const char* debug_line_vs_shader = R"(

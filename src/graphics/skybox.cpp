@@ -1,7 +1,5 @@
 #include <RaphEngine2/graphics/skybox.hpp>
 #include <RaphEngine2/graphics/ogl/gl_skybox.hpp>
-#include <vector>
-#include <string>
 #include <memory>
 
 #include "logger/logger.hpp"
@@ -49,4 +47,4 @@ namespace raphEngine::graphics
         return instance_.get();
     }
 
-}
+} // namespace raphEngine::graphics

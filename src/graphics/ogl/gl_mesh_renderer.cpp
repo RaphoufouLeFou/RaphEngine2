@@ -1,6 +1,7 @@
 #include "graphics/ogl/gl_mesh_renderer.hpp"
 #include <glm/ext/vector_float3.hpp>
 #include <string>
+#include "graphics/ogl/gl_skybox.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
@@ -87,6 +88,26 @@ namespace raphEngine::graphics
             GL_TEXTURE_2D_ARRAY,
             dynamic_cast<GLShadowRenderer*>(ShadowRenderer::getInstance())
                 ->depthMap);
+
+        ogl::GL_Skybox* skybox =
+            dynamic_cast<ogl::GL_Skybox*>(Skybox::getInstance());
+        bool have_skybox = skybox && skybox->is_loaded();
+        sh->setValue("haveSkybox", have_skybox);
+
+        if (have_skybox)
+        {
+            glActiveTexture(GL_TEXTURE5);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->get_irradiance_map());
+            sh->setValue("irradianceMap", 5);
+
+            glActiveTexture(GL_TEXTURE6);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->get_environment_map());
+            sh->setValue("environmentMap", 6);
+            sh->setValue("maxReflectionLod", ogl::GL_Skybox::kMaxReflectionLod);
+            sh->setValue("ambientIntensity", skybox->get_ambient_intensity());
+            sh->setValue("reflectionExposure",
+                         skybox->get_reflection_exposure());
+        }
     }
 
     void GLMeshRenderer::render(const raphEngine::objects::Mesh* mesh) const

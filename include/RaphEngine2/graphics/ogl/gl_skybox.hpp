@@ -14,16 +14,47 @@ namespace raphEngine::graphics::ogl
         void set_hdr(const std::string& hdr) override;
         void render() override;
 
-        void set_exposure(float e)
+        unsigned int get_environment_map() const
         {
-            exposure_ = e;
+            return cube_map_buffer_;
         }
+        unsigned int get_irradiance_map() const
+        {
+            return irradiance_map_;
+        }
+
+        void set_ambient_intensity(float a)
+        {
+            ambient_intensity_ = a;
+        }
+        float get_ambient_intensity() const
+        {
+            return ambient_intensity_;
+        }
+
+        void set_reflection_exposure(float e)
+        {
+            reflection_exposure_ = e;
+        }
+        float get_reflection_exposure() const
+        {
+            return reflection_exposure_;
+        }
+        bool is_loaded() const
+        {
+            return cube_map_buffer_ != 0 && irradiance_map_ != 0;
+        }
+
+        static constexpr float kMaxReflectionLod = 10.0f;
 
     private:
         unsigned int cube_map_buffer_ = 0;
+        unsigned int irradiance_map_ = 0;
         unsigned int skybox_vao_ = 0;
         unsigned int skybox_vbo_ = 0;
         std::shared_ptr<Shader> skybox_shader_;
-        float exposure_ = 0.5f;
+        float exposure_ = 0.1f;
+        float ambient_intensity_ = 1.f;
+        float reflection_exposure_ = exposure_;
     };
 } // namespace raphEngine::graphics::ogl

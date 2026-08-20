@@ -71,23 +71,6 @@ void main()
 
 )";
 
-inline const char* equirect_to_cubemap_vs_shader = R"(
-#version 410 core
-layout(location = 0) in vec3 aPos;
-
-uniform mat4 projection;
-uniform mat4 view;
-
-out vec3 localPos;
-
-void main()
-{
-    localPos = aPos;
-    gl_Position = projection * view * vec4(localPos, 1.0);
-}
-
-)";
-
 inline const char* equirect_to_cubemap_fs_shader = R"(
 #version 410 core
 out vec4 FragColor;
@@ -143,6 +126,13 @@ uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_normal;
 uniform sampler2DArrayShadow shadowMap;
+
+uniform samplerCube irradianceMap;
+uniform samplerCube environmentMap;
+uniform bool haveSkybox;
+uniform float maxReflectionLod;
+uniform float ambientIntensity;
+uniform float reflectionExposure;
 
 uniform vec3 lightDir; // world space
 uniform float lightIntensity;
@@ -250,7 +240,15 @@ void main()
         color = texture(texture_diffuse, fs_in.TexCoords).rgb;
 
     vec3 lightColor = vec3(1.0);
+
     vec3 ambient = 0.1 * lightColor;
+
+    if (haveSkybox)
+    {
+        vec3 skyAmbient =
+            texture(irradianceMap, worldNormal).rgb * ambientIntensity;
+        ambient = min(skyAmbient, vec3(0.3));
+    }
 
     float diff = max(dot(lightDirT, normal), 0.0);
     vec3 diffuse = diff * lightColor * lightIntensity;
@@ -263,6 +261,23 @@ void main()
     float shadow = ShadowCalculation(fs_in.FragPos, worldNormal);
 
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+
+    if (haveSkybox)
+    {
+        vec3 worldViewDir = normalize(viewPos - fs_in.FragPos);
+        vec3 reflectDir = reflect(-worldViewDir, worldNormal);
+        float lod =
+            mix(maxReflectionLod * 0.6, maxReflectionLod * 0.15, specFact);
+
+        vec3 envSample = textureLod(environmentMap, reflectDir, lod).rgb;
+
+        envSample = vec3(1.0) - exp(-envSample * reflectionExposure);
+
+        float reflectivity = HaveSpecularMap ? specFact * 0.5 : 0.1;
+
+        lighting += envSample * reflectivity;
+    }
+
     FragColor = vec4(lighting, 1.0);
 }
 
@@ -331,6 +346,23 @@ void main()
 {
     FragColor = vec4(u_Color, 1.0);
 }
+)";
+
+inline const char* cubemap_capture_vs_shader = R"(
+#version 410 core
+layout(location = 0) in vec3 aPos;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+out vec3 localPos;
+
+void main()
+{
+    localPos = aPos;
+    gl_Position = projection * view * vec4(localPos, 1.0);
+}
+
 )";
 
 inline const char* default_vs_shader = R"(
@@ -431,6 +463,48 @@ void main()
 {
     gl_Position = u_MVP * vec4(aPos, 1.0);
 }
+)";
+
+inline const char* irradiance_convolution_fs_shader = R"(
+#version 410 core
+out vec4 FragColor;
+in vec3 localPos;
+
+uniform samplerCube environmentMap;
+
+const float PI = 3.14159265359;
+
+void main()
+{
+    vec3 N = normalize(localPos);
+
+    vec3 irradiance = vec3(0.0);
+
+    vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 right = normalize(cross(up, N));
+    up = normalize(cross(N, right));
+
+    float sampleDelta = 0.025;
+    float nrSamples = 0.0;
+    for (float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)
+    {
+        for (float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta)
+        {
+            vec3 tangentSample =
+                vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+            vec3 sampleVec = tangentSample.x * right + tangentSample.y * up
+                + tangentSample.z * N;
+
+            irradiance += texture(environmentMap, sampleVec).rgb * cos(theta)
+                * sin(theta);
+            nrSamples++;
+        }
+    }
+    irradiance = PI * irradiance * (1.0 / nrSamples);
+
+    FragColor = vec4(irradiance, 1.0);
+}
+
 )";
 
 inline const char* debug_cascade_vs_shader = R"(

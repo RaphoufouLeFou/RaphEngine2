@@ -19,6 +19,13 @@ uniform sampler2D texture_specular;
 uniform sampler2D texture_normal;
 uniform sampler2DArrayShadow shadowMap;
 
+uniform samplerCube irradianceMap;
+uniform samplerCube environmentMap;
+uniform bool haveSkybox;
+uniform float maxReflectionLod;
+uniform float ambientIntensity;
+uniform float reflectionExposure;
+
 uniform vec3 lightDir; // world space
 uniform float lightIntensity;
 uniform vec3 viewPos;
@@ -125,7 +132,15 @@ void main()
         color = texture(texture_diffuse, fs_in.TexCoords).rgb;
 
     vec3 lightColor = vec3(1.0);
+
     vec3 ambient = 0.1 * lightColor;
+
+    if (haveSkybox)
+    {
+        vec3 skyAmbient =
+            texture(irradianceMap, worldNormal).rgb * ambientIntensity;
+        ambient = min(skyAmbient, vec3(0.3));
+    }
 
     float diff = max(dot(lightDirT, normal), 0.0);
     vec3 diffuse = diff * lightColor * lightIntensity;
@@ -138,5 +153,22 @@ void main()
     float shadow = ShadowCalculation(fs_in.FragPos, worldNormal);
 
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+
+    if (haveSkybox)
+    {
+        vec3 worldViewDir = normalize(viewPos - fs_in.FragPos);
+        vec3 reflectDir = reflect(-worldViewDir, worldNormal);
+        float lod =
+            mix(maxReflectionLod * 0.6, maxReflectionLod * 0.15, specFact);
+
+        vec3 envSample = textureLod(environmentMap, reflectDir, lod).rgb;
+
+        envSample = vec3(1.0) - exp(-envSample * reflectionExposure);
+
+        float reflectivity = HaveSpecularMap ? specFact * 0.5 : 0.1;
+
+        lighting += envSample * reflectivity;
+    }
+
     FragColor = vec4(lighting, 1.0);
 }

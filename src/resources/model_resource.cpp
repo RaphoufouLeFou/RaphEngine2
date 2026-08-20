@@ -118,6 +118,43 @@ namespace raphEngine::resources
             return textures;
         }
 
+        std::vector<objects::Texture> loadMaterialTexturesWithFallback(
+            const std::string& model_path, const aiScene* scene,
+            aiMaterial* mat, aiTextureType primary, aiTextureType fallback,
+            objects::Texture::TextureType typeName, bool filter)
+        {
+            auto textures = loadMaterialTextures(model_path, scene, mat,
+                                                 primary, typeName, filter);
+            if (textures.empty())
+                textures = loadMaterialTextures(model_path, scene, mat,
+                                                fallback, typeName, filter);
+            return textures;
+        }
+
+        void logMaterialTextureTypes(aiMaterial* mat)
+        {
+            static const std::pair<aiTextureType, const char*> kTypes[] = {
+                { aiTextureType_DIFFUSE, "DIFFUSE" },
+                { aiTextureType_BASE_COLOR, "BASE_COLOR" },
+                { aiTextureType_SPECULAR, "SPECULAR" },
+                { aiTextureType_NORMALS, "NORMALS" },
+                { aiTextureType_HEIGHT, "HEIGHT" },
+                { aiTextureType_METALNESS, "METALNESS (unused by the engine)" },
+                { aiTextureType_DIFFUSE_ROUGHNESS,
+                  "DIFFUSE_ROUGHNESS (unused by the engine)" },
+                { aiTextureType_EMISSIVE, "EMISSIVE (unused by the engine)" },
+                { aiTextureType_AMBIENT_OCCLUSION,
+                  "AMBIENT_OCCLUSION (unused by the engine)" },
+            };
+            for (const auto& [type, name] : kTypes)
+            {
+                unsigned int count = mat->GetTextureCount(type);
+                if (count > 0)
+                    Logger::LogDebug("Material provides ", count, " ", name,
+                                     " texture(s)");
+            }
+        }
+
         void processMesh(const std::string& model_path, aiMesh* mesh,
                          const aiScene* scene, bool filter,
                          const glm::mat4& ModelMat,
@@ -165,6 +202,7 @@ namespace raphEngine::resources
                     data.indices.push_back(face.mIndices[j]);
             }
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+            logMaterialTextureTypes(material);
 
             if (!data.vertices.empty())
             {
@@ -180,9 +218,9 @@ namespace raphEngine::resources
                     glm::length(data.bounds_max - data.local_sphere_center);
             }
 
-            auto diffuseMaps = loadMaterialTextures(
+            auto diffuseMaps = loadMaterialTexturesWithFallback(
                 model_path, scene, material, aiTextureType_DIFFUSE,
-                objects::Texture::DIFFUSE, filter);
+                aiTextureType_BASE_COLOR, objects::Texture::DIFFUSE, filter);
             data.textures.insert(data.textures.end(), diffuseMaps.begin(),
                                  diffuseMaps.end());
 
@@ -248,7 +286,7 @@ namespace raphEngine::resources
             }
 
             const float to_meters = relative_to_cm * 0.01f;
-            Logger::LogInfo("Model unit-to-meter scale: ", to_meters);
+            Logger::LogDebug("Model unit-to-meter scale: ", to_meters);
 
             return kYupToZup
                 * glm::scale(glm::mat4(1.0f), glm::vec3(to_meters));

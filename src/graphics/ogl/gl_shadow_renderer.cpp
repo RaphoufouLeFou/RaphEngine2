@@ -269,7 +269,7 @@ namespace raphEngine::graphics
         if (inputs::Key::IsKeyPressed(inputs::Key::KeyCode::KEY_E)
             && pressed == false)
         {
-            Logger::LogInfo("E is pressed!");
+            Logger::LogDebug("E is pressed!");
             lightMatricesCache = getLightSpaceMatrices();
             pressed = true;
         }

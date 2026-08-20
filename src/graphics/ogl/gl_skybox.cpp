@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "default_shaders.hpp"
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include "component/camera_component.hpp"
@@ -23,6 +24,7 @@ namespace raphEngine::graphics::ogl
     namespace
     {
         constexpr unsigned int kCaptureFaceSize = 1024;
+        constexpr unsigned int kIrradianceFaceSize = 32;
 
         constexpr float kCubeVertices[] = {
             -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
@@ -42,6 +44,17 @@ namespace raphEngine::graphics::ogl
 
             -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
             1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f
+        };
+
+        const glm::mat4 kCaptureProjection =
+            glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+        const glm::mat4 kCaptureViews[6] = {
+            glm::lookAt(glm::vec3(0), glm::vec3(1, 0, 0), glm::vec3(0, -1, 0)),
+            glm::lookAt(glm::vec3(0), glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0)),
+            glm::lookAt(glm::vec3(0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)),
+            glm::lookAt(glm::vec3(0), glm::vec3(0, -1, 0), glm::vec3(0, 0, -1)),
+            glm::lookAt(glm::vec3(0), glm::vec3(0, 0, 1), glm::vec3(0, -1, 0)),
+            glm::lookAt(glm::vec3(0), glm::vec3(0, 0, -1), glm::vec3(0, -1, 0)),
         };
 
         void CreateCubeGeometry(unsigned int& vao, unsigned int& vbo)
@@ -111,9 +124,28 @@ namespace raphEngine::graphics::ogl
                         GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R,
                         GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
+                        GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+        if (irradiance_map_ != 0)
+            glDeleteTextures(1, &irradiance_map_);
+
+        glGenTextures(1, &irradiance_map_);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, irradiance_map_);
+        for (unsigned int i = 0; i < 6; i++)
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
+                         kIrradianceFaceSize, kIrradianceFaceSize, 0, GL_RGB,
+                         GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S,
+                        GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T,
+                        GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R,
+                        GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         CreateCubeGeometry(skybox_vao_, skybox_vbo_);
 
@@ -127,42 +159,65 @@ namespace raphEngine::graphics::ogl
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                                   GL_RENDERBUFFER, capture_rbo);
 
-        auto conv_shader = Shader::loadShader(equirect_to_cubemap_vs_shader,
-                                              equirect_to_cubemap_fs_shader);
-        const GlShader* conv = dynamic_cast<const GlShader*>(conv_shader.get());
-
-        const glm::mat4 capture_projection =
-            glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-
-        const glm::mat4 capture_views[6] = {
-            glm::lookAt(glm::vec3(0), glm::vec3(1, 0, 0), glm::vec3(0, -1, 0)),
-            glm::lookAt(glm::vec3(0), glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0)),
-            glm::lookAt(glm::vec3(0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)),
-            glm::lookAt(glm::vec3(0), glm::vec3(0, -1, 0), glm::vec3(0, 0, -1)),
-            glm::lookAt(glm::vec3(0), glm::vec3(0, 0, 1), glm::vec3(0, -1, 0)),
-            glm::lookAt(glm::vec3(0), glm::vec3(0, 0, -1), glm::vec3(0, -1, 0)),
-        };
-
-        conv->use();
-        conv->setValue("equirectangularMap", 0);
-        conv->setValue("projection", capture_projection);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, hdr_texture);
-
         glDisable(GL_CULL_FACE);
-        glViewport(0, 0, kCaptureFaceSize, kCaptureFaceSize);
-        glBindFramebuffer(GL_FRAMEBUFFER, capture_fbo);
+        glBindVertexArray(skybox_vao_);
 
-        for (unsigned int i = 0; i < 6; i++)
         {
-            conv->setValue("view", capture_views[i]);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                                   cube_map_buffer_, 0);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            auto conv_shader = Shader::loadShader(
+                cubemap_capture_vs_shader, equirect_to_cubemap_fs_shader);
+            const GlShader* conv =
+                dynamic_cast<const GlShader*>(conv_shader.get());
 
-            glBindVertexArray(skybox_vao_);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            conv->use();
+            conv->setValue("equirectangularMap", 0);
+            conv->setValue("projection", kCaptureProjection);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, hdr_texture);
+
+            glViewport(0, 0, kCaptureFaceSize, kCaptureFaceSize);
+            glBindFramebuffer(GL_FRAMEBUFFER, capture_fbo);
+
+            for (unsigned int i = 0; i < 6; i++)
+            {
+                conv->setValue("view", kCaptureViews[i]);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                       GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                                       cube_map_buffer_, 0);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
+        }
+
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map_buffer_);
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+        {
+            auto irr_shader = Shader::loadShader(
+                cubemap_capture_vs_shader, irradiance_convolution_fs_shader);
+            const GlShader* irr =
+                dynamic_cast<const GlShader*>(irr_shader.get());
+
+            irr->use();
+            irr->setValue("environmentMap", 0);
+            irr->setValue("projection", kCaptureProjection);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map_buffer_);
+
+            glBindRenderbuffer(GL_RENDERBUFFER, capture_rbo);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+                                  kIrradianceFaceSize, kIrradianceFaceSize);
+            glViewport(0, 0, kIrradianceFaceSize, kIrradianceFaceSize);
+            glBindFramebuffer(GL_FRAMEBUFFER, capture_fbo);
+
+            for (unsigned int i = 0; i < 6; i++)
+            {
+                irr->setValue("view", kCaptureViews[i]);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                       GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                                       irradiance_map_, 0);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
         }
 
         glBindVertexArray(0);

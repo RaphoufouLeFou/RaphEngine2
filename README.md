@@ -22,14 +22,14 @@ As of today, the engine handle :
 - Instancing
 - UI (RmlUI)
 - Culling
+- Skyboxes
+- Skybox Reflection
 
 And more little things.
 
 ## In the TODO list (Not in order)
 
-
 - Spot and point lights
-- Skyboxes
 - Handle big terrains
 - Vegetation
 - Smooth lod transitions
@@ -44,7 +44,6 @@ And more little things.
 - Add vulkan / D3D11 / D3D12
 - Assets compressions
 - Glass/Transparency
-- Reflections
 - Smoke
 
 ## Some screenshots

@@ -31,7 +31,7 @@ namespace raphEngine::graphics
                 return light;
         }
 
-        Logger::LogError("No directional light!");
+        // Logger::LogError("No directional light!");
         // throw std::runtime_error("No directional light!");
         return nullptr;
     }

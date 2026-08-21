@@ -13,6 +13,11 @@ else()
     target_compile_options(RaphEditor PRIVATE -Wall -Wextra -Werror -pedantic -Wold-style-cast -fPIC)
 endif()
 
+if(RAPHENGINE2_ENABLE_ASAN AND NOT WIN32)
+    target_compile_options(RaphEditor PRIVATE -fsanitize=address -fno-omit-frame-pointer -g)
+    target_link_options(RaphEditor PRIVATE -fsanitize=address)
+endif()
+
 # Copies the DLL into the same folder as the executable for win builds
 if(WIN32)
     add_custom_command(TARGET RaphEditor POST_BUILD

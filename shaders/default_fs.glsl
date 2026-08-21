@@ -153,6 +153,10 @@ void main()
     float shadow = ShadowCalculation(fs_in.FragPos, worldNormal);
 
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+    if (fs_in.TangentLightDir == 0.0)
+    {
+        lighting = color;
+    }
 
     if (haveSkybox)
     {

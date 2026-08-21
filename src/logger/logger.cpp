@@ -20,7 +20,7 @@ namespace raphEngine
     std::ofstream Logger::output_stream;
     bool Logger::std_cout_ = true;
     bool Logger::log_to_file_ = false;
-    Logger::LogLevel Logger::log_level_;
+    Logger::LogLevel Logger::log_level_ = INFO;
 
     void Logger::ConfigureLogger(const std::string& log_file_path,
                                  LogLevel log_level, bool std_cout)

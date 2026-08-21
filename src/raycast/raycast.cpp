@@ -404,6 +404,162 @@ namespace raphEngine
         return hitFound;
     }
 
+#ifdef EDITOR_BUILD
+
+    RayHit RayIntersectMeshLocal(const objects::Mesh* mesh,
+                                 const glm::vec3& localOrigin,
+                                 const glm::vec3& localDirection)
+    {
+        const auto& verts = mesh->get_vertices();
+        const auto& indices = mesh->get_indices();
+        bool isIndexed = !indices.empty();
+        size_t triSource = isIndexed ? indices.size() : verts.size();
+        size_t triCount = triSource / 3;
+
+        RayHit best;
+        for (size_t k = 0; k < triCount; k++)
+        {
+            unsigned int i0, i1, i2;
+            if (isIndexed)
+            {
+                i0 = indices[k * 3];
+                i1 = indices[k * 3 + 1];
+                i2 = indices[k * 3 + 2];
+            }
+            else
+            {
+                i0 = static_cast<unsigned int>(k * 3);
+                i1 = static_cast<unsigned int>(k * 3 + 1);
+                i2 = static_cast<unsigned int>(k * 3 + 2);
+            }
+
+            Utils::Triangle tri;
+            tri.a = verts[i0].position;
+            tri.b = verts[i1].position;
+            tri.c = verts[i2].position;
+
+            glm::vec3 hitPoint;
+            float t = 0.0f;
+            if (ray_intersects_triangle(localOrigin, localDirection, tri,
+                                        hitPoint, t)
+                && t < best.t)
+            {
+                best.valid = true;
+                best.t = t;
+                best.tri = tri;
+            }
+        }
+        return best;
+    }
+
+    bool RayCast::FromMouseMeshes(RayInfo* OutRayInfo)
+    {
+        if (!OutRayInfo)
+            return false;
+
+        OutRayInfo->hitObject = nullptr;
+
+        if (!component::CameraComponent::active_camera)
+            return false;
+
+        glm::vec2 screenPos = inputs::Mouse::GetMousePos();
+        screenPos.x -= graphics::GraphicApi::viewport_pos_x;
+        screenPos.y -= graphics::GraphicApi::viewport_pos_y;
+
+        glm::vec3 direction = GetDirectionFromScreen(screenPos);
+        const glm::vec3& origin =
+            component::CameraComponent::active_camera->get_position();
+
+        objects::GameObject* closestObj = nullptr;
+        glm::vec3 closestPoint(0.0f);
+        glm::vec3 closestNormal(0.0f);
+        float closestDistSq = std::numeric_limits<float>::max();
+        bool hitFound = false;
+
+        for (objects::GameObject* obj :
+             objects::GameObject::spawned_game_objects_)
+        {
+            if (!obj->is_active)
+                continue;
+
+            auto* mesh_component =
+                obj->get_first_component_of_type<component::MeshComponent>();
+            if (!mesh_component || !mesh_component->lods_)
+                continue;
+
+            const objects::ObjectMesh* current_lod =
+                mesh_component->lods_->get_lod_at(
+                    obj->get_transform().get_position());
+            if (!current_lod)
+                continue;
+
+            const glm::mat4 world_transform =
+                obj->get_transform().get_model_matrix();
+
+            for (const auto& mesh : current_lod->meshes_)
+            {
+                glm::vec3 worldMin, worldMax;
+                mesh->get_world_bounds(worldMin, worldMax);
+
+                float aabbEntryT;
+                if (!RayIntersectsAABB(origin, direction, worldMin, worldMax,
+                                       aabbEntryT))
+                    continue;
+
+                const glm::mat4 full_model =
+                    world_transform * mesh->get_model_matrix();
+                const glm::mat4 inv_model = glm::inverse(full_model);
+
+                glm::vec3 localOrigin =
+                    glm::vec3(inv_model * glm::vec4(origin, 1.0f));
+                glm::vec3 localDirection =
+                    GetNewDirection(origin, localOrigin, direction, inv_model);
+
+                RayHit hit = RayIntersectMeshLocal(mesh.get(), localOrigin,
+                                                   localDirection);
+                if (!hit.valid)
+                    continue;
+
+                glm::vec3 localHitPoint = localOrigin + localDirection * hit.t;
+                glm::vec3 worldHitPoint =
+                    glm::vec3(full_model * glm::vec4(localHitPoint, 1.0f));
+
+                glm::vec3 toHit = worldHitPoint - origin;
+                float distSq = glm::dot(toHit, toHit);
+
+                if (!hitFound || distSq < closestDistSq)
+                {
+                    glm::mat3 normalMatrix =
+                        glm::transpose(glm::inverse(glm::mat3(full_model)));
+                    glm::vec3 localNormal = glm::normalize(glm::cross(
+                        hit.tri.b - hit.tri.a, hit.tri.c - hit.tri.a));
+
+                    closestPoint = worldHitPoint;
+                    closestNormal = glm::normalize(normalMatrix * localNormal);
+                    closestObj = obj;
+                    closestDistSq = distSq;
+                    hitFound = true;
+                }
+            }
+        }
+
+        if (hitFound)
+        {
+            OutRayInfo->hitPoint.x = closestPoint.x;
+            OutRayInfo->hitPoint.y = closestPoint.y;
+            OutRayInfo->hitPoint.z = closestPoint.z;
+            OutRayInfo->hitNormal.x = closestNormal.x;
+            OutRayInfo->hitNormal.y = closestNormal.y;
+            OutRayInfo->hitNormal.z = closestNormal.z;
+            OutRayInfo->hitObject = closestObj;
+            OutRayInfo->hitDistance = glm::distance(origin, closestPoint);
+            return true;
+        }
+        return false;
+    }
+
+#endif
+
     bool RayCast::FromCamera(glm::vec2 screenPos, RayInfo* OutRayInfo,
                              int layer)
     {

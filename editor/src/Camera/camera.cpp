@@ -19,22 +19,22 @@ using namespace raphEngine;
 using namespace raphEngine::inputs;
 using namespace raphEngine::objects;
 
-GameObject* poi = new GameObject{ "ball" };
+// GameObject* poi = new GameObject{ "ball" };
 
 void Camera::Start()
 {
     Logger::LogInfo("Starting camera");
-    transform_.set_position(glm::vec3(0, 0, 2.6f));
-    transform_.set_rotation(glm::vec3(0, 0, 0));
+    /*
+        auto lods = {
+            // MeshInfo("assets/models/pylone3.fbx"),
+            MeshInfo("editor/assets/models/untitled.glb"),
+        };
 
-    auto lods = {
-        // MeshInfo("assets/models/pylone3.fbx"),
-        MeshInfo("editor/assets/models/untitled.glb"),
-    };
-    poi->add_component<component::MeshComponent>(lods);
-    poi->get_transform().set_scale(glm::vec3(1));
-    poi->add_component<component::ColliderComponent>();
-    poi->raycast_layer_ = 1;
+        poi->add_component<component::MeshComponent>(lods);
+        poi->get_transform().set_scale(glm::vec3(1));
+        poi->add_component<component::ColliderComponent>();
+        poi->raycast_layer_ = 1;
+        */
 }
 
 glm::vec2 lastMousePos = glm::vec2(-1, -1);
@@ -119,6 +119,6 @@ void Camera::Update()
     if (RayCast::FromMouseMeshes(&OutRayInfo))
     {
         Logger::LogInfo("Hit on ", OutRayInfo.hitObject->get_name());
-        poi->get_transform().set_position(OutRayInfo.hitPoint);
+        // poi->get_transform().set_position(OutRayInfo.hitPoint);
     }
 }

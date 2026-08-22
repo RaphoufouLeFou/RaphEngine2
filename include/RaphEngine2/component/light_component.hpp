@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include "component.hpp"
+#include "scenes/reflection.hpp"
 
 namespace raphEngine::component
 {
@@ -38,5 +39,9 @@ namespace raphEngine::component
         float intensity_;
         bool cast_shadows_ = true;
         Type type;
+
+    private:
+        REFLECT(LightComponent, Component, intensity_, cast_shadows_, type)
+        REFLECT_FACTORY(LightComponent, Component, "Light")
     };
 } // namespace raphEngine::component

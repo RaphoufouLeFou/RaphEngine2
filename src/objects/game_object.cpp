@@ -5,9 +5,13 @@
 #include <string>
 #include <algorithm>
 #include <RaphEngine2/logger/logger.hpp>
+#include <vector>
+#include "component/component.hpp"
 #include "imgui.h"
 
 #include "misc/cpp/imgui_stdlib.h"
+#include "objects/transform.hpp"
+#include "scenes/reflection.hpp"
 
 namespace raphEngine::objects
 {
@@ -230,4 +234,51 @@ namespace raphEngine::objects
         }
         return nullptr;
     }
+
+    void GameObject::add_component(std::unique_ptr<component::Component> c)
+    {
+        Logger::LogDebug("adding ", c->get_name());
+        c->parent_object = this;
+        c->Start();
+        components_.push_back(std::move(c));
+    }
+
+    nlohmann::json GameObject::toJson() const
+    {
+        nlohmann::json j = reflection::toJson(*this);
+        j["transform_"] = transform_;
+        j["components_"] = components_;
+        return j;
+    }
+
+    void GameObject::fromJson(const nlohmann::json& j)
+    {
+        reflection::fromJson(*this, j);
+
+        Logger::LogDebug("Parsing a gameobject");
+
+        if (j.contains("transform_"))
+        {
+            const nlohmann::json& t = j.at("transform_");
+            Logger::LogDebug("Adding transform");
+            t.at("position").get_to(transform_.position_);
+            t.at("rotation").get_to(transform_.rotation_);
+            t.at("scale").get_to(transform_.scale_);
+            transform_.can_have_moved = true;
+        }
+
+        if (j.contains("components_"))
+        {
+            const nlohmann::json& c = j.at("components_");
+            Logger::LogDebug("Found ", c.size(), " Components");
+            for (const auto& comp : c)
+            {
+                auto ptr = component::Component::parse_from_json(comp);
+
+                Logger::LogDebug("Fast adding ", ptr->get_name());
+                add_component(std::move(ptr));
+            }
+        }
+    }
+
 } // namespace raphEngine::objects

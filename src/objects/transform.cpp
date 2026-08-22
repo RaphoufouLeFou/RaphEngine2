@@ -25,6 +25,14 @@ namespace raphEngine::objects
         root_childs.push_back(this);
     }
 
+    Transform::~Transform()
+    {
+        set_parent(nullptr);
+        auto position = std::find(root_childs.begin(), root_childs.end(), this);
+        if (position != root_childs.end())
+            root_childs.erase(position);
+    }
+
     const glm::vec3& Transform::get_position() const
     {
         return position_;

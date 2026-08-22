@@ -2,6 +2,9 @@
 .cache
 .vscode
 
+**.json
+imgui.ini
+log.txt
 RaphEditor
 
 # Prerequisites

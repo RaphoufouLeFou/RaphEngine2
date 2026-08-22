@@ -1,8 +1,6 @@
 #include "project_file.hpp"
 
-#include <nlohmann/json_fwd.hpp>
 #include <optional>
-#include <experimental/filesystem>
 #include <nlohmann/json.hpp>
 #include <RaphEngine2/logger/logger.hpp>
 
@@ -74,7 +72,7 @@ void Project::store_project_file()
     std::ofstream file(path);
     if (!file.is_open())
     {
-        Logger::LogCritical("Error writing at \"", path, "\"");
+        Logger::LogCritical("Error writing at ", path);
         return;
     }
 

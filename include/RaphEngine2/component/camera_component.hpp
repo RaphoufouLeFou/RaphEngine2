@@ -37,5 +37,9 @@ namespace raphEngine::component
         float farPlane;
         glm::mat4 view_matrix_;
         glm::mat4 projection_matrix_;
+
+    private:
+        REFLECT(CameraComponent, Component, fov, nearPlane, farPlane)
+        REFLECT_FACTORY(CameraComponent, Component, "Camera")
     };
 } // namespace raphEngine::component

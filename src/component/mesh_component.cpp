@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include <memory>
 #include <vector>
+#include "logger/logger.hpp"
 
 #ifdef EDITOR_BUILD
 #    include "imgui.h"
@@ -14,6 +15,11 @@
 
 namespace raphEngine::component
 {
+
+    MeshComponent::MeshComponent()
+    {
+        shader_ = graphics::Shader::loadShader();
+    }
 
     MeshComponent::MeshComponent(
         std::initializer_list<objects::MeshInfo> meshes,
@@ -42,9 +48,9 @@ namespace raphEngine::component
 
     void MeshComponent::Start()
     {
+        Logger::LogDebug("creating LOD with ", meshes_.size(), " levels");
         lods_ = std::make_unique<objects::Lod>(parent_object, meshes_, shader_,
                                                &cast_shadows);
-        meshes_.clear();
     }
 
     void MeshComponent::Update()

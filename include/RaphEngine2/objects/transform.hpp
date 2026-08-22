@@ -2,7 +2,9 @@
 
 #include <RaphEngine2/export.hpp>
 #include <glm/glm.hpp>
+#include <nlohmann/json.hpp>
 #include <vector>
+#include <RaphEngine2/utils.hpp>
 
 namespace raphEngine::objects
 {
@@ -12,6 +14,7 @@ namespace raphEngine::objects
     {
     public:
         Transform();
+        ~Transform();
 
         const glm::vec3& get_position() const;
         void set_position(const glm::vec3& p);
@@ -38,6 +41,19 @@ namespace raphEngine::objects
         void add_child(Transform* child);
         const std::vector<Transform*>& get_children();
         Transform* get_child(size_t index) const;
+
+        friend void to_json(nlohmann::json& j, const Transform& t)
+        {
+            j = { { "position", t.position_ },
+                  { "rotation", t.rotation_ },
+                  { "scale", t.scale_ } };
+        }
+        friend void from_json(const nlohmann::json& j, Transform& t)
+        {
+            t.position_ = j.at("position").get<glm::vec3>();
+            t.rotation_ = j.at("rotation").get<glm::vec3>();
+            t.scale_ = j.at("scale").get<glm::vec3>();
+        }
 
     private:
         void calculate_matrix();

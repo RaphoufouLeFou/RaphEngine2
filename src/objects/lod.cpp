@@ -24,6 +24,9 @@ namespace raphEngine::objects
 
     const ObjectMesh* Lod::get_lod_at(const glm::vec3& object_pos) const
     {
+        if (lod_meshes_.empty())
+            return nullptr;
+
         component::CameraComponent* cam =
             component::CameraComponent::active_camera;
         const glm::vec3& campera_pos = cam->get_position();

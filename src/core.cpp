@@ -6,6 +6,7 @@
 #include "logger/logger.hpp"
 #include "objects/game_object.hpp"
 #include "objects/transform.hpp"
+#include "scenes/scene_manager.hpp"
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 
@@ -146,6 +147,8 @@ namespace raphEngine
                 io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
             else
                 io.ConfigFlags &= ~ImGuiConfigFlags_NoMouseCursorChange;
+
+            SceneManager::Imgui_update();
 #endif
 
             fps_avr += 1.0f / Time::deltaTime;

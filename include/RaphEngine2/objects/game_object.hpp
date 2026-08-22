@@ -9,6 +9,7 @@
 #include "RaphEngine2/raycast/raycast.hpp"
 #include "RaphEngine2/component/component.hpp"
 #include "RaphEngine2/core.hpp"
+#include "scenes/reflection.hpp"
 #include "transform.hpp"
 
 namespace raphEngine::component
@@ -69,6 +70,9 @@ namespace raphEngine::objects
         void start_components();
         void update_components();
 
+        nlohmann::json toJson() const;
+        void fromJson(const nlohmann::json& j);
+
         static std::shared_ptr<GameObject> instanciate(const GameObject&);
         static GameObject* find(const std::string& name);
         static void destroy(GameObject&);
@@ -100,6 +104,11 @@ namespace raphEngine::objects
         void ImGui_layout();
         void ImGui_update();
 #endif
+
+        void add_component(std::unique_ptr<component::Component> c);
+
+        REFLECT_ROOT(GameObject, name_, id_, is_active, raycast_layer_)
+        REFLECT_FACTORY(GameObject, GameObject, "GameObject")
     };
 } // namespace raphEngine::objects
 

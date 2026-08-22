@@ -30,10 +30,7 @@ namespace raphEngine::component
         nearPlane = .1f;
         farPlane = 2500.0f;
         Logger::LogDebug("creating camera");
-        if (!active_camera)
-        {
-            set_as_active_camera();
-        }
+        set_as_active_camera();
     }
 
     void CameraComponent::Start()

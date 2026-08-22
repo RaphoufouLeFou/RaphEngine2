@@ -12,6 +12,7 @@
 #include "RaphEngine2/objects/mesh.hpp"
 #include "RaphEngine2/utils.hpp"
 #include "RaphEngine2/objects/collider_geometry.hpp"
+#include "scenes/reflection.hpp"
 
 namespace raphEngine::component
 {
@@ -71,5 +72,8 @@ namespace raphEngine::component
         std::shared_ptr<const ColliderGeometry> geometry_;
 
         bool started = false;
+
+        REFLECT_EMPTY(ColliderComponent, Component)
+        REFLECT_FACTORY(ColliderComponent, Component, "Collider")
     };
 } // namespace raphEngine::component

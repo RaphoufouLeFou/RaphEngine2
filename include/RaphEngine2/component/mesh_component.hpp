@@ -20,11 +20,12 @@ namespace raphEngine::component
     class RAPHENGINE_API MeshComponent : public Component
     {
     public:
+        MeshComponent();
         MeshComponent(std::initializer_list<objects::MeshInfo> mesh_lods,
                       std::shared_ptr<graphics::Shader> shader = nullptr);
         MeshComponent(objects::MeshInfo mesh,
                       std::shared_ptr<graphics::Shader> shader = nullptr);
-        const std::string component_name = "Render mesh";
+        const std::string component_name = "Mesh";
 
         inline const std::string get_name() const override
         {
@@ -47,5 +48,8 @@ namespace raphEngine::component
 
     private:
         void render() const;
+
+        REFLECT(MeshComponent, Component, meshes_, cast_shadows)
+        REFLECT_FACTORY(MeshComponent, Component, "Mesh")
     };
 } // namespace raphEngine::component

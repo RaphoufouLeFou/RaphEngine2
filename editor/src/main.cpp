@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
     Core::Init(Project::name);
 
-    Camera camera{};
+    // Camera camera{};
 
     Core::Run();
 

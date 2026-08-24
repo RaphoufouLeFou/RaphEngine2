@@ -21,6 +21,6 @@ namespace raphEngine::graphics::ogl
     private:
         void RenderLine(const glm::vec3& start, const glm::vec3& end,
                         const glm::vec3& color);
-        uint line_vao, line_vbo;
+        unsigned int line_vao, line_vbo;
     };
 } // namespace raphEngine::graphics::ogl

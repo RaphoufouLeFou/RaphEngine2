@@ -1,5 +1,6 @@
 #pragma once
 
+#include <RaphEngine2/export.hpp>
 #include <string>
 #include <vector>
 #include <functional>
@@ -22,13 +23,13 @@ namespace raphEngine::reflection
         TypeInfo* parent = nullptr;
     };
 
-    class Reflection
+    class RAPHENGINE_API Reflection
     {
     public:
         static std::unordered_map<std::type_index, TypeInfo>& registry();
 
         template <typename Derived, typename T>
-        static void addField(const std::string& name, T Derived::*member)
+        static void addField(const std::string& name, T Derived::* member)
         {
             registry()[typeid(Derived)].fields.push_back(FieldInfo{
                 [member, name](const void* obj, nlohmann::json& j) {

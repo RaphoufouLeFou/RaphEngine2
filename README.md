@@ -24,6 +24,7 @@ As of today, the engine handle :
 - Culling
 - Skyboxes
 - Skybox Reflection
+- Scene manager
 
 And more little things.
 
@@ -34,7 +35,6 @@ And more little things.
 - Vegetation
 - Smooth lod transitions
 - Particle system
-- Scene manager
 - Bloom
 - Terrain painting
 - Sound system

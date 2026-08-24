@@ -43,13 +43,13 @@ namespace raphEngine::graphics::ogl
         void CreateViewportFramebuffer(int width, int height);
 
         // Multisampled target we actually render into
-        uint viewport_fbo_ms_ = 0;
-        uint viewport_color_rbo_ms_ = 0;
-        uint viewport_depth_rbo_ms_ = 0;
+        unsigned int viewport_fbo_ms_ = 0;
+        unsigned int viewport_color_rbo_ms_ = 0;
+        unsigned int viewport_depth_rbo_ms_ = 0;
 
         // Resolved single-sample target ImGui samples from
-        uint viewport_fbo_resolve_ = 0;
-        uint viewport_color_tex_ = 0;
+        unsigned int viewport_fbo_resolve_ = 0;
+        unsigned int viewport_color_tex_ = 0;
 
         int viewport_width_ = 0;
         int viewport_height_ = 0;

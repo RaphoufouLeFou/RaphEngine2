@@ -79,9 +79,10 @@ set_target_properties(RaphEngine2 PROPERTIES
 # dependencies
 # ========================
 
-find_package(TBB REQUIRED)
-target_link_libraries(RaphEngine2 PUBLIC TBB::tbb)
-
+if(NOT WIN32)
+    find_package(TBB REQUIRED)
+    target_link_libraries(RaphEngine2 PUBLIC TBB::tbb)
+endif()
 
 #imgui
 
@@ -156,12 +157,24 @@ target_link_libraries(RaphEngine2 PRIVATE glfw)
 find_package(Freetype QUIET)
 
 if(NOT Freetype_FOUND)
+
+    set(FT_DISABLE_ZLIB ON CACHE BOOL "" FORCE)
+    set(FT_DISABLE_BZIP2 ON CACHE BOOL "" FORCE)
+    set(FT_DISABLE_PNG ON CACHE BOOL "" FORCE)
+    set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "" FORCE)
+    set(FT_DISABLE_BROTLI ON CACHE BOOL "" FORCE)
+    
     FetchContent_Declare(
         freetype
         GIT_REPOSITORY https://github.com/freetype/freetype.git
         GIT_TAG VER-2-13-3
+        OVERRIDE_FIND_PACKAGE
     )
     FetchContent_MakeAvailable(freetype)
+
+    if(NOT TARGET Freetype::Freetype)
+        add_library(Freetype::Freetype ALIAS freetype)
+    endif()
 endif()
 
 # RmlUi

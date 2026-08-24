@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     if (argc <= 1)
     {
         Logger::LogError("No project given in argument");
-        if (!Project::parse_project_file(std::string(Project::path)))
+        if (!Project::parse_project_file(Project::path.string()))
         {
             Project::store_project_file();
             return 1;

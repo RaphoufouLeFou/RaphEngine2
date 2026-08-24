@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 
 #include "component.hpp"
-#include "scenes/reflection.hpp"
+#include "RaphEngine2/scenes/reflection.hpp"
 
 namespace raphEngine::component
 {

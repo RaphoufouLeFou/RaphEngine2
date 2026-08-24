@@ -13,6 +13,7 @@
 #include "Camera/camera.hpp"
 #include "project_file/project_file.hpp"
 
+#ifdef ENGINE_BUILD
 using namespace raphEngine;
 using namespace raphEngine::objects;
 
@@ -36,6 +37,9 @@ int main(int argc, char* argv[])
 
     Core::Init(Project::name);
 
+    graphics::Skybox::getInstance()->set_hdr(
+        "/home/raphael/Documents/github/RaphEngine2-example/assets/textures/"
+        "skybox/belfast_sunset_puresky_8k.hdr");
     // Camera camera{};
 
     Core::Run();
@@ -43,3 +47,4 @@ int main(int argc, char* argv[])
     Project::store_project_file();
     return 0;
 }
+#endif

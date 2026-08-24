@@ -12,7 +12,7 @@
 #include "RaphEngine2/objects/mesh.hpp"
 #include "RaphEngine2/utils.hpp"
 #include "RaphEngine2/objects/collider_geometry.hpp"
-#include "scenes/reflection.hpp"
+#include "RaphEngine2/scenes/reflection.hpp"
 
 namespace raphEngine::component
 {

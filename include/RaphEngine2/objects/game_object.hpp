@@ -9,7 +9,7 @@
 #include "RaphEngine2/raycast/raycast.hpp"
 #include "RaphEngine2/component/component.hpp"
 #include "RaphEngine2/core.hpp"
-#include "scenes/reflection.hpp"
+#include "RaphEngine2/scenes/reflection.hpp"
 #include "transform.hpp"
 
 namespace raphEngine::component

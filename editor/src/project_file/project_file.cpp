@@ -4,17 +4,18 @@
 #include <nlohmann/json.hpp>
 #include <RaphEngine2/logger/logger.hpp>
 
+#ifdef ENGINE_BUILD
 using namespace raphEngine;
 
 fs::path expand_home(const std::string& path)
 {
     if (!path.empty() && path[0] == '~')
     {
-#ifdef _WIN32
+#    ifdef _WIN32
         const char* home = std::getenv("USERPROFILE");
-#else
+#    else
         const char* home = std::getenv("HOME");
-#endif
+#    endif
         if (home)
             return fs::path(home) / path.substr(2);
     }
@@ -82,3 +83,4 @@ void Project::store_project_file()
     Logger::LogDebug("Saved at ", path);
     file << p.dump(4);
 }
+#endif

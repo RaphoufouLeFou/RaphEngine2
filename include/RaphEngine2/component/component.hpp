@@ -5,8 +5,7 @@
 #include <string>
 
 #include "RaphEngine2/export.hpp"
-#include "objects/game_object.hpp"
-#include "scenes/reflection.hpp"
+#include "RaphEngine2/scenes/reflection.hpp"
 #include <RaphEngine2/logger/logger.hpp>
 
 namespace raphEngine::objects

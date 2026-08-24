@@ -5,21 +5,25 @@
 #include <RaphEngine2/component/mesh_component.hpp>
 #include "scenes/reflection.hpp"
 
-class Camera : public raphEngine::objects::GameObject
+#ifdef ENGINE_BUILD
+using namespace raphEngine::objects;
+
+class Camera : public GameObject
 {
 public:
     Camera()
         : GameObject("Main Camera")
-    {
-        // this->add_component<raphEngine::component::CameraComponent>();
-    }
+    {}
 
     void Start() override;
     void Update() override;
 
+    int id;
+
 private:
     void HandleMouseRotation();
 
-    REFLECT_EMPTY(Camera, raphEngine::objects::GameObject)
-    REFLECT_FACTORY(Camera, raphEngine::objects::GameObject, "Camera")
+    REFLECT(Camera, GameObject, id)
+    REFLECT_FACTORY(Camera, GameObject, "Camera")
 };
+#endif

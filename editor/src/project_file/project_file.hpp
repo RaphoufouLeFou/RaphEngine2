@@ -3,6 +3,7 @@
 #include <string>
 #include <filesystem>
 
+#ifdef ENGINE_BUILD
 namespace fs = std::filesystem;
 
 class Project
@@ -15,3 +16,4 @@ public:
     static std::string setting_file_name;
     static fs::path path;
 };
+#endif

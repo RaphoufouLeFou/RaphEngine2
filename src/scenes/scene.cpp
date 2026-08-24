@@ -2,6 +2,8 @@
 #include <cstring>
 #include <nlohmann/json.hpp>
 #include <filesystem>
+#include "core.hpp"
+#include "graphics/skybox.hpp"
 #include "imgui.h"
 #include "objects/game_object.hpp"
 
@@ -59,8 +61,9 @@ namespace raphEngine
             file >> j;
 
             if (j.contains("SkyBox"))
+            {
                 j.at("SkyBox").get_to(skybox_path_);
-
+            }
             if (j.contains("Objects"))
             {
                 for (const auto& objJson : j.at("Objects"))

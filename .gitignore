@@ -6,6 +6,7 @@
 imgui.ini
 log.txt
 RaphEditor
+**.hdr
 
 # Prerequisites
 *.d

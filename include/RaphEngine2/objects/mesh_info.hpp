@@ -4,7 +4,7 @@
 #include <string>
 
 #include "RaphEngine2/export.hpp"
-#include "scenes/reflection.hpp"
+#include "RaphEngine2/scenes/reflection.hpp"
 
 namespace raphEngine::objects
 {

@@ -13,17 +13,19 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#ifdef ENGINE_BUILD
 float speed = 10;
 
 using namespace raphEngine;
 using namespace raphEngine::inputs;
 using namespace raphEngine::objects;
 
-// GameObject* poi = new GameObject{ "ball" };
+GameObject* poi = nullptr;
 
 void Camera::Start()
 {
     Logger::LogInfo("Starting camera");
+    poi = GameObject::find("Ball");
     /*
         auto lods = {
             // MeshInfo("assets/models/pylone3.fbx"),
@@ -119,6 +121,8 @@ void Camera::Update()
     if (RayCast::FromMouseMeshes(&OutRayInfo))
     {
         Logger::LogInfo("Hit on ", OutRayInfo.hitObject->get_name());
-        // poi->get_transform().set_position(OutRayInfo.hitPoint);
+        if (poi)
+            poi->get_transform().set_position(OutRayInfo.hitPoint);
     }
 }
+#endif

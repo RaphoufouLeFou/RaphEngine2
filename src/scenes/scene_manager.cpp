@@ -8,6 +8,11 @@ namespace raphEngine
 {
     std::unique_ptr<Scene> SceneManager::active_scene_;
 
+    void SceneManager::init()
+    {
+        load_scene("");
+    }
+
     bool SceneManager::load_scene(fs::path path)
     {
         active_scene_ = std::make_unique<Scene>(path);

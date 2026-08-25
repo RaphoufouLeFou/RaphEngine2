@@ -9,6 +9,7 @@ namespace raphEngine
     class RAPHENGINE_API SceneManager
     {
     public:
+        static void init();
         static bool load_scene(fs::path path);
         static Scene* get_active_scene();
 

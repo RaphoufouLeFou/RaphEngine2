@@ -13,7 +13,9 @@ class Camera : public GameObject
 public:
     Camera()
         : GameObject("Main Camera")
-    {}
+    {
+        Logger::LogDebug("Spawning !!!");
+    }
 
     void Start() override;
     void Update() override;

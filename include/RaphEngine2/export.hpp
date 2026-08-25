@@ -15,6 +15,6 @@
 #endif
 
 // Export important stuff for the editor engine version
-// #define EDITOR_BUILD
+#define EDITOR_BUILD
 
 #define RAYCAST_DEBUG 0

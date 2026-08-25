@@ -1,4 +1,6 @@
 #include "RaphEngine2/core.hpp"
+#include <memory>
+#include <vector>
 
 #include "RaphEngine2/time_utils.hpp"
 #include "graphics/ogl/opengl.hpp"
@@ -6,6 +8,7 @@
 #include "logger/logger.hpp"
 #include "objects/game_object.hpp"
 #include "objects/transform.hpp"
+#include "scenes/reflection.hpp"
 #include "scenes/scene_manager.hpp"
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
@@ -45,6 +48,7 @@ namespace raphEngine
 
         renderer.Init(title);
         graphics::Debug::getInstance()->Init();
+        SceneManager::init();
     }
 
     void Core::Run()
@@ -86,7 +90,7 @@ namespace raphEngine
                                             &dock_id_right, &dock_id_main);
                 ImGui::DockBuilderDockWindow("Layout", dock_id_left);
 
-                ImGui::DockBuilderDockWindow("Down", dock_id_down);
+                ImGui::DockBuilderDockWindow("Objects", dock_id_down);
                 /*
                 for (auto& go :
                 objects::GameObject::spawned_game_objects_)
@@ -106,9 +110,23 @@ namespace raphEngine
             ImGui::DockSpaceOverViewport(
                 dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 
-            ImGui::Begin("Down");
+            static std::vector<std::unique_ptr<objects::GameObject>> sp_obj;
 
-            ImGui::Text("FPS: %f", current_fps_);
+            ImGui::Begin("Objects");
+            ImGui::SeparatorText("Spawn GameObjects");
+
+            auto objs =
+                reflection::Factory<objects::GameObject>::allRegistered();
+
+            for (auto [name, creator] : objs)
+            {
+                if (ImGui::Button(name.c_str()))
+                {
+                    Logger::LogDebug("creating ", name);
+                    sp_obj.push_back(creator());
+                }
+            }
+
             ImGui::End();
 
             ImGui::BeginMainMenuBar();
@@ -130,6 +148,7 @@ namespace raphEngine
             ImGui::EndMainMenuBar();
 
             ImGui::Begin("Viewport");
+            ImGui::Text("FPS: %f", current_fps_);
             graphics::GraphicApi::viewport_focused = ImGui::IsWindowFocused();
 
             ImVec2 viewportScreenPos = ImGui::GetCursorScreenPos();
@@ -140,6 +159,7 @@ namespace raphEngine
             renderer.ResizeViewportFramebuffer((int)avail.x, (int)avail.y);
             ImGui::Image(renderer.GetViewportTexture(), avail, ImVec2(0, 1),
                          ImVec2(1, 0));
+
             ImGui::End();
 
             ImGuiIO& io = ImGui::GetIO();

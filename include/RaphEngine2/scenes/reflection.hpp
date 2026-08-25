@@ -29,7 +29,7 @@ namespace raphEngine::reflection
         static std::unordered_map<std::type_index, TypeInfo>& registry();
 
         template <typename Derived, typename T>
-        static void addField(const std::string& name, T Derived::* member)
+        static void addField(const std::string& name, T Derived::*member)
         {
             registry()[typeid(Derived)].fields.push_back(FieldInfo{
                 [member, name](const void* obj, nlohmann::json& j) {
@@ -79,6 +79,11 @@ namespace raphEngine::reflection
         {
             static std::unordered_map<std::string, Creator> table;
             return table;
+        }
+
+        static const std::unordered_map<std::string, Creator>& allRegistered()
+        {
+            return registry();
         }
 
         static std::unordered_map<std::type_index, std::string>& names()

@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <RaphEngine2/logger/logger.hpp>
+#include <unordered_map>
 #include <vector>
 #include "component/component.hpp"
 #include "imgui.h"
@@ -152,6 +153,27 @@ namespace raphEngine::objects
                 for (auto& c : components_)
                 {
                     c->ImGuiPrint();
+                }
+
+                if (ImGui::Button("Add component"))
+                {
+                    ImGui::OpenPopup("add_component_popup");
+                }
+
+                if (ImGui::BeginPopup("add_component_popup"))
+                {
+                    auto aval_comps = reflection::Factory<
+                        component::Component>::allRegistered();
+                    ImGui::SeparatorText("Component avalable");
+                    for (const auto& [names, creator] : aval_comps)
+                    {
+                        if (ImGui::Selectable(names.c_str()))
+                        {
+                            add_component(creator());
+                        }
+                    }
+
+                    ImGui::EndPopup();
                 }
             }
             // ImGui::End();

@@ -5,6 +5,7 @@
 #include "core.hpp"
 #include "graphics/skybox.hpp"
 #include "imgui.h"
+#include "logger/logger.hpp"
 #include "objects/game_object.hpp"
 
 namespace raphEngine
@@ -86,6 +87,7 @@ namespace raphEngine
 
     bool Scene::save_to_file(const fs::path& path)
     {
+        Logger::LogDebug("Saving scene to ", path);
         fs::path p = file_path_;
         if (path != "")
             p = path;

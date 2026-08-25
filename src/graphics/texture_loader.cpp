@@ -57,10 +57,6 @@ namespace raphEngine::graphics
     {
         std::string filename = path;
 
-        int index = path.find("assets");
-        if (index != -1)
-            filename = path.substr(index);
-
         RawTexture res;
 
         res.data = stbi_load(filename.c_str(), &res.width, &res.height,
@@ -72,13 +68,8 @@ namespace raphEngine::graphics
     TextureLoader::RawTextureHDR
     TextureLoader::load_texture_raw_hdr(const std::string& path)
     {
-        std::string filename = path;
-        int index = path.find("assets");
-        if (index != -1)
-            filename = path.substr(index);
-
         RawTextureHDR res;
-        res.data = stbi_loadf(filename.c_str(), &res.width, &res.height,
+        res.data = stbi_loadf(path.c_str(), &res.width, &res.height,
                               &res.nrChannels, 0);
         return res;
     }

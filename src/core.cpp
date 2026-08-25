@@ -228,11 +228,13 @@ namespace raphEngine
 
         for (auto& go : SceneManager::get_active_scene()->get_objects())
         {
-            go->pre_update();
+            if (go->is_active)
+                go->pre_update();
 #ifdef EDITOR_BUILD
             go->ImGui_update();
 #endif
-            go->Update();
+            if (go->is_active)
+                go->Update();
         }
 #ifdef EDITOR_BUILD
         ImGui::End();
@@ -243,7 +245,8 @@ namespace raphEngine
     {
         for (auto& go : SceneManager::get_active_scene()->get_objects())
         {
-            go->update_components();
+            if (go->is_active)
+                go->update_components();
         }
     }
 

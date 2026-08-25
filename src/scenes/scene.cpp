@@ -43,7 +43,6 @@ namespace raphEngine
         if (path == "")
         {
             file_path_ = "default_scene.json";
-            save_to_file(file_path_);
             valid_ = parse_file(file_path_);
         }
         else

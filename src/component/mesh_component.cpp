@@ -3,6 +3,7 @@
 #include <RaphEngine2/graphics/shader.hpp>
 #include <initializer_list>
 #include <memory>
+#include <string>
 #include <vector>
 #include "logger/logger.hpp"
 
@@ -19,6 +20,7 @@ namespace raphEngine::component
     MeshComponent::MeshComponent()
     {
         shader_ = graphics::Shader::loadShader();
+        cast_shadows = true;
     }
 
     MeshComponent::MeshComponent(
@@ -31,6 +33,7 @@ namespace raphEngine::component
         }
         shader_ = shader;
         meshes_ = meshes;
+        cast_shadows = true;
         Logger::LogDebug("initializing mesh with ", meshes.size(), " lods");
     }
 
@@ -66,6 +69,39 @@ namespace raphEngine::component
             ImGui::Checkbox("cast shadows", &cast_shadows);
             int val = lods_->get_lod_count();
             ImGui::InputInt("LOD Count", &val);
+
+            ImGui::SeparatorText("Meshes");
+
+            int indexToRemove = -1;
+            for (size_t i = 0; i < meshes_.size(); i++)
+            {
+                ImGui::PushID((int)i);
+                if (ImGui::Button("remove"))
+                {
+                    indexToRemove = (int)i;
+                }
+                ImGui::SameLine();
+                ImGui::Text("%s", meshes_[i].mesh_path.filename().c_str());
+                ImGui::PopID();
+            }
+
+            if (indexToRemove != -1)
+            {
+                meshes_.erase(meshes_.begin() + indexToRemove);
+                Start();
+            }
+
+            ImGui::SeparatorText("Add mesh");
+            static char buff[128] = { 0 };
+            ImGui::InputText("path", buff, 128);
+            ImGui::SameLine();
+            if (ImGui::Button("Add"))
+            {
+                meshes_.push_back(objects::MeshInfo(std::string(buff)));
+                Start();
+                memset(buff, 0, 128);
+            }
+
             ImGui::TreePop();
         }
     }
@@ -73,8 +109,11 @@ namespace raphEngine::component
 
     void MeshComponent::render() const
     {
-        lods_->get_lod_at(parent_object->get_transform().get_position())
-            ->render();
+        if (lods_->get_lod_count() > 0)
+        {
+            lods_->get_lod_at(parent_object->get_transform().get_position())
+                ->render();
+        }
     }
 
 } // namespace raphEngine::component

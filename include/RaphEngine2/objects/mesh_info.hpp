@@ -1,22 +1,23 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <string>
-
+#include <filesystem>
 #include "RaphEngine2/export.hpp"
 #include "RaphEngine2/scenes/reflection.hpp"
+
+namespace fs = std::filesystem;
 
 namespace raphEngine::objects
 {
     struct RAPHENGINE_API MeshInfo
     {
         MeshInfo() = default;
-        MeshInfo(const std::string& mesh_path_, bool bilinear_ = true)
+        MeshInfo(const fs::path& mesh_path_, bool bilinear_ = true)
             : mesh_path{ mesh_path_ }
             , bilinear{ bilinear_ }
         {}
 
-        std::string mesh_path;
+        fs::path mesh_path;
         bool bilinear;
 
         friend void to_json(nlohmann::json& j, const MeshInfo& m)

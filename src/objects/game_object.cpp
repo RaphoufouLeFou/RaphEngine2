@@ -1,5 +1,6 @@
 #include "objects/game_object.hpp"
 
+#include <cstddef>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -152,9 +153,11 @@ namespace raphEngine::objects
 
             if (ImGui::CollapsingHeader("Components"))
             {
-                for (auto& c : components_)
+                for (size_t i = 0; i < components_.size(); i++)
                 {
-                    c->ImGuiPrint();
+                    ImGui::PushID(i);
+                    components_[i]->ImGuiPrint();
+                    ImGui::PopID();
                 }
 
                 if (ImGui::Button("Add component"))

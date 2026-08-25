@@ -1,6 +1,5 @@
 #include <RaphEngine2/graphics/texture_loader.hpp>
 #include <RaphEngine2/graphics/ogl/gl_texture_loader.hpp>
-#include <vector>
 #include <string>
 #include <memory>
 

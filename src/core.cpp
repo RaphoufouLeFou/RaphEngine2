@@ -131,6 +131,22 @@ namespace raphEngine
 
             ImGui::End();
 
+            ImGui::Begin("Prefabs");
+            ImGui::SeparatorText("Spawn Prefab");
+
+            for (auto [name, creator] : objs)
+            {
+                if (ImGui::Button(name.c_str()))
+                {
+                    Logger::LogDebug("creating ", name);
+                    auto o = creator();
+                    SceneManager::get_active_scene()->add_gameobject(o.get());
+                    sp_obj.push_back(std::move(o));
+                }
+            }
+
+            ImGui::End();
+
             ImGui::BeginMainMenuBar();
             if (ImGui::BeginMenu("File"))
             {

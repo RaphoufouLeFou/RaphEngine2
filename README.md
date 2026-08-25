@@ -25,11 +25,13 @@ As of today, the engine handle :
 - Skyboxes
 - Skybox Reflection
 - Scene manager
+- Object outline
 
 And more little things.
 
 ## In the TODO list (Not in order)
 
+- Prefabs
 - Spot and point lights
 - Handle big terrains
 - Vegetation

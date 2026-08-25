@@ -3,12 +3,21 @@
 in vec2 TexCoord;
 out vec4 FragColor;
 
-uniform sampler2D hDilatedTex; // rg: coverage, nearest object depth
-uniform sampler2D originalMaskTex; // r: pre-dilation coverage
-uniform sampler2D sceneDepthTex; // real, pristine scene depth
+uniform sampler2D hDilatedTex;
+uniform sampler2D originalMaskTex;
+uniform sampler2D sceneDepthTex;
 uniform int radius;
 uniform vec2 texelSize;
 uniform vec3 outlineColor;
+uniform float nearPlane;
+uniform float farPlane;
+
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0;
+    return (2.0 * nearPlane * farPlane)
+        / (farPlane + nearPlane - z * (farPlane - nearPlane));
+}
 
 void main()
 {
@@ -30,9 +39,12 @@ void main()
         discard;
 
     float sceneDepthHere = texture(sceneDepthTex, TexCoord).r;
-    const float depthBias = 0.0005;
 
-    if (sceneDepthHere < nearestDepth - depthBias)
+    float linearScene = LinearizeDepth(sceneDepthHere);
+    float linearOutline = LinearizeDepth(nearestDepth);
+
+    const float depthBiasWorldUnits = 0.05;
+    if (linearScene < linearOutline - depthBiasWorldUnits)
         discard;
 
     FragColor = vec4(outlineColor, 1.0);

@@ -134,7 +134,7 @@ namespace raphEngine::graphics::ogl
         glDisable(GL_BLEND);
 
         glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(-1.0f, -1.0f);
+        glPolygonOffset(-2.0f, -2.0f);
 
         const GlShader* mask_sh =
             dynamic_cast<const GlShader*>(mask_shader_.get());
@@ -200,6 +200,8 @@ namespace raphEngine::graphics::ogl
         dvc->setValue("hDilatedTex", 0);
         dvc->setValue("originalMaskTex", 1);
         dvc->setValue("sceneDepthTex", 2);
+        dvc->setValue("nearPlane", cam->nearPlane);
+        dvc->setValue("farPlane", cam->farPlane);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, intermediate_tex_);
         glActiveTexture(GL_TEXTURE1);

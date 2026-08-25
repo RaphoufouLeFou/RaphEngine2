@@ -44,6 +44,22 @@ void main()
 
 )";
 
+inline const char* outline_mask_vs_shader = R"(
+#version 410 core
+
+layout(location = 0) in vec3 aPos;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+
+)";
+
 inline const char* default_shadow_gs_shader = R"(
 #version 410 core
 
@@ -369,6 +385,36 @@ void main()
 
 )";
 
+inline const char* outline_dilate_h_fs_shader = R"(
+#version 410 core
+
+in vec2 TexCoord;
+out vec2 FragColor;
+
+uniform sampler2D maskTex;
+uniform sampler2D depthTex;
+uniform int radius;
+uniform vec2 texelSize;
+
+void main()
+{
+    float coverage = 0.0;
+    float nearestDepth = 1.0;
+    for (int i = -radius; i <= radius; i++)
+    {
+        vec2 uv = TexCoord + vec2(texelSize.x * float(i), 0.0);
+        float c = texture(maskTex, uv).r;
+        if (c > 0.5)
+        {
+            coverage = 1.0;
+            nearestDepth = min(nearestDepth, texture(depthTex, uv).r);
+        }
+    }
+    FragColor = vec2(coverage, nearestDepth);
+}
+
+)";
+
 inline const char* default_vs_shader = R"(
 #version 410 core
 
@@ -435,6 +481,60 @@ void main()
 }
 )";
 
+inline const char* outline_mask_fs_shader = R"(
+#version 410 core
+
+layout(location = 0) out float FragColor;
+void main()
+{
+    FragColor = 1.0;
+}
+
+)";
+
+inline const char* outline_dilate_v_composite_fs_shader = R"(
+#version 410 core
+
+in vec2 TexCoord;
+out vec4 FragColor;
+
+uniform sampler2D hDilatedTex; // rg: coverage, nearest object depth
+uniform sampler2D originalMaskTex; // r: pre-dilation coverage
+uniform sampler2D sceneDepthTex; // real, pristine scene depth
+uniform int radius;
+uniform vec2 texelSize;
+uniform vec3 outlineColor;
+
+void main()
+{
+    float coverage = 0.0;
+    float nearestDepth = 1.0;
+    for (int i = -radius; i <= radius; i++)
+    {
+        vec2 uv = TexCoord + vec2(0.0, texelSize.y * float(i));
+        vec2 s = texture(hDilatedTex, uv).rg;
+        if (s.r > 0.5)
+        {
+            coverage = 1.0;
+            nearestDepth = min(nearestDepth, s.g);
+        }
+    }
+
+    float original = texture(originalMaskTex, TexCoord).r;
+    if (coverage < 0.5 || original > 0.5)
+        discard;
+
+    float sceneDepthHere = texture(sceneDepthTex, TexCoord).r;
+    const float depthBias = 0.0005;
+
+    if (sceneDepthHere < nearestDepth - depthBias)
+        discard;
+
+    FragColor = vec4(outlineColor, 1.0);
+}
+
+)";
+
 inline const char* skybox_fs_shader = R"(
 #version 410 core
 out vec4 FragColor;
@@ -452,6 +552,19 @@ void main()
     mapped = pow(mapped, vec3(1.0 / 2.2));
 
     FragColor = vec4(mapped, 1.0);
+}
+
+)";
+
+inline const char* fullscreen_triangle_vs_shader = R"(
+#version 410 core
+
+out vec2 TexCoord;
+void main()
+{
+    vec2 pos = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);
+    TexCoord = pos;
+    gl_Position = vec4(pos * 2.0 - 1.0, 0.0, 1.0);
 }
 
 )";

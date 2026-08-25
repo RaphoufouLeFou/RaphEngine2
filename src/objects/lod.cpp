@@ -63,35 +63,38 @@ namespace raphEngine::objects
 
     Lod::Lod(objects::GameObject* parent_object,
              std::initializer_list<MeshInfo> meshes,
-             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow)
+             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow,
+             bool* outline)
     {
         lod_meshes_.reserve(meshes.size());
         for (const auto& info : meshes)
         {
             lod_meshes_.push_back(ObjectMesh::get_or_create(
-                parent_object, info, shader.get(), cast_shadow));
+                parent_object, info, shader.get(), cast_shadow, outline));
         }
         calculate_transitions_distances(meshes.size());
     }
 
     Lod::Lod(objects::GameObject* parent_object, std::vector<MeshInfo>& meshes,
-             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow)
+             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow,
+             bool* outline)
     {
         lod_meshes_.reserve(meshes.size());
 
         for (const auto& info : meshes)
         {
             lod_meshes_.push_back(ObjectMesh::get_or_create(
-                parent_object, info, shader.get(), cast_shadow));
+                parent_object, info, shader.get(), cast_shadow, outline));
         }
         calculate_transitions_distances(meshes.size());
     }
 
     Lod::Lod(objects::GameObject* parent_object, MeshInfo mesh,
-             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow)
+             std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow,
+             bool* outline)
     {
         lod_meshes_.push_back(ObjectMesh::get_or_create(
-            parent_object, mesh, shader.get(), cast_shadow));
+            parent_object, mesh, shader.get(), cast_shadow, outline));
         calculate_transitions_distances(1);
     }
 

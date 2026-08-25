@@ -3,6 +3,7 @@
 #include "component/camera_component.hpp"
 #include "graphics/debug.hpp"
 #include "graphics/frustum.hpp"
+#include "graphics/outline_renderer.hpp"
 #include "graphics/skybox.hpp"
 #include "settings/graphics.hpp"
 
@@ -201,6 +202,7 @@ namespace raphEngine::graphics::ogl
                            objects::BatchKeyHash>
             color_batches;
         std::vector<const Renderable*> color_unbatched;
+        std::vector<const objects::Mesh*> outlined_meshes;
 
         size_t total_meshes = 0, color_visible = 0, shadow_visible = 0;
 
@@ -218,6 +220,9 @@ namespace raphEngine::graphics::ogl
                 {
                     color_batches[mesh->get_batch_key()].push_back(mesh);
                     color_visible++;
+
+                    if (mesh->get_outline())
+                        outlined_meshes.push_back(mesh);
                 }
 
                 if (*mesh->cast_shadows && do_shadows)
@@ -288,7 +293,8 @@ namespace raphEngine::graphics::ogl
         glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);
 #endif
         glViewport(0, 0, res_x, res_y);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+                | GL_STENCIL_BUFFER_BIT);
 
         for (auto& [key, meshes] : color_batches)
         {
@@ -304,6 +310,8 @@ namespace raphEngine::graphics::ogl
         Debug::getInstance()->RenderAllLines();
 
         Skybox::getInstance()->render();
+
+        OutlineRenderer::getInstance()->render(outlined_meshes);
 
         rmlui_renderer_.Render();
 

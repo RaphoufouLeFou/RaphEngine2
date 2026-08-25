@@ -17,11 +17,14 @@ namespace raphEngine::objects
     public:
         Lod(objects::GameObject* parent_object,
             std::initializer_list<MeshInfo> meshes,
-            std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow);
+            std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow,
+            bool* outline);
         Lod(objects::GameObject* parent_object, std::vector<MeshInfo>& meshes,
-            std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow);
+            std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow,
+            bool* outline);
         Lod(objects::GameObject* parent_object, MeshInfo mesh,
-            std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow);
+            std::shared_ptr<graphics::Shader> shader, const bool* cast_shadow,
+            bool* outline);
         size_t get_lod_count() const;
 
         const ObjectMesh* get_lod_at(const glm::vec3& object_pos) const;

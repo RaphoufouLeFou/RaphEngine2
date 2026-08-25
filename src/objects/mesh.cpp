@@ -41,6 +41,18 @@ namespace raphEngine::objects
         return data_->textures;
     }
 
+    bool Mesh::get_outline() const
+    {
+        if (!outline_)
+            return false;
+        return *outline_;
+    }
+
+    void Mesh::set_outline(bool* outline)
+    {
+        outline_ = outline;
+    }
+
     void Mesh::set_model_matrix(const glm::mat4& model_matrix)
     {
         data_->local_matrix = model_matrix;

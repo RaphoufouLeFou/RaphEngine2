@@ -21,6 +21,7 @@ namespace raphEngine::component
     {
         shader_ = graphics::Shader::loadShader();
         cast_shadows = true;
+        outline_ = false;
     }
 
     MeshComponent::MeshComponent(
@@ -34,6 +35,7 @@ namespace raphEngine::component
         shader_ = shader;
         meshes_ = meshes;
         cast_shadows = true;
+        outline_ = false;
         Logger::LogDebug("initializing mesh with ", meshes.size(), " lods");
     }
 
@@ -47,13 +49,14 @@ namespace raphEngine::component
         shader_ = shader;
         meshes_ = { mesh };
         cast_shadows = true;
+        outline_ = false;
     }
 
     void MeshComponent::Start()
     {
         Logger::LogDebug("creating LOD with ", meshes_.size(), " levels");
         lods_ = std::make_unique<objects::Lod>(parent_object, meshes_, shader_,
-                                               &cast_shadows);
+                                               &cast_shadows, &outline_);
     }
 
     void MeshComponent::Update()
@@ -67,6 +70,8 @@ namespace raphEngine::component
         if (ImGui::TreeNode(get_name().c_str()))
         {
             ImGui::Checkbox("cast shadows", &cast_shadows);
+            ImGui::Checkbox("outline", &outline_);
+
             int val = lods_->get_lod_count();
             ImGui::InputInt("LOD Count", &val);
 

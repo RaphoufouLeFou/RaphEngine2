@@ -23,6 +23,10 @@ namespace raphEngine::graphics
                  const std::string& gShaderCode = "");
 
         void use() const override;
+        unsigned int get_id() const
+        {
+            return id_;
+        }
 
         void setValue(const std::string& name, bool value) const override;
         void setValue(const std::string& name, int value) const override;

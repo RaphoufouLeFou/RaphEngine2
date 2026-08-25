@@ -96,6 +96,8 @@ namespace raphEngine::objects
         std::vector<unsigned int>& get_indices();
         const std::vector<Texture>& get_textures() const;
         std::vector<Texture>& get_textures();
+        bool get_outline() const;
+        void set_outline(bool* outline);
 
         void set_model_matrix(const glm::mat4& model_matrix);
         const glm::mat4& get_model_matrix() const;
@@ -125,7 +127,7 @@ namespace raphEngine::objects
             std::vector<Texture> textures_;
         */
 
-        bool outline_;
+        bool* outline_;
         std::shared_ptr<graphics::MeshBuffers> buffers_;
         graphics::Shader* shader_;
 

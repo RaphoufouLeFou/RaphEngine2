@@ -17,7 +17,8 @@ namespace raphEngine::objects
 
         static std::shared_ptr<ObjectMesh>
         get_or_create(objects::GameObject* parent_object, const MeshInfo& info,
-                      graphics::Shader* shader, const bool* cast_shadow);
+                      graphics::Shader* shader, const bool* cast_shadow,
+                      bool* outline);
 
         void add_mesh(std::unique_ptr<Mesh> mesh);
         void render() const;
@@ -28,10 +29,12 @@ namespace raphEngine::objects
 
     private:
         ObjectMesh(objects::GameObject* parent_object, const MeshInfo& info,
-                   graphics::Shader* shader, const bool* cast_shadow);
+                   graphics::Shader* shader, const bool* cast_shadow,
+                   bool* outline);
 
         graphics::Shader* shader_;
         objects::GameObject* parent_object;
+        bool* outline_;
         const bool* cast_shadow_;
     };
 } // namespace raphEngine::objects

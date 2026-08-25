@@ -29,20 +29,21 @@ namespace raphEngine::objects
     std::shared_ptr<ObjectMesh>
     ObjectMesh::get_or_create(objects::GameObject* parent_object,
                               const MeshInfo& info, graphics::Shader* shader,
-                              const bool* cast_shadow)
+                              const bool* cast_shadow, bool* outline)
     {
         ObjectMesh* obj =
-            new ObjectMesh{ parent_object, info, shader, cast_shadow };
+            new ObjectMesh{ parent_object, info, shader, cast_shadow, outline };
         return std::shared_ptr<ObjectMesh>(obj);
     }
 
     ObjectMesh::ObjectMesh(objects::GameObject* parent_object,
                            const MeshInfo& info, graphics::Shader* shader,
-                           const bool* cast_shadow)
+                           const bool* cast_shadow, bool* outline)
     {
         this->parent_object = parent_object;
         shader_ = shader;
         cast_shadow_ = cast_shadow;
+        outline_ = outline;
         Logger::LogDebug("loading new mesh for ", parent_object->get_name());
         loadModel(this, info.mesh_path, info.bilinear);
     }
@@ -52,6 +53,7 @@ namespace raphEngine::objects
         mesh->set_shader(shader_);
         mesh->cast_shadows = cast_shadow_;
         mesh->parent_object = this->parent_object;
+        mesh->set_outline(outline_);
         mesh->generate_mesh_buffers();
         meshes_.push_back(std::move(mesh));
     }

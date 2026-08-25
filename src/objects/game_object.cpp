@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 #include "component/component.hpp"
+#include "component/mesh_component.hpp"
 #include "imgui.h"
 
 #include "misc/cpp/imgui_stdlib.h"
@@ -135,8 +136,11 @@ namespace raphEngine::objects
 
     void GameObject::ImGui_update()
     {
+        auto c = get_first_component_of_type<component::MeshComponent>();
         if (inspected)
         {
+            if (c)
+                c->outline_ = true;
             std::string display_name = name_ + "###" + std::to_string(id_);
 
             ImGui::Checkbox("Is active", &is_active);
@@ -170,6 +174,8 @@ namespace raphEngine::objects
                     ImGui::PopID();
                 }
 
+                ImGui::Separator();
+
                 if (ImGui::Button("Add component"))
                 {
                     ImGui::OpenPopup("add_component_popup");
@@ -193,6 +199,11 @@ namespace raphEngine::objects
             }
             // ImGui::End();
             // ImGui::TreePop();
+        }
+        else
+        {
+            if (c)
+                c->outline_ = false;
         }
     }
 

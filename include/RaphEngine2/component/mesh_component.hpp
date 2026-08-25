@@ -39,7 +39,7 @@ namespace raphEngine::component
 #endif
 
         bool cast_shadows;
-
+        bool outline_;
         std::unique_ptr<objects::Lod> lods_;
 
     protected:

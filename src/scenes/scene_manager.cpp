@@ -45,6 +45,7 @@ namespace raphEngine
         if (ImGui::Button("Delete scene"))
         {
             delete active_scene_.release();
+            init();
         }
         if (active_scene_)
         {

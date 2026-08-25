@@ -71,7 +71,7 @@ namespace raphEngine
         std::ifstream file(path);
         if (!file.is_open())
         {
-            Logger::LogCritical("No scene file found at ", path);
+            Logger::LogError("No scene file found at ", path);
             return false;
         }
 
@@ -97,7 +97,7 @@ namespace raphEngine
         }
         catch (const std::exception& e)
         {
-            Logger::LogCritical("Scene parse error: ", e.what());
+            Logger::LogError("Scene parse error: ", e.what());
             return false;
         }
 
@@ -113,14 +113,14 @@ namespace raphEngine
 
         if (p == "")
         {
-            Logger::LogCritical("Error, saving to empty path");
+            Logger::LogError("Error, saving to empty path");
             return false;
         }
 
         std::ofstream file(p);
         if (!file.is_open())
         {
-            Logger::LogCritical("Error writing at ", p);
+            Logger::LogError("Error writing at ", p);
             return false;
         }
 

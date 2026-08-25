@@ -10,11 +10,14 @@ namespace fs = std::filesystem;
 class Project
 {
 public:
-    bool static parse_project_file(const std::string& path);
+    bool static parse_project_file(const fs::path& path);
     void static store_project_file();
+    void static create_default_project_file();
+    fs::path static get_default_projet();
 
     static std::string name;
     static std::string setting_file_name;
     static fs::path path;
+    static fs::path main_scene_path;
 };
 #endif

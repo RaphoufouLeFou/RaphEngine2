@@ -37,7 +37,7 @@ namespace raphEngine
     public:
         enum LogLevel
         {
-            CRITICAL,
+            FATAL,
             ERROR,
             WARN,
             INFO,
@@ -57,7 +57,7 @@ namespace raphEngine
         template <Printable... Args>
         static void LogError(Args&&... args);
         template <Printable... Args>
-        static void LogCritical(Args&&... args);
+        static void LogFatal(Args&&... args);
 
     private:
         static std::ofstream output_stream;

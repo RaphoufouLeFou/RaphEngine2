@@ -41,7 +41,7 @@ namespace raphEngine
     {
         if (log_level_ < INFO)
             return;
-        Log("LOG  ", Color::IntenseWhite, args...);
+        Log("INFO ", Color::IntenseWhite, args...);
     }
 
     template <Printable... Args>
@@ -69,11 +69,11 @@ namespace raphEngine
     }
 
     template <Printable... Args>
-    void Logger::LogCritical(Args&&... args)
+    void Logger::LogFatal(Args&&... args)
     {
         if (log_level_ < ERROR)
             return;
-        Log("CRIT ", Color::IntensePurple, args...);
+        Log("FATAL", Color::IntensePurple, args...);
     }
 
 } // namespace raphEngine

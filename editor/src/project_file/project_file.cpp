@@ -46,16 +46,17 @@ std::optional<nlohmann::json> open_project_file(const std::string& path)
 
 std::string Project::name = "Untitled project";
 std::string Project::setting_file_name = "settings.json";
-fs::path Project::path =
-    expand_home("~/RaphEngine_projects/Untitled_project/project.json");
+fs::path Project::path = get_default_projet();
+fs::path Project::main_scene_path = "assets/scenes/main.sc";
 
-bool Project::parse_project_file(const std::string& path)
+bool Project::parse_project_file(const fs::path& path)
 {
     auto p = open_project_file(std::string(path));
     if (!p.has_value())
     {
         return false;
     }
+    std::filesystem::current_path(path.root_path());
     auto j = p.value();
 
     Project::path = expand_home(path);
@@ -63,8 +64,21 @@ bool Project::parse_project_file(const std::string& path)
         j.at("Name").get_to(name);
     if (j.contains("SettingFileName"))
         j.at("SettingFileName").get_to(setting_file_name);
+    if (j.contains("MainSscenePath"))
+        j.at("MainSscenePath").get_to(main_scene_path);
 
     return true;
+}
+
+void Project::create_default_project_file()
+{
+    store_project_file();
+}
+
+fs::path Project::get_default_projet()
+{
+    return expand_home("~/RaphEngine_projects/Untitled_project/project.prj");
+    ;
 }
 
 void Project::store_project_file()
@@ -78,7 +92,8 @@ void Project::store_project_file()
     }
 
     nlohmann::json p = { { "Name", name },
-                         { "SettingFileName", setting_file_name } };
+                         { "SettingFileName", setting_file_name },
+                         { "MainSscenePath", main_scene_path } };
 
     Logger::LogDebug("Saved at ", path);
     file << p.dump(4);

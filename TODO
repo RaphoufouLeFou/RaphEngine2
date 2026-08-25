@@ -2,6 +2,7 @@ prefab
 Add Semi-shallow GameObject copies
 Proper object destruction
 Start coding the Editor
+In-game console (ImGui)
 Static lights
 tweak shadows
 spot lights
@@ -14,7 +15,6 @@ Add water planes
 Add smooth lod transitions
 Fix ray casting (octal tree)
 Add a particle system
-In-game console (ImGui)
 Add a guizmo
 Add bloom
 Add terrain painting

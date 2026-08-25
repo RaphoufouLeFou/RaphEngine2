@@ -12,11 +12,13 @@
 
 #include "Camera/camera.hpp"
 #include "project_file/project_file.hpp"
+#include "scenes/scene_manager.hpp"
 
 using namespace raphEngine;
 using namespace raphEngine::objects;
 
 #ifdef EDITOR_BUILD
+
 int main(int argc, char* argv[])
 {
     Logger::LogInfo("Starting editor...");
@@ -24,28 +26,22 @@ int main(int argc, char* argv[])
     if (argc <= 1)
     {
         Logger::LogError("No project given in argument");
-        if (!Project::parse_project_file(Project::path.string()))
+        if (!Project::parse_project_file(Project::get_default_projet()))
         {
-            Project::store_project_file();
-            return 1;
+            Project::create_default_project_file();
         }
     }
-    else if (!Project::parse_project_file(std::string(argv[1])))
+    else if (!Project::parse_project_file(argv[1]))
     {
         return 1;
     }
 
     Core::Init(Project::name);
-
-    graphics::Skybox::getInstance()->set_hdr(
-        "/home/raphael/Documents/github/RaphEngine2-example/assets/textures/"
-        "skybox/belfast_sunset_puresky_8k.hdr");
-    // Camera camera{};
+    SceneManager::load_scene(Project::main_scene_path);
 
     Core::Run();
 
     Project::store_project_file();
-
     return 0;
 }
 

@@ -4,7 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <RaphEngine2/logger/logger.hpp>
 
-#ifdef ENGINE_BUILD
+#ifdef EDITOR_BUILD
 using namespace raphEngine;
 
 fs::path expand_home(const std::string& path)

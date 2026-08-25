@@ -13,7 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#ifdef ENGINE_BUILD
+#ifdef EDITOR_BUILD
 float speed = 10;
 
 using namespace raphEngine;

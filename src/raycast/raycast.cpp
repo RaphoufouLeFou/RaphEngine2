@@ -11,6 +11,7 @@
 #include "graphics/graphic_api.hpp"
 #include "inputs/mouse.hpp"
 #include "logger/logger.hpp"
+#include "scenes/scene_manager.hpp"
 #include "time_utils.hpp"
 #include "utils.hpp"
 
@@ -321,13 +322,13 @@ namespace raphEngine
         float closestDistSq = std::numeric_limits<float>::max();
         bool hitFound = false;
 
-        int objCount =
-            static_cast<int>(objects::GameObject::spawned_game_objects_.size());
+        int objCount = static_cast<int>(
+            SceneManager::get_active_scene()->get_objects().size());
 
         for (int i = 0; i < objCount; i++)
         {
             objects::GameObject* obj =
-                objects::GameObject::spawned_game_objects_[i];
+                SceneManager::get_active_scene()->get_objects()[i];
             if (obj->raycast_layer_ != layer)
                 continue;
 
@@ -477,7 +478,7 @@ namespace raphEngine
         bool hitFound = false;
 
         for (objects::GameObject* obj :
-             objects::GameObject::spawned_game_objects_)
+             SceneManager::get_active_scene()->get_objects())
         {
             if (!obj->is_active)
                 continue;

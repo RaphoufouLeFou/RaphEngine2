@@ -123,7 +123,9 @@ namespace raphEngine
                 if (ImGui::Button(name.c_str()))
                 {
                     Logger::LogDebug("creating ", name);
-                    sp_obj.push_back(creator());
+                    auto o = creator();
+                    SceneManager::get_active_scene()->add_gameobject(o.get());
+                    sp_obj.push_back(std::move(o));
                 }
             }
 
@@ -223,7 +225,8 @@ namespace raphEngine
         ImGui::Begin("Inspector");
 
 #endif
-        for (auto& go : objects::GameObject::spawned_game_objects_)
+
+        for (auto& go : SceneManager::get_active_scene()->get_objects())
         {
             go->pre_update();
 #ifdef EDITOR_BUILD
@@ -238,7 +241,7 @@ namespace raphEngine
 
     void Core::execute_components_updates()
     {
-        for (auto& go : objects::GameObject::spawned_game_objects_)
+        for (auto& go : SceneManager::get_active_scene()->get_objects())
         {
             go->update_components();
         }

@@ -81,7 +81,6 @@ namespace raphEngine::objects
         GameObject& operator=(GameObject&&) = delete;
 
         int raycast_layer_ = 0;
-        static std::vector<GameObject*> spawned_game_objects_;
 
     protected:
         friend raphEngine::Core;

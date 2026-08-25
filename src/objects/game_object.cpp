@@ -13,39 +13,44 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "objects/transform.hpp"
 #include "scenes/reflection.hpp"
+#include "scenes/scene.hpp"
+#include "scenes/scene_manager.hpp"
 
 namespace raphEngine::objects
 {
-    std::vector<GameObject*> GameObject::spawned_game_objects_;
 
     void GameObject::greed()
     {
         Logger::LogInfo("Hello, my name is \"", name_, "\"");
     }
 
+    long get_id()
+    {
+        static long latest_id_ = 0;
+        return latest_id_++;
+    }
+
     GameObject::GameObject(const std::string& name)
     {
-        id_ = spawned_game_objects_.size();
+        id_ = get_id();
         name_ = name;
         transform_.parent_object = this;
-        spawned_game_objects_.push_back(this);
     }
 
     GameObject::GameObject()
     {
-        id_ = spawned_game_objects_.size();
+        id_ = get_id();
         name_ = "New GameObject " + std::to_string(id_);
         transform_.parent_object = this;
-        spawned_game_objects_.push_back(this);
     }
 
     GameObject::GameObject(const GameObject& other)
     {
+        id_ = get_id();
         name_ = other.name_;
         transform_ = other.transform_;
         transform_.parent_object = this;
         transform_.set_parent(other.transform_.get_parent());
-        spawned_game_objects_.push_back(this);
     }
 
     std::shared_ptr<GameObject> GameObject::instanciate(const GameObject& from)
@@ -55,10 +60,7 @@ namespace raphEngine::objects
 
     void GameObject::destroy_internal()
     {
-        auto position = std::find(spawned_game_objects_.begin(),
-                                  spawned_game_objects_.end(), this);
-        if (position != spawned_game_objects_.end())
-            spawned_game_objects_.erase(position);
+        SceneManager::get_active_scene()->remove_gameobject(this);
     }
 
     void GameObject::destroy(GameObject& object)
@@ -249,7 +251,7 @@ namespace raphEngine::objects
 
     GameObject* GameObject::find(const std::string& name)
     {
-        for (auto& go : spawned_game_objects_)
+        for (const auto& go : SceneManager::get_active_scene()->get_objects())
         {
             if (go->name_ == name)
                 return go;

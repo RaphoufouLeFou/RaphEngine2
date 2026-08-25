@@ -11,14 +11,34 @@
 namespace raphEngine
 {
 
+    bool Scene::remove_gameobject(objects::GameObject* obj)
+    {
+        if (!obj)
+            return false;
+        auto position = std::find(objects_.begin(), objects_.end(), obj);
+        if (position != objects_.end())
+        {
+            objects_.erase(position);
+            return true;
+        }
+        return false;
+    }
+
+    void Scene::add_gameobject(objects::GameObject* obj)
+    {
+        if (!obj)
+            return;
+        objects_.push_back(obj);
+    }
+
+    const std::vector<objects::GameObject*>& Scene::get_objects()
+    {
+        return objects_;
+    }
+
     Scene::Scene(fs::path path)
     {
         objects::Transform::root_childs.clear();
-        for (auto obj : objects::GameObject::spawned_game_objects_)
-        {
-            objects::GameObject::destroy(*obj);
-        }
-        objects::GameObject::spawned_game_objects_.clear();
 
         if (path == "")
         {
@@ -142,9 +162,6 @@ namespace raphEngine
 
         int count = objects_.size();
         ImGui::InputInt("Object count", &count);
-
-        int total_count = objects::GameObject::spawned_game_objects_.size();
-        ImGui::InputInt("Total objects count", &total_count);
 
         file_path_ = path_buffer;
         skybox_path_ = skybox_buffer;

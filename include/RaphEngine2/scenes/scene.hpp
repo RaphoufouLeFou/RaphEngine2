@@ -18,6 +18,10 @@ namespace raphEngine
 
         bool is_valid();
 
+        bool remove_gameobject(objects::GameObject*);
+        void add_gameobject(objects::GameObject*);
+        const std::vector<objects::GameObject*>& get_objects();
+
     private:
         bool parse_file(fs::path path);
         bool save_to_file(const fs::path& path = "");

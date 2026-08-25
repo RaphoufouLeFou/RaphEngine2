@@ -2,8 +2,9 @@
 
 #include <string>
 #include <filesystem>
+#include <RaphEngine2/RaphEngine2.hpp>
 
-#ifdef ENGINE_BUILD
+#ifdef EDITOR_BUILD
 namespace fs = std::filesystem;
 
 class Project

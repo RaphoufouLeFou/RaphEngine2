@@ -13,10 +13,10 @@
 #include "Camera/camera.hpp"
 #include "project_file/project_file.hpp"
 
-#ifdef ENGINE_BUILD
 using namespace raphEngine;
 using namespace raphEngine::objects;
 
+#ifdef EDITOR_BUILD
 int main(int argc, char* argv[])
 {
     Logger::LogInfo("Starting editor...");
@@ -45,6 +45,10 @@ int main(int argc, char* argv[])
     Core::Run();
 
     Project::store_project_file();
+
     return 0;
 }
+
+#else
+int main() {};
 #endif

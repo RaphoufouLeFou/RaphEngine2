@@ -4,7 +4,6 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <algorithm>
 #include <RaphEngine2/logger/logger.hpp>
 #include <unordered_map>
 #include <vector>
@@ -83,6 +82,17 @@ namespace raphEngine::objects
 #ifdef EDITOR_BUILD
 
     static GameObject* selected = nullptr;
+
+    void GameObject::ImGui_select()
+    {
+        selected = this;
+    }
+
+    void GameObject::ImGui_unselect()
+    {
+        selected = nullptr;
+    }
+
     void GameObject::ImGui_layout()
     {
         inspected = selected == this;

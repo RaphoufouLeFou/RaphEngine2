@@ -121,8 +121,13 @@ void Camera::Update()
     if (RayCast::FromMouseMeshes(&OutRayInfo))
     {
         Logger::LogInfo("Hit on ", OutRayInfo.hitObject->get_name());
-        if (poi)
-            poi->get_transform().set_position(OutRayInfo.hitPoint);
+        OutRayInfo.hitObject->ImGui_select();
+        // if (poi)
+        //     poi->get_transform().set_position(OutRayInfo.hitPoint);
+    }
+    else
+    {
+        GameObject::ImGui_unselect();
     }
 }
 #endif

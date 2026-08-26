@@ -279,8 +279,7 @@ namespace raphEngine::graphics
             pressed = false;
         }
 
-        component::CameraComponent* cam =
-            component::CameraComponent::active_camera;
+        Camera* cam = Camera::get_active_camera();
 
         if (lightMatricesCache.size() != 0)
         {
@@ -288,8 +287,9 @@ namespace raphEngine::graphics
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             debugCascadeShader->use();
-            debugCascadeShader->setValue("projection", cam->projection_matrix_);
-            debugCascadeShader->setValue("view", cam->view_matrix_);
+            debugCascadeShader->setValue("projection",
+                                         cam->get_projection_matrix_());
+            debugCascadeShader->setValue("view", cam->get_view_matrix_());
             drawCascadeVolumeVisualizers(lightMatricesCache,
                                          debugCascadeShader.get());
             glDisable(GL_BLEND);

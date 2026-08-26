@@ -101,16 +101,15 @@ namespace raphEngine::graphics
     glm::mat4 ShadowRenderer::getLightSpaceMatrix(const float nearPlane,
                                                   const float farPlane)
     {
-        component::CameraComponent* cam =
-            component::CameraComponent::active_camera;
+        Camera* cam = Camera::get_active_camera();
 
-        const auto Proj = glm::perspective(glm::radians(cam->fov),
+        const auto Proj = glm::perspective(glm::radians(cam->get_fov()),
                                            (float)(GraphicApi::res_x)
                                                / (float)(GraphicApi::res_y),
                                            nearPlane, farPlane);
 
         const auto corners =
-            getFrustumCornersWorldSpace(Proj, cam->view_matrix_);
+            getFrustumCornersWorldSpace(Proj, cam->get_view_matrix_());
 
         glm::vec3 center = glm::vec3(0.0f);
         for (const auto& v : corners)
@@ -178,8 +177,7 @@ namespace raphEngine::graphics
 
     std::vector<glm::mat4> ShadowRenderer::getLightSpaceMatrices()
     {
-        component::CameraComponent* cam =
-            component::CameraComponent::active_camera;
+        Camera* cam = Camera::get_active_camera();
 
         std::vector<glm::mat4> ret;
         for (size_t i = 0; i < shadowCascadeLevels.size() + 1; ++i)
@@ -187,18 +185,20 @@ namespace raphEngine::graphics
             if (i == 0)
             {
                 ret.push_back(getLightSpaceMatrix(
-                    cam->nearPlane, cam->farPlane / shadowCascadeLevels[i]));
+                    cam->get_nearPlane(),
+                    cam->get_farPlane() / shadowCascadeLevels[i]));
             }
             else if (i < shadowCascadeLevels.size())
             {
                 ret.push_back(getLightSpaceMatrix(
-                    cam->farPlane / shadowCascadeLevels[i - 1],
-                    cam->farPlane / shadowCascadeLevels[i]));
+                    cam->get_farPlane() / shadowCascadeLevels[i - 1],
+                    cam->get_farPlane() / shadowCascadeLevels[i]));
             }
             else
             {
                 ret.push_back(getLightSpaceMatrix(
-                    cam->farPlane / shadowCascadeLevels[i - 1], cam->farPlane));
+                    cam->get_farPlane() / shadowCascadeLevels[i - 1],
+                    cam->get_farPlane()));
             }
         }
         return ret;

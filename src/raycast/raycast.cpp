@@ -30,13 +30,12 @@ namespace raphEngine
         glm::vec4 clipCoords(ndcX, ndcY, -1.0f, 1.0f);
 
         glm::vec4 eyeCoords =
-            inverse(
-                component::CameraComponent::active_camera->projection_matrix_)
+            inverse(Camera::get_active_camera()->get_projection_matrix_())
             * clipCoords;
         eyeCoords = glm::vec4(eyeCoords.x, eyeCoords.y, -1.0, 0.0);
 
         glm::vec4 worldCoords =
-            inverse(component::CameraComponent::active_camera->view_matrix_)
+            inverse(Camera::get_active_camera()->get_view_matrix_())
             * eyeCoords;
         glm::vec3 rayDirection = normalize(glm::vec3(worldCoords));
         return rayDirection;
@@ -328,7 +327,7 @@ namespace raphEngine
         for (int i = 0; i < objCount; i++)
         {
             objects::GameObject* obj =
-                SceneManager::get_active_scene()->get_objects()[i];
+                SceneManager::get_active_scene()->get_objects()[i].get();
             if (obj->raycast_layer_ != layer)
                 continue;
 
@@ -460,7 +459,7 @@ namespace raphEngine
 
         OutRayInfo->hitObject = nullptr;
 
-        if (!component::CameraComponent::active_camera)
+        if (!Camera::get_active_camera())
             return false;
 
         glm::vec2 screenPos = inputs::Mouse::GetMousePos();
@@ -468,8 +467,7 @@ namespace raphEngine
         screenPos.y -= graphics::GraphicApi::viewport_pos_y;
 
         glm::vec3 direction = GetDirectionFromScreen(screenPos);
-        const glm::vec3& origin =
-            component::CameraComponent::active_camera->get_position();
+        const glm::vec3& origin = Camera::get_active_camera()->get_position();
 
         objects::GameObject* closestObj = nullptr;
         glm::vec3 closestPoint(0.0f);
@@ -477,8 +475,7 @@ namespace raphEngine
         float closestDistSq = std::numeric_limits<float>::max();
         bool hitFound = false;
 
-        for (objects::GameObject* obj :
-             SceneManager::get_active_scene()->get_objects())
+        for (auto& obj : SceneManager::get_active_scene()->get_objects())
         {
             if (!obj->is_active)
                 continue;
@@ -537,7 +534,7 @@ namespace raphEngine
 
                     closestPoint = worldHitPoint;
                     closestNormal = glm::normalize(normalMatrix * localNormal);
-                    closestObj = obj;
+                    closestObj = obj.get();
                     closestDistSq = distSq;
                     hitFound = true;
                 }
@@ -565,8 +562,7 @@ namespace raphEngine
                              int layer)
     {
         glm::vec3 direction = GetDirectionFromScreen(screenPos);
-        const glm::vec3& camPos =
-            component::CameraComponent::active_camera->get_position();
+        const glm::vec3& camPos = Camera::get_active_camera()->get_position();
 
         return FromPoint(camPos, direction, OutRayInfo, layer);
     }

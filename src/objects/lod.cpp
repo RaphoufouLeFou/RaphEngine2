@@ -27,10 +27,9 @@ namespace raphEngine::objects
         if (lod_meshes_.empty())
             return nullptr;
 
-        component::CameraComponent* cam =
-            component::CameraComponent::active_camera;
+        Camera* cam = Camera::get_active_camera();
         const glm::vec3& campera_pos = cam->get_position();
-        float far_plane_2 = cam->farPlane * cam->farPlane;
+        float far_plane_2 = cam->get_farPlane() * cam->get_farPlane();
 
         float distance_m = getManhattanDistance(campera_pos, object_pos);
 

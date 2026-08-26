@@ -2,8 +2,6 @@
 #include <cstring>
 #include <nlohmann/json.hpp>
 #include <filesystem>
-#include "core.hpp"
-#include "graphics/skybox.hpp"
 #include "imgui.h"
 #include "logger/logger.hpp"
 #include "objects/game_object.hpp"
@@ -13,32 +11,29 @@ namespace raphEngine
 
     bool Scene::remove_gameobject(objects::GameObject* obj)
     {
-        if (!obj)
-            return false;
-        auto position = std::find(objects_.begin(), objects_.end(), obj);
-        if (position != objects_.end())
-        {
-            objects_.erase(position);
-            return true;
-        }
-        return false;
+        size_t removed = std::erase_if(
+            objects_, [obj](const std::unique_ptr<objects::GameObject>& ptr) {
+                return ptr.get() == obj;
+            });
+        return removed > 0;
     }
 
-    void Scene::add_gameobject(objects::GameObject* obj)
+    void Scene::add_gameobject(std::unique_ptr<objects::GameObject> obj)
     {
         if (!obj)
             return;
-        objects_.push_back(obj);
+        objects_.push_back(std::move(obj));
     }
 
-    const std::vector<objects::GameObject*>& Scene::get_objects()
+    const std::vector<std::unique_ptr<objects::GameObject>>&
+    Scene::get_objects()
     {
         return objects_;
     }
 
     Scene::Scene(fs::path path)
     {
-        objects::Transform::root_childs.clear();
+        // objects::Transform::root_childs.clear();
 
         if (path == "")
         {
@@ -54,7 +49,7 @@ namespace raphEngine
     Scene::~Scene()
     {
         objects::Transform::root_childs.clear();
-        for (auto obj : objects_)
+        for (auto& obj : objects_)
         {
             objects::GameObject::destroy(*obj);
         }
@@ -91,7 +86,7 @@ namespace raphEngine
                     auto obj = reflection::Factory<objects::GameObject>::create(
                         objJson.at("__object_type").get<std::string>());
                     obj->fromJson(objJson);
-                    objects_.push_back(obj.release());
+                    objects_.push_back(std::move(obj));
                 }
             }
         }

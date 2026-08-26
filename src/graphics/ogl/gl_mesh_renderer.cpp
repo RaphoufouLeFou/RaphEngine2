@@ -39,11 +39,10 @@ namespace raphEngine::graphics
 
     void SetupShader(const GlShader* sh)
     {
-        component::CameraComponent* cam =
-            component::CameraComponent::active_camera;
+        Camera* cam = Camera::get_active_camera();
 
-        sh->setValue("projection", cam->projection_matrix_);
-        sh->setValue("view", cam->view_matrix_);
+        sh->setValue("projection", cam->get_projection_matrix_());
+        sh->setValue("view", cam->get_view_matrix_());
 
         const auto* dir_light = ShadowRenderer::GetDirectionalLight();
 
@@ -61,9 +60,8 @@ namespace raphEngine::graphics
             sh->setValue("lightDir", glm::vec3(0));
         }
 
-        sh->setValue("viewPos",
-                     cam->parent_object->get_transform().get_position());
-        sh->setValue("farPlane", cam->farPlane);
+        sh->setValue("viewPos", cam->get_position());
+        sh->setValue("farPlane", cam->get_farPlane());
 
         sh->setValue("cascadeCount",
                      (int)ShadowRenderer::shadowCascadeLevels.size());
@@ -72,7 +70,7 @@ namespace raphEngine::graphics
         {
             sh->setValue(
                 ("cascadePlaneDistances[" + std::to_string(i) + "]").c_str(),
-                cam->farPlane / ShadowRenderer::shadowCascadeLevels[i]);
+                cam->get_farPlane() / ShadowRenderer::shadowCascadeLevels[i]);
         }
 
         const char* names[] = { "texture_diffuse", "texture_normal",
@@ -112,7 +110,7 @@ namespace raphEngine::graphics
 
     void GLMeshRenderer::render(const raphEngine::objects::Mesh* mesh) const
     {
-        if (!component::CameraComponent::active_camera)
+        if (!Camera::get_active_camera())
         {
             Logger::LogError("Cant render a mesh with no active camera!");
             return;
@@ -134,7 +132,7 @@ namespace raphEngine::graphics
 
         const GlShader* mesh_shader = dynamic_cast<const GlShader*>(s);
 
-        component::CameraComponent::active_camera->calculate_matrices();
+        Camera::get_active_camera()->calculate_matrices();
 
         if (mesh_shader != current_active_shader_)
         {
@@ -187,7 +185,7 @@ namespace raphEngine::graphics
     void GLMeshRenderer::renderInstanced(
         const std::vector<const objects::Mesh*>& meshes) const
     {
-        if (!component::CameraComponent::active_camera)
+        if (!Camera::get_active_camera())
         {
             Logger::LogError("Cant render a mesh with no active camera!");
             return;
@@ -213,7 +211,7 @@ namespace raphEngine::graphics
         const GlShader* mesh_shader =
             dynamic_cast<const GlShader*>(default_mesh_shader_instanced.get());
 
-        component::CameraComponent::active_camera->calculate_matrices();
+        Camera::get_active_camera()->calculate_matrices();
 
         if (mesh_shader != current_active_shader_)
         {

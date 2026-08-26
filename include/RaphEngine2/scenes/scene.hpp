@@ -2,8 +2,9 @@
 
 #include <RaphEngine2/export.hpp>
 #include <filesystem>
+#include <memory>
 #include <vector>
-#include "objects/game_object.hpp"
+#include <RaphEngine2/objects/game_object.hpp>
 
 namespace raphEngine
 {
@@ -19,8 +20,8 @@ namespace raphEngine
         bool is_valid();
 
         bool remove_gameobject(objects::GameObject*);
-        void add_gameobject(objects::GameObject*);
-        const std::vector<objects::GameObject*>& get_objects();
+        void add_gameobject(std::unique_ptr<objects::GameObject>);
+        const std::vector<std::unique_ptr<objects::GameObject>>& get_objects();
 
     private:
         bool parse_file(fs::path path);
@@ -31,7 +32,7 @@ namespace raphEngine
 #endif
 
         friend class SceneManager;
-        std::vector<objects::GameObject*> objects_;
+        std::vector<std::unique_ptr<objects::GameObject>> objects_;
         fs::path skybox_path_ = "";
         fs::path file_path_;
 

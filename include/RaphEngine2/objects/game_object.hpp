@@ -73,7 +73,7 @@ namespace raphEngine::objects
         nlohmann::json toJson() const;
         void fromJson(const nlohmann::json& j);
 
-        static std::shared_ptr<GameObject> instanciate(const GameObject&);
+        static GameObject* instanciate(const GameObject&);
         static GameObject* find(const std::string& name);
         static void destroy(GameObject&);
 

@@ -8,9 +8,7 @@
 #include <nlohmann/json.hpp>
 #include <glm/glm.hpp>
 
-#include <string>
-
-#include "Camera/camera.hpp"
+#include "Camera/editor_camera.hpp"
 #include "project_file/project_file.hpp"
 #include "scenes/scene_manager.hpp"
 
@@ -38,6 +36,8 @@ int main(int argc, char* argv[])
 
     Core::Init(Project::name);
     SceneManager::load_scene(Project::main_scene_path);
+
+    EditorCamera cam{};
 
     Core::Run();
 

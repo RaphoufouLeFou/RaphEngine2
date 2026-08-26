@@ -7,10 +7,13 @@
 #include <string>
 
 #include "component.hpp"
+#include <RaphEngine2/graphics/camera.hpp>
 
 namespace raphEngine::component
 {
-    class RAPHENGINE_API CameraComponent : public Component
+    class RAPHENGINE_API CameraComponent
+        : public Component
+        , public Camera
     {
     public:
         CameraComponent();
@@ -23,23 +26,15 @@ namespace raphEngine::component
 
         void Start() override;
         void Update() override;
+        void CamUpdate() override;
 #ifdef EDITOR_BUILD
         void ImGuiPrint() override;
 #endif
-        void set_as_active_camera();
-        void calculate_matrices();
-        const glm::vec3& get_position() const;
-
-        static CameraComponent* active_camera;
-
-        float fov;
-        float nearPlane;
-        float farPlane;
-        glm::mat4 view_matrix_;
-        glm::mat4 projection_matrix_;
+        const glm::vec3& get_position() const override;
+        const glm::vec3& get_rotation() const override;
 
     private:
-        REFLECT(CameraComponent, Component, fov, nearPlane, farPlane)
+        REFLECT(CameraComponent, Component, fov_, nearPlane_, farPlane_)
         REFLECT_FACTORY(CameraComponent, Component, "Camera")
     };
 } // namespace raphEngine::component

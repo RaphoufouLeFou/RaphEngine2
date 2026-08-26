@@ -22,6 +22,8 @@ namespace raphEngine::objects
         position_ = glm::vec3(0);
         rotation_ = glm::vec3(0);
         scale_ = glm::vec3(1);
+        Logger::LogDebug("Adding a transform to root childs ",
+                         root_childs.size());
         root_childs.push_back(this);
     }
 

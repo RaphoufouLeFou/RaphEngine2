@@ -92,8 +92,7 @@ namespace raphEngine::graphics::ogl
         if (outlined_meshes.empty())
             return;
 
-        component::CameraComponent* cam =
-            component::CameraComponent::active_camera;
+        Camera* cam = Camera::get_active_camera();
         if (!cam)
             return;
 
@@ -139,8 +138,8 @@ namespace raphEngine::graphics::ogl
         const GlShader* mask_sh =
             dynamic_cast<const GlShader*>(mask_shader_.get());
         mask_sh->use();
-        mask_sh->setValue("view", cam->view_matrix_);
-        mask_sh->setValue("projection", cam->projection_matrix_);
+        mask_sh->setValue("view", cam->get_view_matrix_());
+        mask_sh->setValue("projection", cam->get_projection_matrix_());
 
         for (const objects::Mesh* mesh : outlined_meshes)
         {
@@ -200,8 +199,8 @@ namespace raphEngine::graphics::ogl
         dvc->setValue("hDilatedTex", 0);
         dvc->setValue("originalMaskTex", 1);
         dvc->setValue("sceneDepthTex", 2);
-        dvc->setValue("nearPlane", cam->nearPlane);
-        dvc->setValue("farPlane", cam->farPlane);
+        dvc->setValue("nearPlane", cam->get_nearPlane());
+        dvc->setValue("farPlane", cam->get_farPlane());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, intermediate_tex_);
         glActiveTexture(GL_TEXTURE1);

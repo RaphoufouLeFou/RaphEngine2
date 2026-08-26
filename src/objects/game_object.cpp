@@ -6,6 +6,7 @@
 #include <string>
 #include <RaphEngine2/logger/logger.hpp>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include "component/component.hpp"
 #include "component/mesh_component.hpp"
@@ -54,9 +55,12 @@ namespace raphEngine::objects
         transform_.set_parent(other.transform_.get_parent());
     }
 
-    std::shared_ptr<GameObject> GameObject::instanciate(const GameObject& from)
+    GameObject* GameObject::instanciate(const GameObject& from)
     {
-        return std::make_shared<GameObject>(from);
+        auto go = std::make_unique<GameObject>(from);
+        auto res = go.get();
+        SceneManager::get_active_scene()->add_gameobject(std::move(go));
+        return res;
     }
 
     void GameObject::destroy_internal()
@@ -278,7 +282,7 @@ namespace raphEngine::objects
         for (const auto& go : SceneManager::get_active_scene()->get_objects())
         {
             if (go->name_ == name)
-                return go;
+                return go.get();
         }
         return nullptr;
     }

@@ -239,8 +239,7 @@ namespace raphEngine::graphics::ogl
         if (cube_map_buffer_ == 0 || !skybox_shader_)
             return;
 
-        component::CameraComponent* cam =
-            component::CameraComponent::active_camera;
+        Camera* cam = Camera::get_active_camera();
         if (!cam)
             return;
 
@@ -252,8 +251,8 @@ namespace raphEngine::graphics::ogl
         glDisable(GL_CULL_FACE);
 
         sh->use();
-        sh->setValue("view", glm::mat4(glm::mat3(cam->view_matrix_)));
-        sh->setValue("projection", cam->projection_matrix_);
+        sh->setValue("view", glm::mat4(glm::mat3(cam->get_view_matrix_())));
+        sh->setValue("projection", cam->get_projection_matrix_());
         sh->setValue("skybox", 0);
         sh->setValue("exposure", exposure_);
 

@@ -162,8 +162,7 @@ namespace raphEngine::graphics::ogl
 
     void OpenGL::Render()
     {
-        component::CameraComponent* cam =
-            component::CameraComponent::active_camera;
+        Camera* cam = Camera::get_active_camera();
         if (!cam)
         {
             Logger::LogError("Cant render with no active camera!");
@@ -171,14 +170,15 @@ namespace raphEngine::graphics::ogl
         }
         cam->calculate_matrices();
 
-        float max_render_distance = cam->farPlane;
+        float max_render_distance = cam->get_farPlane();
 
-        glm::vec3 camPos = cam->parent_object->get_transform().get_position();
-        glm::vec3 camForward = Utils::GetForwardFromModelMatrix(
-            cam->parent_object->get_transform().get_model_matrix());
+        glm::vec3 camPos = cam->get_position();
+        glm::vec3 camForward =
+            Utils::GetForwardFromRotation(cam->get_rotation());
 
         const graphics::Cone camCone = graphics::Cone::FromCamera(
-            camPos, camForward, cam->projection_matrix_, max_render_distance);
+            camPos, camForward, cam->get_projection_matrix_(),
+            max_render_distance);
 
         GLShadowRenderer::prepare_shadows();
 

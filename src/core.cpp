@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "RaphEngine2/time_utils.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/ogl/opengl.hpp"
 #include "graphics/debug.hpp"
 #include "logger/logger.hpp"
@@ -110,8 +111,6 @@ namespace raphEngine
             ImGui::DockSpaceOverViewport(
                 dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 
-            static std::vector<std::unique_ptr<objects::GameObject>> sp_obj;
-
             ImGui::Begin("Objects");
             ImGui::SeparatorText("Spawn GameObjects");
 
@@ -123,9 +122,7 @@ namespace raphEngine
                 if (ImGui::Button(name.c_str()))
                 {
                     Logger::LogDebug("creating ", name);
-                    auto o = creator();
-                    SceneManager::get_active_scene()->add_gameobject(o.get());
-                    sp_obj.push_back(std::move(o));
+                    SceneManager::get_active_scene()->add_gameobject(creator());
                 }
             }
 
@@ -139,9 +136,7 @@ namespace raphEngine
                 if (ImGui::Button(name.c_str()))
                 {
                     Logger::LogDebug("creating ", name);
-                    auto o = creator();
-                    SceneManager::get_active_scene()->add_gameobject(o.get());
-                    sp_obj.push_back(std::move(o));
+                    SceneManager::get_active_scene()->add_gameobject(creator());
                 }
             }
 
@@ -230,6 +225,11 @@ namespace raphEngine
 
     void Core::execute_updates()
     {
+        if (Camera::get_active_camera())
+        {
+            Camera::get_active_camera()->CamUpdate();
+        }
+
 #ifdef EDITOR_BUILD
         ImGui::Begin("Layout");
         for (auto& t : objects::Transform::root_childs)
@@ -237,11 +237,8 @@ namespace raphEngine
             t->parent_object->ImGui_layout();
         }
         ImGui::End();
-
         ImGui::Begin("Inspector");
-
 #endif
-
         for (auto& go : SceneManager::get_active_scene()->get_objects())
         {
             if (go->is_active)

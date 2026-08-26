@@ -23,6 +23,8 @@ namespace raphEngine
 
         static glm::vec3 GetDirectionFromRotation(const glm::vec3& rotation);
         static glm::vec3 GetForwardFromModelMatrix(const glm::mat4& model);
+        static glm::vec3
+        GetForwardFromRotation(const glm::vec3& rotationDegrees);
     };
 } // namespace raphEngine
 

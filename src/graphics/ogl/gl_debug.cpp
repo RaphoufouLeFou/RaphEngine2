@@ -77,8 +77,8 @@ namespace raphEngine::graphics::ogl
         line_shader->use();
         line_shader->setValue(
             "u_MVP",
-            component::CameraComponent::active_camera->projection_matrix_
-                * component::CameraComponent::active_camera->view_matrix_);
+            Camera::get_active_camera()->get_projection_matrix_()
+                * Camera::get_active_camera()->get_view_matrix_());
 
         line_shader->setValue("u_Color", color);
 

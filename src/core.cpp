@@ -122,7 +122,10 @@ namespace raphEngine
                 if (ImGui::Button(name.c_str()))
                 {
                     Logger::LogDebug("creating ", name);
-                    SceneManager::get_active_scene()->add_gameobject(creator());
+
+                    if (SceneManager::get_active_scene())
+                        SceneManager::get_active_scene()->add_gameobject(
+                            creator());
                 }
             }
 
@@ -136,7 +139,10 @@ namespace raphEngine
                 if (ImGui::Button(name.c_str()))
                 {
                     Logger::LogDebug("creating ", name);
-                    SceneManager::get_active_scene()->add_gameobject(creator());
+
+                    if (SceneManager::get_active_scene())
+                        SceneManager::get_active_scene()->add_gameobject(
+                            creator());
                 }
             }
 
@@ -239,27 +245,34 @@ namespace raphEngine
         ImGui::End();
         ImGui::Begin("Inspector");
 #endif
-        for (auto& go : SceneManager::get_active_scene()->get_objects())
+
+        if (SceneManager::get_active_scene())
         {
-            if (go->is_active)
-                go->pre_update();
+            for (auto& go : SceneManager::get_active_scene()->get_objects())
+            {
+                if (go->is_active)
+                    go->pre_update();
 #ifdef EDITOR_BUILD
-            go->ImGui_update();
+                go->ImGui_update();
 #endif
-            if (go->is_active)
-                go->Update();
+                if (go->is_active)
+                    go->Update();
+            }
+#ifdef EDITOR_BUILD
+            ImGui::End();
+#endif
         }
-#ifdef EDITOR_BUILD
-        ImGui::End();
-#endif
     }
 
     void Core::execute_components_updates()
     {
-        for (auto& go : SceneManager::get_active_scene()->get_objects())
+        if (SceneManager::get_active_scene())
         {
-            if (go->is_active)
-                go->update_components();
+            for (auto& go : SceneManager::get_active_scene()->get_objects())
+            {
+                if (go->is_active)
+                    go->update_components();
+            }
         }
     }
 

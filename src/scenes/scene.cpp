@@ -11,6 +11,9 @@ namespace raphEngine
 
     bool Scene::remove_gameobject(objects::GameObject* obj)
     {
+        if (destructing_)
+            return false;
+
         size_t removed = std::erase_if(
             objects_, [obj](const std::unique_ptr<objects::GameObject>& ptr) {
                 return ptr.get() == obj;
@@ -48,11 +51,8 @@ namespace raphEngine
 
     Scene::~Scene()
     {
+        destructing_ = true;
         objects::Transform::root_childs.clear();
-        for (auto& obj : objects_)
-        {
-            objects::GameObject::destroy(*obj);
-        }
     }
 
     bool Scene::is_valid()

@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <algorithm>
+#include <RaphEngine2/objects/game_object.hpp>
 
 namespace raphEngine::objects
 {
@@ -22,13 +23,15 @@ namespace raphEngine::objects
         position_ = glm::vec3(0);
         rotation_ = glm::vec3(0);
         scale_ = glm::vec3(1);
+        root_childs.push_back(this);
+        parent_ = nullptr;
         Logger::LogDebug("Adding a transform to root childs ",
                          root_childs.size());
-        root_childs.push_back(this);
     }
 
     Transform::~Transform()
     {
+        Logger::LogDebug("deleting a transform");
         set_parent(nullptr);
         auto position = std::find(root_childs.begin(), root_childs.end(), this);
         if (position != root_childs.end())
@@ -108,6 +111,9 @@ namespace raphEngine::objects
         auto position = std::find(parent_list.begin(), parent_list.end(), this);
         if (position != parent_list.end())
             parent_list.erase(position);
+
+        Logger::LogWarning("Changing parent of ", parent_object->get_name(),
+                           " to ", parent);
 
         parent_ = parent;
         if (!parent_)

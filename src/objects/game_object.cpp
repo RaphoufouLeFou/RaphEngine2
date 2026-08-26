@@ -57,6 +57,10 @@ namespace raphEngine::objects
 
     GameObject* GameObject::instanciate(const GameObject& from)
     {
+        if (!SceneManager::get_active_scene())
+        {
+            return nullptr;
+        }
         auto go = std::make_unique<GameObject>(from);
         auto res = go.get();
         SceneManager::get_active_scene()->add_gameobject(std::move(go));
@@ -65,7 +69,8 @@ namespace raphEngine::objects
 
     void GameObject::destroy_internal()
     {
-        SceneManager::get_active_scene()->remove_gameobject(this);
+        if (SceneManager::get_active_scene())
+            SceneManager::get_active_scene()->remove_gameobject(this);
     }
 
     void GameObject::destroy(GameObject& object)
@@ -279,10 +284,14 @@ namespace raphEngine::objects
 
     GameObject* GameObject::find(const std::string& name)
     {
-        for (const auto& go : SceneManager::get_active_scene()->get_objects())
+        if (SceneManager::get_active_scene())
         {
-            if (go->name_ == name)
-                return go.get();
+            for (const auto& go :
+                 SceneManager::get_active_scene()->get_objects())
+            {
+                if (go->name_ == name)
+                    return go.get();
+            }
         }
         return nullptr;
     }

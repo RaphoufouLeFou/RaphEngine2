@@ -37,5 +37,6 @@ namespace raphEngine
         fs::path file_path_;
 
         bool valid_ = false;
+        bool destructing_ = false;
     };
 } // namespace raphEngine

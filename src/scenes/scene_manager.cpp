@@ -15,6 +15,7 @@ namespace raphEngine
 
     bool SceneManager::load_scene(fs::path path)
     {
+        active_scene_ = nullptr;
         active_scene_ = std::make_unique<Scene>(path);
         if (!active_scene_)
             return false;

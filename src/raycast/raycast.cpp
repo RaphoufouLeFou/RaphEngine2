@@ -321,11 +321,16 @@ namespace raphEngine
         float closestDistSq = std::numeric_limits<float>::max();
         bool hitFound = false;
 
-        int objCount = static_cast<int>(
-            SceneManager::get_active_scene()->get_objects().size());
+        int objCount = 0;
+
+        if (SceneManager::get_active_scene())
+            objCount = static_cast<int>(
+                SceneManager::get_active_scene()->get_objects().size());
 
         for (int i = 0; i < objCount; i++)
         {
+            if (!SceneManager::get_active_scene())
+                continue;
             objects::GameObject* obj =
                 SceneManager::get_active_scene()->get_objects()[i].get();
             if (obj->raycast_layer_ != layer)
@@ -474,7 +479,8 @@ namespace raphEngine
         glm::vec3 closestNormal(0.0f);
         float closestDistSq = std::numeric_limits<float>::max();
         bool hitFound = false;
-
+        if (!SceneManager::get_active_scene())
+            return false;
         for (auto& obj : SceneManager::get_active_scene()->get_objects())
         {
             if (!obj->is_active)

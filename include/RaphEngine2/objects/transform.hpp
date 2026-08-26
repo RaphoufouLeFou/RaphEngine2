@@ -31,7 +31,7 @@ namespace raphEngine::objects
         const glm::mat4 get_model_matrix();
 
         bool can_have_moved = true;
-        GameObject* parent_object;
+        GameObject* parent_object = nullptr;
 
         static std::vector<Transform*> root_childs;
 

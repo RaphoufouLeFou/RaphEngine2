@@ -21,10 +21,8 @@
 #include "utils.hpp"
 #include "inputs/rmlui_input.hpp"
 
-#ifdef EDITOR_BUILD
-#    include "imgui_impl_glfw.h"
-#    include "imgui_impl_opengl3.h"
-#endif
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 namespace raphEngine::graphics::ogl
 {
@@ -39,10 +37,11 @@ namespace raphEngine::graphics::ogl
         if (RmlUiRenderer::instance_)
             RmlUiRenderer::instance_->Resize(width, height);
 
-#ifdef EDITOR_BUILD
-        GraphicApi::viewport_res_x = width;
-        GraphicApi::viewport_res_y = height;
-#endif
+        if (Core::is_editor_mode())
+        {
+            GraphicApi::viewport_res_x = width;
+            GraphicApi::viewport_res_y = height;
+        }
     }
 
     GLFWwindow* window;
@@ -140,24 +139,25 @@ namespace raphEngine::graphics::ogl
 
         GLShadowRenderer::generate_shadows_buffer();
 
-#ifdef EDITOR_BUILD
-        ImGui_ImplGlfw_InitForOpenGL(
-            window,
-            true); // Second param install_callback=true will install
-                   // GLFW callbacks and chain to existing ones.
-        Logger::LogDebug("imgui opengl3 init");
-        ImGui_ImplOpenGL3_Init();
-        CreateViewportFramebuffer(res_x, res_y);
-
-#endif
+        if (Core::is_editor_mode())
+        {
+            ImGui_ImplGlfw_InitForOpenGL(
+                window,
+                true); // Second param install_callback=true will install
+                       // GLFW callbacks and chain to existing ones.
+            Logger::LogDebug("imgui opengl3 init");
+            ImGui_ImplOpenGL3_Init();
+            CreateViewportFramebuffer(res_x, res_y);
+        }
     }
 
     void OpenGL::StartFrame()
     {
-#ifdef EDITOR_BUILD
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-#endif
+        if (Core::is_editor_mode())
+        {
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+        }
     }
 
     void OpenGL::Render()
@@ -289,9 +289,10 @@ namespace raphEngine::graphics::ogl
         dynamic_cast<GLMeshRenderer*>(GLMeshRenderer::getInstance())
             ->invalidate_active_shader();
 
-#ifdef EDITOR_BUILD
-        glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);
-#endif
+        if (Core::is_editor_mode())
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);
+        }
         glViewport(0, 0, res_x, res_y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
                 | GL_STENCIL_BUFFER_BIT);
@@ -315,23 +316,25 @@ namespace raphEngine::graphics::ogl
 
         rmlui_renderer_.Render();
 
-#ifdef EDITOR_BUILD
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_ms_);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, viewport_fbo_resolve_);
-        glBlitFramebuffer(0, 0, viewport_width_, viewport_height_, 0, 0,
-                          viewport_width_, viewport_height_,
-                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
+        if (Core::is_editor_mode())
+        {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_ms_);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, viewport_fbo_resolve_);
+            glBlitFramebuffer(0, 0, viewport_width_, viewport_height_, 0, 0,
+                              viewport_width_, viewport_height_,
+                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
     }
 
     bool OpenGL::Refresh()
     {
-#ifdef EDITOR_BUILD
-        glViewport(0, 0, res_x, res_y);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#endif
+        if (Core::is_editor_mode())
+        {
+            glViewport(0, 0, res_x, res_y);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        }
         render_pool.clear();
         lights_pool.clear();
         spot_lights_pool.clear();
@@ -344,16 +347,16 @@ namespace raphEngine::graphics::ogl
         if (!stay_open)
         {
             rmlui_renderer_.Shutdown();
-#ifdef EDITOR_BUILD
-            ImGui_ImplOpenGL3_Shutdown();
-            ImGui_ImplGlfw_Shutdown();
-#endif
+            if (Core::is_editor_mode())
+            {
+                ImGui_ImplOpenGL3_Shutdown();
+                ImGui_ImplGlfw_Shutdown();
+            }
         }
 
         return stay_open;
     }
 
-#ifdef EDITOR_BUILD
     void OpenGL::CreateViewportFramebuffer(int width, int height)
     {
         if (width <= 0 || height <= 0)
@@ -383,7 +386,8 @@ namespace raphEngine::graphics::ogl
                                   GL_RENDERBUFFER, viewport_depth_rbo_ms_);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            Logger::LogError("Viewport MSAA framebuffer is not complete!");
+            Logger::LogError("Viewport MSAA framebuffer is "
+                             "not complete!");
 
         glGenFramebuffers(1, &viewport_fbo_resolve_);
         glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_resolve_);
@@ -398,7 +402,9 @@ namespace raphEngine::graphics::ogl
                                GL_TEXTURE_2D, viewport_color_tex_, 0);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            Logger::LogError("Viewport resolve framebuffer is not complete!");
+            Logger::LogError("Viewport resolve "
+                             "framebuffer is "
+                             "not complete!");
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -420,7 +426,6 @@ namespace raphEngine::graphics::ogl
         }
         CreateViewportFramebuffer(width, height);
     }
-#endif
 
     bool OpenGL::IsKeyPressed(int key) const
     {

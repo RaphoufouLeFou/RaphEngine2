@@ -40,8 +40,9 @@ namespace raphEngine
         return current_fps_;
     }
 
-    int Core::Launch(const std::string& project_file)
+    int Core::Launch(const std::string& project_file, bool editor_mode)
     {
+        editor_mode_ = editor_mode;
         if (!Project::parse_project_file(project_file))
         {
             return 1;
@@ -50,7 +51,10 @@ namespace raphEngine
         Core::Init(Project::name);
         SceneManager::load_scene(Project::main_scene_path);
 
-        Editor::Init();
+        if (Core::is_editor_mode())
+        {
+            Editor::Init();
+        }
 
         Core::Run();
 
@@ -66,15 +70,16 @@ namespace raphEngine
         Settings::Register<GraphicsSettings>();
         Settings::Load("settings.json");
 
-#ifdef EDITOR_BUILD
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        ImGui::StyleColorsDark();
-#endif
+        if (Core::is_editor_mode())
+        {
+            IMGUI_CHECKVERSION();
+            ImGui::CreateContext();
+            ImGuiIO& io = ImGui::GetIO();
+            io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+            io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+            io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+            ImGui::StyleColorsDark();
+        }
 
         renderer.Init(title);
         graphics::Debug::getInstance()->Init();
@@ -94,9 +99,10 @@ namespace raphEngine
             double start = Time::GetTime();
             renderer.StartFrame();
 
-#ifdef EDITOR_BUILD
-            Editor::Update();
-#endif
+            if (Core::is_editor_mode())
+            {
+                Editor::Update();
+            }
 
             fps_avr += 1.0f / Time::deltaTime;
             avr_count++;
@@ -117,9 +123,10 @@ namespace raphEngine
             renderer.GetRmlUiRenderer().Update();
             renderer.Render();
 
-#ifdef EDITOR_BUILD
-            ImGui::Render();
-#endif
+            if (Core::is_editor_mode())
+            {
+                ImGui::Render();
+            }
             bool still_alive = renderer.Refresh();
 
             if (!still_alive)
@@ -132,9 +139,10 @@ namespace raphEngine
         Settings::Save("settings.json");
         Logger::LogDebug("exiting now!");
 
-#ifdef EDITOR_BUILD
-        ImGui::DestroyContext();
-#endif
+        if (Core::is_editor_mode())
+        {
+            ImGui::DestroyContext();
+        }
     }
 
     void Core::execute_updates()
@@ -144,31 +152,36 @@ namespace raphEngine
             Camera::get_active_camera()->CamUpdate();
         }
 
-#ifdef EDITOR_BUILD
-        ImGui::Begin("Layout");
-        for (auto& t : objects::Transform::root_childs)
+        if (Core::is_editor_mode())
         {
-            t->parent_object->ImGui_layout();
+            ImGui::Begin("Layout");
+            for (auto& t : objects::Transform::root_childs)
+            {
+                t->parent_object->ImGui_layout();
+            }
+            ImGui::End();
+            ImGui::Begin("Inspector");
         }
-        ImGui::End();
-        ImGui::Begin("Inspector");
-#endif
 
         if (SceneManager::get_active_scene())
         {
             for (auto& go : SceneManager::get_active_scene()->get_objects())
             {
-                if (go->is_active)
+                if (!Core::is_editor_mode() && go->is_active)
                     go->pre_update();
-#ifdef EDITOR_BUILD
-                go->ImGui_update();
-#endif
-                if (go->is_active)
+
+                if (Core::is_editor_mode())
+                {
+                    go->ImGui_update();
+                }
+
+                if (!Core::is_editor_mode() && go->is_active)
                     go->Update();
             }
-#ifdef EDITOR_BUILD
-            ImGui::End();
-#endif
+            if (Core::is_editor_mode())
+            {
+                ImGui::End();
+            }
         }
     }
 

@@ -6,9 +6,7 @@
 #include <RaphEngine2/graphics/graphic_api.hpp>
 #include <RaphEngine2/objects/game_object.hpp>
 
-#ifdef EDITOR_BUILD
-#    include "imgui.h"
-#endif
+#include "imgui.h"
 
 namespace raphEngine::component
 {
@@ -55,7 +53,6 @@ namespace raphEngine::component
         graphics::GraphicApi::AddToLightsPool(this);
     }
 
-#ifdef EDITOR_BUILD
     void LightComponent::ImGuiPrint()
     {
         if (ImGui::TreeNode(get_name().c_str()))
@@ -65,6 +62,5 @@ namespace raphEngine::component
             ImGui::TreePop();
         }
     }
-#endif
 
 } // namespace raphEngine::component

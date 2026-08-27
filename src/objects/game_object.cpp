@@ -89,8 +89,6 @@ namespace raphEngine::objects
         }
     }
 
-#ifdef EDITOR_BUILD
-
     static GameObject* selected = nullptr;
 
     void GameObject::ImGui_select()
@@ -215,8 +213,6 @@ namespace raphEngine::objects
                 c->outline_ = false;
         }
     }
-
-#endif
 
     GameObject::~GameObject()
     {

@@ -11,7 +11,8 @@ namespace raphEngine
     class RAPHENGINE_API Core
     {
     public:
-        static int Launch(const std::string& project_file = "project.prj");
+        static int Launch(const std::string& project_file = "project.prj",
+                          bool editor_mode = false);
 
         static double GetFPS();
         static graphics::GraphicApi* getRenderer();

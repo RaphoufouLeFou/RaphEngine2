@@ -11,9 +11,7 @@
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/graphics/graphic_api.hpp>
 
-#ifdef EDITOR_BUILD
-#    include "imgui.h"
-#endif
+#include "imgui.h"
 
 namespace raphEngine::component
 {
@@ -126,7 +124,6 @@ namespace raphEngine::component
         debug->DrawLine(corners[3], corners[7], color);
     }
 
-#ifdef EDITOR_BUILD
     void ColliderComponent::ImGuiPrint()
     {
         if (ImGui::TreeNode(get_name().c_str()))
@@ -139,6 +136,5 @@ namespace raphEngine::component
             ImGui::TreePop();
         }
     }
-#endif
 
 } // namespace raphEngine::component

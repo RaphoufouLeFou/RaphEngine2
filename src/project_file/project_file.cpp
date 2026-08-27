@@ -84,7 +84,6 @@ namespace raphEngine
 
     void Project::store_project_file()
     {
-        fs::create_directories(path.parent_path());
         std::ofstream file(path);
         if (!file.is_open())
         {

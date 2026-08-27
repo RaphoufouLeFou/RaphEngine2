@@ -3,7 +3,7 @@
 #include <RaphEngine2/export.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float2.hpp>
-#include "editor/editor.hpp"
+#include <RaphEngine2/editor/editor.hpp>
 
 namespace raphEngine::objects
 {
@@ -37,7 +37,7 @@ namespace raphEngine
                                   glm::vec3& out_normal,
                                   objects::GameObject** objOut, int layer);
 
-        friend class Editor;
+        friend class EditorCamera;
         // Very slow, only use for object without colliders
         static bool FromMouseMeshes(RayInfo* OutRayInfo);
     };

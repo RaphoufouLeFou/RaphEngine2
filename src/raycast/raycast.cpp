@@ -409,8 +409,6 @@ namespace raphEngine
         return hitFound;
     }
 
-#ifdef EDITOR_BUILD
-
     RayHit RayIntersectMeshLocal(const objects::Mesh* mesh,
                                  const glm::vec3& localOrigin,
                                  const glm::vec3& localDirection)
@@ -562,8 +560,6 @@ namespace raphEngine
         return false;
     }
 
-#endif
-
     bool RayCast::FromCamera(glm::vec2 screenPos, RayInfo* OutRayInfo,
                              int layer)
     {
@@ -575,10 +571,11 @@ namespace raphEngine
     bool RayCast::FromMouse(RayInfo* OutRayInfo, int layer)
     {
         glm::vec2 screenPos = inputs::Mouse::GetMousePos();
-#ifdef EDITOR_BUILD
-        screenPos.x -= graphics::GraphicApi::viewport_pos_x;
-        screenPos.y -= graphics::GraphicApi::viewport_pos_y;
-#endif
+        if (Core::is_editor_mode())
+        {
+            screenPos.x -= graphics::GraphicApi::viewport_pos_x;
+            screenPos.y -= graphics::GraphicApi::viewport_pos_y;
+        }
         return FromCamera(screenPos, OutRayInfo, layer);
     }
 

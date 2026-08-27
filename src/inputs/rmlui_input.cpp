@@ -1,6 +1,7 @@
 #include "graphics/graphic_api.hpp"
 #include "graphics/ogl/rmlui_renderer.hpp"
 #include <RmlUi_Platform_GLFW.h>
+#include <RaphEngine2/core.hpp>
 
 namespace raphEngine::inputs
 {
@@ -28,10 +29,11 @@ namespace raphEngine::inputs
         if (!r || !r->GetContext() || !r->IsInputEnabled())
             return;
 
-#ifdef EDITOR_BUILD
-        x -= graphics::GraphicApi::viewport_pos_x;
-        y -= graphics::GraphicApi::viewport_pos_y;
-#endif
+        if (Core::is_editor_mode())
+        {
+            x -= graphics::GraphicApi::viewport_pos_x;
+            y -= graphics::GraphicApi::viewport_pos_y;
+        }
         int mods = RmlGLFW::ConvertKeyModifiers(GetCurrentGlfwMods(window));
         RmlGLFW::ProcessCursorPosCallback(r->GetContext(), window, x, y, mods);
     }

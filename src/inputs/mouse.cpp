@@ -1,14 +1,16 @@
 #include <RaphEngine2/graphics/graphic_api.hpp>
 #include <RaphEngine2/inputs/mouse.hpp>
+#include <RaphEngine2/core.hpp>
 
 namespace raphEngine::inputs
 {
     bool Mouse::IsMouseButtonPressed(MouseButton button)
     {
-#ifdef EDITOR_BUILD
-        if (!graphics::GraphicApi::viewport_focused)
-            return false;
-#endif
+        if (Core::is_editor_mode())
+        {
+            if (!graphics::GraphicApi::viewport_focused)
+                return false;
+        }
 
         return graphics::GraphicApi::get_api()->GetMouseButtonPressed(
             (int)button);

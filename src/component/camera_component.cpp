@@ -35,7 +35,6 @@ namespace raphEngine::component
     void CameraComponent::CamUpdate()
     {}
 
-#ifdef EDITOR_BUILD
     void CameraComponent::ImGuiPrint()
     {
         if (ImGui::TreeNode(get_name().c_str()))
@@ -46,7 +45,6 @@ namespace raphEngine::component
             ImGui::TreePop();
         }
     }
-#endif
 
     const glm::vec3& CameraComponent::get_position() const
     {

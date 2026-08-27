@@ -7,9 +7,7 @@
 #include <vector>
 #include "logger/logger.hpp"
 
-#ifdef EDITOR_BUILD
-#    include "imgui.h"
-#endif
+#include "imgui.h"
 
 #include "objects/lod.hpp"
 #include "objects/mesh_info.hpp"
@@ -64,7 +62,6 @@ namespace raphEngine::component
         render();
     }
 
-#ifdef EDITOR_BUILD
     void MeshComponent::ImGuiPrint()
     {
         if (ImGui::TreeNode(get_name().c_str()))
@@ -110,7 +107,6 @@ namespace raphEngine::component
             ImGui::TreePop();
         }
     }
-#endif
 
     void MeshComponent::render() const
     {

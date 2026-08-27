@@ -1,4 +1,5 @@
 #include "graphics/ogl/rmlui_renderer.hpp"
+#include "core.hpp"
 #include "graphics/graphic_api.hpp"
 #include "logger/logger.hpp"
 
@@ -44,10 +45,8 @@ namespace raphEngine::graphics::ogl
         if (!context_)
             Logger::LogError("Failed to create RmlUi context");
 
-        // #ifdef EDITOR_BUILD
         Rml::Debugger::Initialise(context_);
         // Rml::Debugger::SetVisible(true);
-        //  #endif
     }
 
     void RmlUiRenderer::Shutdown()
@@ -112,10 +111,9 @@ namespace raphEngine::graphics::ogl
 
     bool RmlUiRenderer::IsInputEnabled() const
     {
-#ifdef EDITOR_BUILD
-        return GraphicApi::viewport_focused;
-#else
-        return true;
-#endif
+        if (Core::is_editor_mode())
+            return GraphicApi::viewport_focused;
+        else
+            return true;
     }
 } // namespace raphEngine::graphics::ogl

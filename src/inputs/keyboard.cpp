@@ -1,14 +1,16 @@
 #include <RaphEngine2/graphics/graphic_api.hpp>
 #include <RaphEngine2/inputs/keyboard.hpp>
+#include <RaphEngine2/core.hpp>
 
 namespace raphEngine::inputs
 {
     bool Key::IsKeyPressed(KeyCode key)
     {
-#ifdef EDITOR_BUILD
-        if (!graphics::GraphicApi::viewport_focused)
-            return false;
-#endif
+        if (Core::is_editor_mode())
+        {
+            if (!graphics::GraphicApi::viewport_focused)
+                return false;
+        }
 
         bool isPressed =
             graphics::GraphicApi::get_api()->IsKeyPressed((int)key);

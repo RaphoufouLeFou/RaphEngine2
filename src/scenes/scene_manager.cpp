@@ -28,7 +28,6 @@ namespace raphEngine
         return active_scene_.get();
     }
 
-#ifdef EDITOR_BUILD
     void SceneManager::Imgui_update()
     {
         static constexpr short buffer_size = 128;
@@ -54,6 +53,4 @@ namespace raphEngine
         }
         ImGui::End();
     }
-#endif
-
 } // namespace raphEngine

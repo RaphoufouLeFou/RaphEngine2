@@ -140,7 +140,6 @@ namespace raphEngine
         return true;
     }
 
-#ifdef EDITOR_BUILD
     void Scene::Imgui_update()
     {
         static constexpr short buffer_size = 128;
@@ -163,6 +162,5 @@ namespace raphEngine
         file_path_ = path_buffer;
         skybox_path_ = skybox_buffer;
     }
-#endif
 
 } // namespace raphEngine

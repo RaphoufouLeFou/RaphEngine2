@@ -22,8 +22,8 @@ namespace raphEngine
     {
         projection_matrix_ = glm::perspective(
             glm::radians(fov_),
-            static_cast<float>(graphics::GraphicApi::res_x)
-                / static_cast<float>(graphics::GraphicApi::res_y),
+            static_cast<float>(graphics::GraphicApi::viewport_res_x)
+                / static_cast<float>(graphics::GraphicApi::viewport_res_y),
             nearPlane_, farPlane_);
 
         glm::mat4 RotationMat =

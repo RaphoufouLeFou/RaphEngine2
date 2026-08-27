@@ -96,8 +96,8 @@ namespace raphEngine::graphics::ogl
         if (!cam)
             return;
 
-        int width = graphics::GraphicApi::res_x;
-        int height = graphics::GraphicApi::res_y;
+        int width = graphics::GraphicApi::viewport_res_x;
+        int height = graphics::GraphicApi::viewport_res_y;
         if (width <= 0 || height <= 0)
             return;
 

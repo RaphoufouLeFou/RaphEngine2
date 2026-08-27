@@ -223,7 +223,8 @@ namespace raphEngine::graphics::ogl
         glBindVertexArray(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_CULL_FACE);
-        glViewport(0, 0, GraphicApi::res_x, GraphicApi::res_y);
+        glViewport(0, 0, GraphicApi::viewport_res_x,
+                   GraphicApi::viewport_res_y);
 
         glDeleteFramebuffers(1, &capture_fbo);
         glDeleteRenderbuffers(1, &capture_rbo);

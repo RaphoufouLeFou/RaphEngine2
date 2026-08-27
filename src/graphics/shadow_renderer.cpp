@@ -103,10 +103,11 @@ namespace raphEngine::graphics
     {
         Camera* cam = Camera::get_active_camera();
 
-        const auto Proj = glm::perspective(glm::radians(cam->get_fov()),
-                                           (float)(GraphicApi::res_x)
-                                               / (float)(GraphicApi::res_y),
-                                           nearPlane, farPlane);
+        const auto Proj =
+            glm::perspective(glm::radians(cam->get_fov()),
+                             (float)(GraphicApi::viewport_res_x)
+                                 / (float)(GraphicApi::viewport_res_y),
+                             nearPlane, farPlane);
 
         const auto corners =
             getFrustumCornersWorldSpace(Proj, cam->get_view_matrix_());

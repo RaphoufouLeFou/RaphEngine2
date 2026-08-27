@@ -42,12 +42,11 @@ namespace raphEngine::graphics
             return nullptr;
         }
 
-        static unsigned short res_x;
-        static unsigned short res_y;
+        static unsigned short viewport_res_x;
+        static unsigned short viewport_res_y;
 
-        static inline int viewport_res_x = 0;
-        static inline int viewport_res_y = 0;
-
+        static inline int window_res_x = 0;
+        static inline int window_res_y = 0;
         static inline float viewport_pos_x = 0.0f;
         static inline float viewport_pos_y = 0.0f;
 

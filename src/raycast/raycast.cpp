@@ -24,8 +24,10 @@ namespace raphEngine
 
     glm::vec3 GetDirectionFromScreen(glm::vec2 screenPos)
     {
-        float ndcX = (2.0f * screenPos.x) / graphics::GraphicApi::res_x - 1.0f;
-        float ndcY = 1.0f - (2.0f * screenPos.y) / graphics::GraphicApi::res_y;
+        float ndcX =
+            (2.0f * screenPos.x) / graphics::GraphicApi::viewport_res_x - 1.0f;
+        float ndcY =
+            1.0f - (2.0f * screenPos.y) / graphics::GraphicApi::viewport_res_y;
 
         glm::vec4 clipCoords(ndcX, ndcY, -1.0f, 1.0f);
 
@@ -457,6 +459,9 @@ namespace raphEngine
 
     bool RayCast::FromMouseMeshes(RayInfo* OutRayInfo)
     {
+        if (!inputs::Mouse::IsMouseOnScreen())
+            return false;
+
         if (!OutRayInfo)
             return false;
 
@@ -570,6 +575,9 @@ namespace raphEngine
     }
     bool RayCast::FromMouse(RayInfo* OutRayInfo, int layer)
     {
+        if (!inputs::Mouse::IsMouseOnScreen())
+            return false;
+
         glm::vec2 screenPos = inputs::Mouse::GetMousePos();
         if (Core::is_editor_mode())
         {

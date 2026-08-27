@@ -23,17 +23,18 @@ namespace raphEngine
 
     void EditorCamera::HandleMouseRotation()
     {
-        int WindowWidth, WindowHeight;
-        WindowWidth = graphics::GraphicApi::res_x;
-        WindowHeight = graphics::GraphicApi::res_y;
+        int WindowWidth = graphics::GraphicApi::viewport_res_x;
+        int WindowHeight = graphics::GraphicApi::viewport_res_y;
+        int WindowPosX = graphics::GraphicApi::viewport_pos_x;
+        int WindowPosY = graphics::GraphicApi::viewport_pos_y;
 
         glm::vec2 mousePos = Mouse::GetMousePos();
 
         if (Mouse::IsMouseButtonPressed(Mouse::MouseButton::RIGHT)
             && Mouse::IsMouseOnScreen() && Mouse::IsWindowFocused())
         {
-            glm::vec2 MiddleScreen =
-                glm::vec2(WindowWidth / 2, WindowHeight / 2);
+            glm::vec2 MiddleScreen = glm::vec2(WindowPosX + WindowWidth / 2,
+                                               WindowPosY + WindowHeight / 2);
             if (!lastMouseState)
                 mousePos = MiddleScreen;
             glm::vec2 delta = mousePos - MiddleScreen;
@@ -42,12 +43,25 @@ namespace raphEngine
             Mouse::SetMouseVisibility(false);
             Mouse::SetMousePosition(MiddleScreen.x, MiddleScreen.y);
             lastMouseState = true;
+
+            Logger::LogDebug("\nW.x=", graphics::GraphicApi::viewport_res_x,
+                             "\nW.y=", graphics::GraphicApi::viewport_res_y,
+                             "\nV.x=", graphics::GraphicApi::window_res_x,
+                             "\nV.y=", graphics::GraphicApi::window_res_y,
+                             "\nP.x=", graphics::GraphicApi::viewport_pos_x,
+                             "\nP.y=", graphics::GraphicApi::viewport_pos_y);
         }
         else
         {
             Mouse::SetMouseVisibility(true);
             if (lastMouseState)
-                Mouse::SetMousePosition(lastMousePos.x, lastMousePos.y);
+            {
+                glm::vec2 MiddleScreen =
+                    glm::vec2(WindowPosX + WindowWidth / 2,
+                              WindowPosY + WindowHeight / 2);
+                Mouse::SetMousePosition(MiddleScreen.x, MiddleScreen.y);
+                // Mouse::SetMousePosition(lastMousePos.x, lastMousePos.y);
+            }
             lastMousePos = mousePos;
             lastMouseState = false;
         }
@@ -79,6 +93,9 @@ namespace raphEngine
         glm::vec3 direction = glm::vec3(RotationMat * glm::vec4(movement, 1));
 
         position_ += direction;
+
+        if (!inputs::Mouse::IsMouseOnScreen())
+            return;
 
         static bool last_pressed = false;
 

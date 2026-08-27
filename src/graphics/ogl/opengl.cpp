@@ -31,16 +31,16 @@ namespace raphEngine::graphics::ogl
     {
         (void)window;
         glViewport(0, 0, width, height);
-        GraphicApi::res_x = width;
-        GraphicApi::res_y = height;
+        GraphicApi::viewport_res_x = width;
+        GraphicApi::viewport_res_y = height;
 
         if (RmlUiRenderer::instance_)
             RmlUiRenderer::instance_->Resize(width, height);
 
         if (Core::is_editor_mode())
         {
-            GraphicApi::viewport_res_x = width;
-            GraphicApi::viewport_res_y = height;
+            GraphicApi::window_res_x = width;
+            GraphicApi::window_res_y = height;
         }
     }
 
@@ -73,8 +73,8 @@ namespace raphEngine::graphics::ogl
         auto& gfx = Settings::Get<GraphicsSettings>();
 
         auto [ResX, ResY] = gfx.getResolution();
-        res_x = ResX;
-        res_y = ResY;
+        viewport_res_x = ResX;
+        viewport_res_y = ResY;
 
         window = glfwCreateWindow(ResX, ResY, window_name.c_str(),
                                   gfx.fullscreen ? monitor : NULL, NULL);
@@ -93,10 +93,11 @@ namespace raphEngine::graphics::ogl
 
         int x, y;
         glfwGetWindowSize(window, &x, &y);
-        res_x = x;
-        res_y = y;
+        viewport_res_x = x;
+        viewport_res_y = y;
 
-        Logger::LogDebug("starting with a resolution of ", res_x, 'x', res_y);
+        Logger::LogDebug("starting with a resolution of ", viewport_res_x, 'x',
+                         viewport_res_y);
 
         glfwMakeContextCurrent(window);
 
@@ -110,7 +111,7 @@ namespace raphEngine::graphics::ogl
             return;
         }
 
-        rmlui_renderer_.Init(window, res_x, res_y);
+        rmlui_renderer_.Init(window, viewport_res_x, viewport_res_y);
         glfwSetCursorPosCallback(window, inputs::rmlui_cursor_pos_callback);
         glfwSetMouseButtonCallback(window, inputs::rmlui_mouse_button_callback);
         glfwSetScrollCallback(window, inputs::rmlui_scroll_callback);
@@ -147,7 +148,7 @@ namespace raphEngine::graphics::ogl
                        // GLFW callbacks and chain to existing ones.
             Logger::LogDebug("imgui opengl3 init");
             ImGui_ImplOpenGL3_Init();
-            CreateViewportFramebuffer(res_x, res_y);
+            CreateViewportFramebuffer(viewport_res_x, viewport_res_y);
         }
     }
 
@@ -293,7 +294,7 @@ namespace raphEngine::graphics::ogl
         {
             glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);
         }
-        glViewport(0, 0, res_x, res_y);
+        glViewport(0, 0, viewport_res_x, viewport_res_y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
                 | GL_STENCIL_BUFFER_BIT);
 
@@ -331,7 +332,7 @@ namespace raphEngine::graphics::ogl
     {
         if (Core::is_editor_mode())
         {
-            glViewport(0, 0, res_x, res_y);
+            glViewport(0, 0, viewport_res_x, viewport_res_y);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
@@ -365,8 +366,8 @@ namespace raphEngine::graphics::ogl
         viewport_width_ = width;
         viewport_height_ = height;
 
-        GraphicApi::res_x = width;
-        GraphicApi::res_y = height;
+        GraphicApi::viewport_res_x = width;
+        GraphicApi::viewport_res_y = height;
 
         glGenFramebuffers(1, &viewport_fbo_ms_);
         glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);

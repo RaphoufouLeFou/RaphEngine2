@@ -117,9 +117,6 @@ namespace raphEngine
             execute_updates();
             execute_components_updates();
 
-            graphics::Debug::getInstance()->DrawLine(glm::vec3(0, 0, 0),
-                                                     glm::vec3(100, 2, 3));
-
             renderer.GetRmlUiRenderer().Update();
             renderer.Render();
 

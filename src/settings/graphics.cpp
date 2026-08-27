@@ -53,11 +53,11 @@ namespace raphEngine
             return std::pair<unsigned short, unsigned short>{ 1920, 1080 };
         }
 
-        std::string res_x = resolution.substr(0, index);
-        std::string res_y = resolution.substr(index + 1);
+        std::string viewport_res_x = resolution.substr(0, index);
+        std::string viewport_res_y = resolution.substr(index + 1);
 
-        unsigned short int_x = std::stoi(res_x);
-        unsigned short int_y = std::stoi(res_y);
+        unsigned short int_x = std::stoi(viewport_res_x);
+        unsigned short int_y = std::stoi(viewport_res_y);
 
         return std::pair<unsigned short, unsigned short>{ int_x, int_y };
     }

@@ -40,9 +40,14 @@ namespace raphEngine::inputs
     bool Mouse::IsMouseOnScreen()
     {
         glm::vec2 pos = graphics::GraphicApi::get_api()->GetCursorPos();
-        unsigned short resX = graphics::GraphicApi::res_x;
-        unsigned short resY = graphics::GraphicApi::res_y;
-        return (pos.x >= 0 && pos.x <= resX && pos.y >= 0 && pos.y <= resY);
+        unsigned short resX = graphics::GraphicApi::viewport_res_x;
+        unsigned short resY = graphics::GraphicApi::viewport_res_y;
+
+        unsigned short posX = graphics::GraphicApi::viewport_pos_x;
+        unsigned short posY = graphics::GraphicApi::viewport_pos_y;
+
+        return (pos.x >= posX && pos.x <= posX + resX && pos.y >= posY
+                && pos.y <= posY + resY);
     }
 
     bool Mouse::IsWindowFocused()

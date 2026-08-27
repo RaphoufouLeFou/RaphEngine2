@@ -4,8 +4,8 @@
 
 namespace raphEngine::graphics
 {
-    unsigned short GraphicApi::res_x = 640;
-    unsigned short GraphicApi::res_y = 480;
+    unsigned short GraphicApi::viewport_res_x = 640;
+    unsigned short GraphicApi::viewport_res_y = 480;
 
     std::vector<const Renderable*> GraphicApi::render_pool;
     std::vector<const component::LightComponent*> GraphicApi::lights_pool;

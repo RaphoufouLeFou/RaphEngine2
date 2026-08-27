@@ -27,9 +27,9 @@ namespace raphEngine::component
         void Start() override;
         void Update() override;
         void CamUpdate() override;
-#ifdef EDITOR_BUILD
+
         void ImGuiPrint() override;
-#endif
+
         const glm::vec3& get_position() const override;
         const glm::vec3& get_rotation() const override;
 

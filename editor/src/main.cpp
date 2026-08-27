@@ -15,8 +15,6 @@
 using namespace raphEngine;
 using namespace raphEngine::objects;
 
-#ifdef EDITOR_BUILD
-
 int main(int argc, char* argv[])
 {
     Logger::LogInfo("Starting editor...");
@@ -44,7 +42,3 @@ int main(int argc, char* argv[])
     Project::store_project_file();
     return 0;
 }
-
-#else
-int main() {};
-#endif

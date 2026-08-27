@@ -32,9 +32,8 @@ namespace raphEngine::component
 
         void Start() override;
         void Update() override;
-#ifdef EDITOR_BUILD
+
         void ImGuiPrint() override;
-#endif
 
         float intensity_;
         bool cast_shadows_ = true;

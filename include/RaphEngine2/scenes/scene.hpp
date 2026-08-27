@@ -27,9 +27,7 @@ namespace raphEngine
         bool parse_file(fs::path path);
         bool save_to_file(const fs::path& path = "");
 
-#ifdef EDITOR_BUILD
         void Imgui_update();
-#endif
 
         friend class SceneManager;
         std::vector<std::unique_ptr<objects::GameObject>> objects_;

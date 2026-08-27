@@ -34,9 +34,8 @@ namespace raphEngine::component
 
         void Start() override;
         void Update() override;
-#ifdef EDITOR_BUILD
+
         void ImGuiPrint() override;
-#endif
 
         bool cast_shadows;
         bool outline_;

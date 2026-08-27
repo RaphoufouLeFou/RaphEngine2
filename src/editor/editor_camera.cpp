@@ -1,5 +1,4 @@
-#include "editor_camera.hpp"
-
+#include <RaphEngine2/editor/editor_camera.hpp>
 #include <RaphEngine2/component/collider_component.hpp>
 #include <RaphEngine2/component/mesh_component.hpp>
 #include <RaphEngine2/graphics/graphic_api.hpp>

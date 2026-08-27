@@ -13,9 +13,7 @@ namespace raphEngine
         static bool load_scene(fs::path path);
         static Scene* get_active_scene();
 
-#ifdef EDITOR_BUILD
         static void Imgui_update();
-#endif
 
     private:
         static std::unique_ptr<Scene> active_scene_;

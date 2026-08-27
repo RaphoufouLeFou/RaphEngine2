@@ -143,8 +143,8 @@ namespace raphEngine::graphics::ogl
 #ifdef EDITOR_BUILD
         ImGui_ImplGlfw_InitForOpenGL(
             window,
-            true); // Second param install_callback=true will install GLFW
-                   // callbacks and chain to existing ones.
+            true); // Second param install_callback=true will install
+                   // GLFW callbacks and chain to existing ones.
         Logger::LogDebug("imgui opengl3 init");
         ImGui_ImplOpenGL3_Init();
         CreateViewportFramebuffer(res_x, res_y);

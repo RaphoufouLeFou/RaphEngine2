@@ -3,30 +3,59 @@
 #include <vector>
 
 #include "RaphEngine2/time_utils.hpp"
+#include "editor/editor.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/ogl/opengl.hpp"
 #include "graphics/debug.hpp"
+#include "graphics/skybox.hpp"
 #include "logger/logger.hpp"
 #include "objects/game_object.hpp"
 #include "objects/transform.hpp"
+#include "project_file/project_file.hpp"
 #include "scenes/reflection.hpp"
 #include "scenes/scene_manager.hpp"
 #include "settings/graphics.hpp"
 #include "settings/settings.hpp"
 
-#ifdef EDITOR_BUILD
-#    include "imgui.h"
-#    include "imgui_internal.h"
-#endif
+#include "imgui.h"
 
 namespace raphEngine
 {
     graphics::ogl::OpenGL renderer{};
     static double current_fps_ = 60.0;
+    bool Core::editor_mode_ = false;
+
+    bool Core::is_editor_mode()
+    {
+        return editor_mode_;
+    }
+
+    graphics::GraphicApi* Core::getRenderer()
+    {
+        return &renderer;
+    }
 
     double Core::GetFPS()
     {
         return current_fps_;
+    }
+
+    int Core::Launch(const std::string& project_file)
+    {
+        if (!Project::parse_project_file(project_file))
+        {
+            return 1;
+        }
+
+        Core::Init(Project::name);
+        SceneManager::load_scene(Project::main_scene_path);
+
+        Editor::Init();
+
+        Core::Run();
+
+        Project::store_project_file();
+        return 0;
     }
 
     void Core::Init(const std::string& title)
@@ -66,128 +95,7 @@ namespace raphEngine
             renderer.StartFrame();
 
 #ifdef EDITOR_BUILD
-            ImGui::NewFrame();
-
-            ImGuiID dockspace_id = ImGui::GetID("My Dockspace");
-            ImGuiViewport* viewport = ImGui::GetMainViewport();
-
-            // Create settings
-            if (ImGui::DockBuilderGetNode(dockspace_id) == nullptr)
-            {
-                ImGui::DockBuilderAddNode(dockspace_id,
-                                          ImGuiDockNodeFlags_DockSpace);
-                ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
-                ImGuiID dock_id_left = 0;
-                ImGuiID dock_id_right = 0;
-                ImGuiID dock_id_down = 0;
-                ImGuiID dock_id_main = dockspace_id;
-                ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Down, 0.20f,
-                                            &dock_id_down, &dock_id_main);
-
-                ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Left, 0.20f,
-                                            &dock_id_left, &dock_id_main);
-
-                ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Right, 0.20f,
-                                            &dock_id_right, &dock_id_main);
-                ImGui::DockBuilderDockWindow("Layout", dock_id_left);
-
-                ImGui::DockBuilderDockWindow("Objects", dock_id_down);
-                /*
-                for (auto& go :
-                objects::GameObject::spawned_game_objects_)
-                {
-                    std::string display_name =
-                        go->get_name() + "###" + std::to_string(go->id_);
-                    ImGui::DockBuilderDockWindow(display_name.c_str(),
-                                                 dock_id_right);
-                }
-                */
-                ImGui::DockBuilderDockWindow("Inspector", dock_id_right);
-                ImGui::DockBuilderDockWindow("Viewport", dock_id_main);
-
-                ImGui::DockBuilderFinish(dockspace_id);
-            }
-
-            ImGui::DockSpaceOverViewport(
-                dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
-
-            ImGui::Begin("Objects");
-            ImGui::SeparatorText("Spawn GameObjects");
-
-            auto objs =
-                reflection::Factory<objects::GameObject>::allRegistered();
-
-            for (auto [name, creator] : objs)
-            {
-                if (ImGui::Button(name.c_str()))
-                {
-                    Logger::LogDebug("creating ", name);
-
-                    if (SceneManager::get_active_scene())
-                        SceneManager::get_active_scene()->add_gameobject(
-                            creator());
-                }
-            }
-
-            ImGui::End();
-
-            ImGui::Begin("Prefabs");
-            ImGui::SeparatorText("Spawn Prefab");
-
-            for (auto [name, creator] : objs)
-            {
-                if (ImGui::Button(name.c_str()))
-                {
-                    Logger::LogDebug("creating ", name);
-
-                    if (SceneManager::get_active_scene())
-                        SceneManager::get_active_scene()->add_gameobject(
-                            creator());
-                }
-            }
-
-            ImGui::End();
-
-            ImGui::BeginMainMenuBar();
-            if (ImGui::BeginMenu("File"))
-            {
-                ImGui::Text("File menu");
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Edit"))
-            {
-                ImGui::Text("Edit menu");
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Help"))
-            {
-                ImGui::Text("Help menu");
-                ImGui::EndMenu();
-            }
-            ImGui::EndMainMenuBar();
-
-            ImGui::Begin("Viewport");
-            ImGui::Text("FPS: %f", current_fps_);
-            graphics::GraphicApi::viewport_focused = ImGui::IsWindowFocused();
-
-            ImVec2 viewportScreenPos = ImGui::GetCursorScreenPos();
-            graphics::GraphicApi::viewport_pos_x = viewportScreenPos.x;
-            graphics::GraphicApi::viewport_pos_y = viewportScreenPos.y;
-
-            ImVec2 avail = ImGui::GetContentRegionAvail();
-            renderer.ResizeViewportFramebuffer((int)avail.x, (int)avail.y);
-            ImGui::Image(renderer.GetViewportTexture(), avail, ImVec2(0, 1),
-                         ImVec2(1, 0));
-
-            ImGui::End();
-
-            ImGuiIO& io = ImGui::GetIO();
-            if (graphics::GraphicApi::viewport_focused)
-                io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
-            else
-                io.ConfigFlags &= ~ImGuiConfigFlags_NoMouseCursorChange;
-
-            SceneManager::Imgui_update();
+            Editor::Update();
 #endif
 
             fps_avr += 1.0f / Time::deltaTime;

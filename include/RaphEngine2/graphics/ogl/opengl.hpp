@@ -29,17 +29,15 @@ namespace raphEngine::graphics::ogl
             return rmlui_renderer_;
         }
 
-#ifdef EDITOR_BUILD
         void ResizeViewportFramebuffer(int width, int height) override;
         void* GetViewportTexture() const override
         {
             return (void*)(intptr_t)viewport_color_tex_;
         }
-#endif
+
         graphics::ogl::RmlUiRenderer rmlui_renderer_;
 
     private:
-#ifdef EDITOR_BUILD
         void CreateViewportFramebuffer(int width, int height);
 
         // Multisampled target we actually render into
@@ -54,6 +52,5 @@ namespace raphEngine::graphics::ogl
         int viewport_width_ = 0;
         int viewport_height_ = 0;
         int viewport_samples_ = 4; // match whatever GLFW_SAMPLES you were using
-#endif
     };
 } // namespace raphEngine::graphics::ogl

@@ -32,9 +32,8 @@ namespace raphEngine::component
         void Update() override;
         void DebugDrawBoundingBox(const glm::vec3& color = glm::vec3{ 0, 0,
                                                                       1 });
-#ifdef EDITOR_BUILD
+
         void ImGuiPrint() override;
-#endif
 
         bool show_bounding_box = false;
 

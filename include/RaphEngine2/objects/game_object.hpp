@@ -82,10 +82,8 @@ namespace raphEngine::objects
 
         int raycast_layer_ = 0;
 
-#ifdef EDITOR_BUILD
         void ImGui_select();
         static void ImGui_unselect();
-#endif
 
     protected:
         friend raphEngine::Core;
@@ -103,11 +101,9 @@ namespace raphEngine::objects
 
         bool inspected = false;
 
-#ifdef EDITOR_BUILD
         friend Transform;
         void ImGui_layout();
         void ImGui_update();
-#endif
 
         void add_component(std::unique_ptr<component::Component> c);
 

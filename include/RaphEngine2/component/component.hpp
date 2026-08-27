@@ -22,9 +22,8 @@ namespace raphEngine::component
 
         virtual void Start() = 0;
         virtual void Update() = 0;
-#ifdef EDITOR_BUILD
+
         virtual void ImGuiPrint() = 0;
-#endif
 
         virtual const std::string get_name() const
         {

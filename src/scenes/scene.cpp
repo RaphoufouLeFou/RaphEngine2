@@ -2,6 +2,7 @@
 #include <cstring>
 #include <nlohmann/json.hpp>
 #include <filesystem>
+#include "graphics/skybox.hpp"
 #include "imgui.h"
 #include "logger/logger.hpp"
 #include "objects/game_object.hpp"
@@ -78,6 +79,8 @@ namespace raphEngine
             if (j.contains("SkyBox"))
             {
                 j.at("SkyBox").get_to(skybox_path_);
+
+                graphics::Skybox::getInstance()->set_hdr(skybox_path_);
             }
             if (j.contains("Objects"))
             {

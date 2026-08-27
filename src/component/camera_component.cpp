@@ -11,9 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#ifdef EDITOR_BUILD
-#    include "imgui.h"
-#endif
+#include "imgui.h"
 
 namespace raphEngine::component
 {
@@ -24,8 +22,8 @@ namespace raphEngine::component
         nearPlane_ = .01f;
         farPlane_ = 5000.0f;
         Logger::LogDebug("creating camera component");
-        // if (!get_active_camera())
-        set_as_active_camera();
+        if (!get_active_camera())
+            set_as_active_camera();
     }
 
     void CameraComponent::Start()

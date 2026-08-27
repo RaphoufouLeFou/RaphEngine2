@@ -3,6 +3,7 @@
 #include <RaphEngine2/export.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float2.hpp>
+#include "editor/editor.hpp"
 
 namespace raphEngine::objects
 {
@@ -30,17 +31,14 @@ namespace raphEngine
 
         static void DebugUpdate();
 
-#ifdef EDITOR_BUILD
-
-        // Very slow, only use for object without colliders
-        static bool FromMouseMeshes(RayInfo* OutRayInfo);
-
-#endif
-
     private:
         static bool haveCollision(glm::vec3 origin, glm::vec3 direction,
                                   glm::vec3& out_intersection_point,
                                   glm::vec3& out_normal,
                                   objects::GameObject** objOut, int layer);
+
+        friend class Editor;
+        // Very slow, only use for object without colliders
+        static bool FromMouseMeshes(RayInfo* OutRayInfo);
     };
 } // namespace raphEngine

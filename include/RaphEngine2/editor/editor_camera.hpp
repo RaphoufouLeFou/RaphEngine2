@@ -6,7 +6,6 @@
 #include "graphics/camera.hpp"
 #include "logger/logger.hpp"
 
-#ifdef EDITOR_BUILD
 namespace raphEngine
 {
     class EditorCamera : public Camera
@@ -29,5 +28,3 @@ namespace raphEngine
         glm::vec3 position_ = glm::vec3{ 0, -5, 2 };
     };
 } // namespace raphEngine
-
-#endif

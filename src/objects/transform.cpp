@@ -151,12 +151,34 @@ namespace raphEngine::objects
         return children_.at(index);
     }
 
+    bool Transform::get_can_have_moved()
+    {
+        if (parent_)
+        {
+            return can_have_moved || parent_->get_can_have_moved();
+        }
+        return can_have_moved;
+    }
+
     const glm::mat4 Transform::get_model_matrix()
     {
-        if (can_have_moved)
+        bool this_and_parent_movement = get_can_have_moved();
+        if (!this_and_parent_movement)
         {
-            calculate_matrix();
+            return model_matrix_;
         }
+        /*
+                if (parent_)
+                {
+                    if (can_have_moved)
+                    {
+                        calculate_matrix();
+                        return model_matrix_;
+                    }
+                    return parent_->get_model_matrix() * model_matrix_;
+                }
+        */
+        calculate_matrix();
         return model_matrix_;
     }
 

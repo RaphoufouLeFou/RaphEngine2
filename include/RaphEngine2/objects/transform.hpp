@@ -57,6 +57,8 @@ namespace raphEngine::objects
 
     private:
         void calculate_matrix();
+        bool get_can_have_moved();
+
         friend GameObject;
 
         glm::vec3 position_;

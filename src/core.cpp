@@ -4,6 +4,7 @@
 
 #include "RaphEngine2/time_utils.hpp"
 #include "editor/editor.hpp"
+#include "editor/layout.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/ogl/opengl.hpp"
 #include "graphics/debug.hpp"
@@ -151,12 +152,7 @@ namespace raphEngine
 
         if (Core::is_editor_mode())
         {
-            ImGui::Begin("Layout");
-            for (auto& t : objects::Transform::root_childs)
-            {
-                t->parent_object->ImGui_layout();
-            }
-            ImGui::End();
+            editor::Layout::Update();
             ImGui::Begin("Inspector");
         }
 

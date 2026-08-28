@@ -17,6 +17,11 @@ namespace raphEngine::component
     class Component;
 }
 
+namespace raphEngine::emgine
+{
+    class Layout;
+}
+
 namespace raphEngine::objects
 {
     class Transform;
@@ -82,9 +87,6 @@ namespace raphEngine::objects
 
         int raycast_layer_ = 0;
 
-        void ImGui_select();
-        static void ImGui_unselect();
-
     protected:
         friend raphEngine::Core;
 
@@ -96,18 +98,18 @@ namespace raphEngine::objects
     private:
         bool has_started = false;
         unsigned int id_ = 0;
+        std::string uuid_;
         void pre_update();
         void destroy_internal();
 
-        bool inspected = false;
-
+        friend class Layout;
         friend Transform;
         void ImGui_layout();
         void ImGui_update();
 
         void add_component(std::unique_ptr<component::Component> c);
 
-        REFLECT_ROOT(GameObject, name_, id_, is_active, raycast_layer_)
+        REFLECT_ROOT(GameObject, name_, id_, uuid_, is_active, raycast_layer_)
         REFLECT_FACTORY(GameObject, GameObject, "GameObject")
     };
 } // namespace raphEngine::objects

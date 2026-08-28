@@ -103,7 +103,7 @@ namespace raphEngine::objects
             model_matrix_ = model;
     }
 
-    void Transform::set_parent(Transform* parent)
+    void Transform::set_parent(Transform* parent, bool worldPositionStay)
     {
         std::vector<Transform*>& parent_list =
             parent_ ? parent_->children_ : root_childs;
@@ -111,9 +111,6 @@ namespace raphEngine::objects
         auto position = std::find(parent_list.begin(), parent_list.end(), this);
         if (position != parent_list.end())
             parent_list.erase(position);
-
-        Logger::LogWarning("Changing parent of ", parent_object->get_name(),
-                           " to ", parent);
 
         parent_ = parent;
         if (!parent_)
@@ -123,6 +120,13 @@ namespace raphEngine::objects
         else
         {
             parent_->children_.push_back(this);
+        }
+        if (parent_ && !worldPositionStay)
+        {
+            position_ += parent_->position_;
+            rotation_ += parent_->rotation_;
+            scale_ += parent_->scale_;
+            can_have_moved = true;
         }
     }
 

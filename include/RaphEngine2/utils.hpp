@@ -25,6 +25,11 @@ namespace raphEngine
         static glm::vec3 GetForwardFromModelMatrix(const glm::mat4& model);
         static glm::vec3
         GetForwardFromRotation(const glm::vec3& rotationDegrees);
+
+        static long get_id();
+        static std::string get_uuid();
+        static bool compare_uuid(const std::string& lhs,
+                                 const std::string& rhs);
     };
 } // namespace raphEngine
 

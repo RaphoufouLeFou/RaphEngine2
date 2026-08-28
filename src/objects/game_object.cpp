@@ -17,6 +17,9 @@
 #include "scenes/reflection.hpp"
 #include "scenes/scene.hpp"
 #include "scenes/scene_manager.hpp"
+#include "utils.hpp"
+
+#include "editor/layout.hpp"
 
 namespace raphEngine::objects
 {
@@ -26,29 +29,26 @@ namespace raphEngine::objects
         Logger::LogInfo("Hello, my name is \"", name_, "\"");
     }
 
-    long get_id()
-    {
-        static long latest_id_ = 0;
-        return latest_id_++;
-    }
-
     GameObject::GameObject(const std::string& name)
     {
-        id_ = get_id();
+        id_ = Utils::get_id();
+        uuid_ = Utils::get_uuid();
         name_ = name;
         transform_.parent_object = this;
     }
 
     GameObject::GameObject()
     {
-        id_ = get_id();
+        id_ = Utils::get_id();
+        uuid_ = Utils::get_uuid();
         name_ = "New GameObject " + std::to_string(id_);
         transform_.parent_object = this;
     }
 
     GameObject::GameObject(const GameObject& other)
     {
-        id_ = get_id();
+        id_ = Utils::get_id();
+        uuid_ = Utils::get_uuid();
         name_ = other.name_;
         transform_ = other.transform_;
         transform_.parent_object = this;
@@ -89,62 +89,10 @@ namespace raphEngine::objects
         }
     }
 
-    static GameObject* selected = nullptr;
-
-    void GameObject::ImGui_select()
-    {
-        selected = this;
-    }
-
-    void GameObject::ImGui_unselect()
-    {
-        selected = nullptr;
-    }
-
-    void GameObject::ImGui_layout()
-    {
-        inspected = selected == this;
-        if (transform_.get_children().size() == 0 || true)
-        {
-            ImGui::Bullet();
-            if (ImGui::Selectable(name_.c_str(), &inspected)
-                && selected == this)
-            {
-                selected = nullptr;
-                inspected = false;
-            }
-            if (inspected)
-            {
-                selected = this;
-            }
-        }
-        else
-        {
-            bool unfolded = ImGui::TreeNode(name_.c_str());
-
-            if (inspected)
-            {
-                selected = this;
-            }
-
-            if (unfolded)
-            {
-                ImGui::TreePop();
-            }
-        }
-
-        ImGui::Indent();
-        for (auto* t : transform_.get_children())
-        {
-            t->parent_object->ImGui_layout();
-        }
-        ImGui::Unindent();
-    }
-
     void GameObject::ImGui_update()
     {
         auto c = get_first_component_of_type<component::MeshComponent>();
-        if (inspected)
+        if (editor::Layout::IsSelected(this))
         {
             if (c)
                 c->outline_ = true;
@@ -154,18 +102,17 @@ namespace raphEngine::objects
             ImGui::InputText("Name", &name_);
             ImGui::InputInt("RayCast layer", &raycast_layer_);
             ImGui::Checkbox("Has started", &has_started);
+            int id_const = id_;
+            ImGui::InputInt("Id", &id_const);
+            ImGui::LabelText("UUID", "%s", uuid_.c_str());
+
+            ImGui::Separator();
 
             if (ImGui::CollapsingHeader("Transform"))
             {
                 ImGui::DragFloat3("Position", &get_transform().position_.x, 1);
                 ImGui::DragFloat3("Rotation", &get_transform().rotation_.x, 1);
                 ImGui::DragFloat3("Scale", &get_transform().scale_.x, 0.1f);
-                ImGui::Text("Model matrix");
-                glm::mat4 matrix = get_transform().get_model_matrix();
-                ImGui::InputFloat4("[0]", &matrix[0].x);
-                ImGui::InputFloat4("[1]", &matrix[1].x);
-                ImGui::InputFloat4("[2]", &matrix[2].x);
-                ImGui::InputFloat4("[3]", &matrix[3].x);
 
                 get_transform().can_have_moved = true;
             }
@@ -179,9 +126,8 @@ namespace raphEngine::objects
                     ImGui::PushID(i);
                     components_[i]->ImGuiPrint();
                     ImGui::PopID();
+                    ImGui::Separator();
                 }
-
-                ImGui::Separator();
 
                 if (ImGui::Button("Add component"))
                 {

@@ -35,7 +35,7 @@ namespace raphEngine::objects
 
         static std::vector<Transform*> root_childs;
 
-        void set_parent(Transform* parent);
+        void set_parent(Transform* parent, bool worldPositionStay = true);
         Transform* get_parent() const;
 
         void add_child(Transform* child);

@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include "editor/layout.hpp"
 
 namespace raphEngine
 {
@@ -43,13 +44,6 @@ namespace raphEngine
             Mouse::SetMouseVisibility(false);
             Mouse::SetMousePosition(MiddleScreen.x, MiddleScreen.y);
             lastMouseState = true;
-
-            Logger::LogDebug("\nW.x=", graphics::GraphicApi::viewport_res_x,
-                             "\nW.y=", graphics::GraphicApi::viewport_res_y,
-                             "\nV.x=", graphics::GraphicApi::window_res_x,
-                             "\nV.y=", graphics::GraphicApi::window_res_y,
-                             "\nP.x=", graphics::GraphicApi::viewport_pos_x,
-                             "\nP.y=", graphics::GraphicApi::viewport_pos_y);
         }
         else
         {
@@ -114,11 +108,11 @@ namespace raphEngine
         if (RayCast::FromMouseMeshes(&OutRayInfo))
         {
             Logger::LogInfo("Hit on ", OutRayInfo.hitObject->get_name());
-            OutRayInfo.hitObject->ImGui_select();
+            editor::Layout::SelectObject(OutRayInfo.hitObject);
         }
         else
         {
-            GameObject::ImGui_unselect();
+            editor::Layout::UnselectAll();
         }
     }
 

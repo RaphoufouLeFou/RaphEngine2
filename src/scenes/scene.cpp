@@ -53,7 +53,7 @@ namespace raphEngine
     Scene::~Scene()
     {
         destructing_ = true;
-        objects::Transform::root_childs.clear();
+        // objects::Transform::root_childs.clear();
     }
 
     bool Scene::is_valid()
@@ -75,28 +75,42 @@ namespace raphEngine
         try
         {
             file >> j;
+        }
+        catch (const std::exception& e)
+        {
+            Logger::LogError("Scene parse error: ", e.what());
+            return false;
+        }
 
+        try
+        {
             if (j.contains("SkyBox"))
             {
                 j.at("SkyBox").get_to(skybox_path_);
 
                 graphics::Skybox::getInstance()->set_hdr(skybox_path_);
             }
-            if (j.contains("Objects"))
+        }
+        catch (const std::exception& e)
+        {
+            Logger::LogError("SkyBox parse error: ", e.what());
+        }
+        if (j.contains("Objects"))
+        {
+            for (const auto& objJson : j.at("Objects"))
             {
-                for (const auto& objJson : j.at("Objects"))
+                try
                 {
                     auto obj = reflection::Factory<objects::GameObject>::create(
                         objJson.at("__object_type").get<std::string>());
                     obj->fromJson(objJson);
                     objects_.push_back(std::move(obj));
                 }
+                catch (const std::exception& e)
+                {
+                    Logger::LogError("Object parse error: ", e.what());
+                }
             }
-        }
-        catch (const std::exception& e)
-        {
-            Logger::LogError("Scene parse error: ", e.what());
-            return false;
         }
 
         return true;

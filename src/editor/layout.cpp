@@ -11,7 +11,7 @@ namespace raphEngine::editor
     {
         constexpr const char* kDragDropPayloadType = "RE2_HIERARCHY_GO";
         constexpr float kRootDropLeftWidthEms = 1.2f;
-        constexpr float kRootDropBottomHeightEms = 1.2f;
+        constexpr float kRootDropBottomMinHeightEms = 4.0f;
         const ImVec4 kRootDropTargetColor = ImVec4(0.30f, 0.70f, 1.00f, 0.90f);
     } // namespace
 
@@ -37,11 +37,11 @@ namespace raphEngine::editor
     {
         ImGuiTreeNodeFlags tree_node_flags = ImGuiTreeNodeFlags_SpanAvailWidth
             | ImGuiTreeNodeFlags_OpenOnArrow
-            | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+            | ImGuiTreeNodeFlags_OpenOnDoubleClick
+            | ImGuiTreeNodeFlags_DrawLinesFull;
         tree_node_flags |= ImGuiTreeNodeFlags_NavLeftJumpsToParent;
         if (go->get_transform().get_children().size() == 0)
-            tree_node_flags |=
-                ImGuiTreeNodeFlags_Bullet | ImGuiTreeNodeFlags_Leaf;
+            tree_node_flags |= ImGuiTreeNodeFlags_Leaf;
         if (selection_.count(go))
             tree_node_flags |= ImGuiTreeNodeFlags_Selected;
 
@@ -213,26 +213,23 @@ namespace raphEngine::editor
         }
     }
 
-    void Layout::handle_root_drop_left()
+    void Layout::handle_root_drop_left(float top_left_x, float top_left_y,
+                                       float height)
     {
-        const float margin_width = ImGui::GetFontSize() * kRootDropLeftWidthEms;
-        ImVec2 avail = ImGui::GetContentRegionAvail();
+        float margin_width = ImGui::GetFontSize() * kRootDropLeftWidthEms;
+        ImGui::SetCursorScreenPos(ImVec2(top_left_x, top_left_y));
         ImGui::InvisibleButton("##root_drop_left",
-                               ImVec2(margin_width, avail.y));
+                               ImVec2(margin_width, height));
         if (ImGui::BeginDragDropTarget())
         {
             queue_reparent_from_payload(nullptr);
             ImGui::EndDragDropTarget();
         }
-        ImGui::SameLine();
     }
 
-    void Layout::handle_root_drop_bottom(float width)
+    void Layout::handle_root_drop_bottom(float width, float height)
     {
-        const float margin_height =
-            ImGui::GetFontSize() * kRootDropBottomHeightEms;
-        ImGui::InvisibleButton("##root_drop_bottom",
-                               ImVec2(width, margin_height));
+        ImGui::InvisibleButton("##root_drop_bottom", ImVec2(width, height));
         if (ImGui::BeginDragDropTarget())
         {
             queue_reparent_from_payload(nullptr);
@@ -275,51 +272,50 @@ namespace raphEngine::editor
 
     void Layout::Update()
     {
-        ImGui::Begin("Layout", NULL, ImGuiChildFlags_FrameStyle);
+        ImGui::Begin("Layout");
         {
-            ImVec2 avail = ImGui::GetContentRegionAvail();
-            float bottom_height =
-                ImGui::GetFontSize() * kRootDropBottomHeightEms;
-            float spacing_y = ImGui::GetStyle().ItemSpacing.y;
-            float tree_height =
-                std::max(avail.y - bottom_height - spacing_y, 0.0f);
+            float margin_width = ImGui::GetFontSize() * kRootDropLeftWidthEms;
+            ImVec2 tree_top_left = ImGui::GetCursorScreenPos();
 
-            ImGui::BeginChild("##tree_area", ImVec2(avail.x, tree_height));
+            ImGui::Indent(margin_width);
+            ImGui::BeginGroup();
+
+            ImGuiMultiSelectFlags ms_flags = ImGuiMultiSelectFlags_ClearOnEscape
+                | ImGuiMultiSelectFlags_BoxSelect2d;
+            ImGuiMultiSelectIO* ms_io =
+                ImGui::BeginMultiSelect(ms_flags, (int)selection_.size(), -1);
+            apply_selection_requests(ms_io);
+
+            for (auto& t : objects::Transform::root_childs)
             {
-                handle_root_drop_left();
-
-                ImGui::BeginGroup();
-
-                ImGuiMultiSelectFlags ms_flags =
-                    ImGuiMultiSelectFlags_ClearOnEscape
-                    | ImGuiMultiSelectFlags_BoxSelect2d;
-                ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(
-                    ms_flags, (int)selection_.size(), -1);
-                apply_selection_requests(ms_io);
-
-                for (auto& t : objects::Transform::root_childs)
-                {
-                    go_update(t->parent_object);
-                }
-
-                ms_io = ImGui::EndMultiSelect();
-                bool had_requests = ms_io->Requests.Size > 0;
-                apply_selection_requests(ms_io);
-
-                if (had_requests)
-                {
-                    if (ms_io->NavIdSelected)
-                        selected_ = reinterpret_cast<objects::GameObject*>(
-                            static_cast<intptr_t>(ms_io->NavIdItem));
-
-                    reconcile_selected();
-                }
-
-                ImGui::EndGroup();
+                go_update(t->parent_object);
             }
-            ImGui::EndChild();
 
-            handle_root_drop_bottom(avail.x);
+            ms_io = ImGui::EndMultiSelect();
+            bool had_requests = ms_io->Requests.Size > 0;
+            apply_selection_requests(ms_io);
+
+            if (had_requests)
+            {
+                if (ms_io->NavIdSelected)
+                    selected_ = reinterpret_cast<objects::GameObject*>(
+                        static_cast<intptr_t>(ms_io->NavIdItem));
+
+                reconcile_selected();
+            }
+
+            ImGui::EndGroup();
+            float tree_bottom_y = ImGui::GetItemRectMax().y;
+            ImGui::Unindent(margin_width);
+
+            handle_root_drop_left(tree_top_left.x, tree_top_left.y,
+                                  tree_bottom_y - tree_top_left.y);
+
+            ImGui::SetCursorScreenPos(ImVec2(tree_top_left.x, tree_bottom_y));
+            ImVec2 avail = ImGui::GetContentRegionAvail();
+            float bottom_height = std::max(
+                avail.y, ImGui::GetFontSize() * kRootDropBottomMinHeightEms);
+            handle_root_drop_bottom(avail.x, bottom_height);
         }
         ImGui::End();
 

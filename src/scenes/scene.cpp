@@ -61,6 +61,16 @@ namespace raphEngine
         return valid_;
     }
 
+    objects::GameObject* Scene::find_uuid(const std::string& uuid)
+    {
+        for (const auto& go : get_objects())
+        {
+            if (Utils::compare_uuid(go->get_uuid(), uuid))
+                return go.get();
+        }
+        return nullptr;
+    }
+
     bool Scene::parse_file(fs::path path)
     {
         this->file_path_ = path;
@@ -104,6 +114,19 @@ namespace raphEngine
                     auto obj = reflection::Factory<objects::GameObject>::create(
                         objJson.at("__object_type").get<std::string>());
                     obj->fromJson(objJson);
+
+                    if (objJson.contains("parent_uuid"))
+                    {
+                        std::string parent_uuid;
+                        objJson.at("parent_uuid").get_to(parent_uuid);
+                        objects::GameObject* parent = find_uuid(parent_uuid);
+                        if (parent)
+                        {
+                            obj->get_transform().set_parent(
+                                &parent->get_transform(), false);
+                        }
+                    }
+
                     objects_.push_back(std::move(obj));
                 }
                 catch (const std::exception& e)
@@ -114,6 +137,19 @@ namespace raphEngine
         }
 
         return true;
+    }
+
+    void add_to_json(nlohmann::json& objectsJson, objects::GameObject* obj)
+    {
+        auto objJson = obj->toJson();
+        objJson["__object_type"] =
+            reflection::Factory<objects::GameObject>::nameOf(*obj);
+        objectsJson.push_back(objJson);
+
+        for (const auto& c : obj->get_transform().get_children())
+        {
+            add_to_json(objectsJson, c->parent_object);
+        }
     }
 
     bool Scene::save_to_file(const fs::path& path)
@@ -137,12 +173,9 @@ namespace raphEngine
         }
 
         nlohmann::json objectsJson = nlohmann::json::array();
-        for (const auto& obj : objects_)
+        for (const auto& obj : objects::Transform::root_childs)
         {
-            auto objJson = obj->toJson();
-            objJson["__object_type"] =
-                reflection::Factory<objects::GameObject>::nameOf(*obj);
-            objectsJson.push_back(objJson);
+            add_to_json(objectsJson, obj->parent_object);
         }
 
         nlohmann::json sc = {

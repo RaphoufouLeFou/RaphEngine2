@@ -28,8 +28,8 @@ namespace raphEngine
 
     protected:
         float fov_ = 60;
-        float nearPlane_ = .01f;
-        float farPlane_ = 5000.0f;
+        float nearPlane_ = .4f;
+        float farPlane_ = 2000.0f;
         glm::mat4 view_matrix_;
         glm::mat4 projection_matrix_;
 

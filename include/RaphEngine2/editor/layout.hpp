@@ -43,8 +43,9 @@ namespace raphEngine::editor
         find_topmost_selected_recursive(objects::GameObject* go);
 
         static void handle_drag_drop(objects::GameObject* go);
-        static void handle_root_drop_left();
-        static void handle_root_drop_bottom(float width);
+        static void handle_root_drop_left(float top_left_x, float top_left_y,
+                                          float height);
+        static void handle_root_drop_bottom(float width, float height);
         static void
         queue_reparent_from_payload(objects::GameObject* new_parent);
         static void reparent_to(objects::GameObject* obj,

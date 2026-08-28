@@ -50,6 +50,7 @@ namespace raphEngine::objects
 
         std::string& get_name();
         objects::Transform& get_transform();
+        const std::string& get_uuid();
 
         template <Comp T, class... Args>
         T* add_component(Args&&... args);
@@ -79,7 +80,10 @@ namespace raphEngine::objects
         void fromJson(const nlohmann::json& j);
 
         static GameObject* instanciate(const GameObject&);
+
         static GameObject* find(const std::string& name);
+        static GameObject* find_uuid(const std::string& uuid);
+
         static void destroy(GameObject&);
 
         GameObject& operator=(const GameObject&) = delete;

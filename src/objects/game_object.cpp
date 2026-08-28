@@ -105,6 +105,14 @@ namespace raphEngine::objects
             int id_const = id_;
             ImGui::InputInt("Id", &id_const);
             ImGui::LabelText("UUID", "%s", uuid_.c_str());
+            if (!get_transform().get_parent())
+                ImGui::LabelText("Parent name", "null");
+            else
+                ImGui::LabelText("Parent name", "%s",
+                                 get_transform()
+                                     .get_parent()
+                                     ->parent_object->get_name()
+                                     .c_str());
 
             ImGui::Separator();
 
@@ -219,6 +227,11 @@ namespace raphEngine::objects
         return name_;
     }
 
+    const std::string& GameObject::get_uuid()
+    {
+        return uuid_;
+    }
+
     objects::Transform& GameObject::get_transform()
     {
         return transform_;
@@ -238,6 +251,26 @@ namespace raphEngine::objects
         return nullptr;
     }
 
+    GameObject* GameObject::find_uuid(const std::string& uuid)
+    {
+        Logger::LogDebug("looking for UUID of ", uuid, " there is ",
+                         SceneManager::get_active_scene()->get_objects().size(),
+                         " objects");
+        if (SceneManager::get_active_scene())
+        {
+            for (const auto& go :
+                 SceneManager::get_active_scene()->get_objects())
+            {
+                Logger::LogDebug(
+                    "Compairing UUID of ", go->uuid_, " vs ", uuid,
+                    " res: ", Utils::compare_uuid(go->uuid_, uuid));
+                if (Utils::compare_uuid(go->uuid_, uuid))
+                    return go.get();
+            }
+        }
+        return nullptr;
+    }
+
     void GameObject::add_component(std::unique_ptr<component::Component> c)
     {
         Logger::LogDebug("adding ", c->get_name());
@@ -251,6 +284,11 @@ namespace raphEngine::objects
         nlohmann::json j = reflection::toJson(*this);
         j["transform_"] = transform_;
         j["components_"] = components_;
+        if (transform_.parent_)
+        {
+            j["parent_uuid"] =
+                transform_.get_parent()->parent_object->get_uuid();
+        }
         return j;
     }
 
@@ -282,6 +320,8 @@ namespace raphEngine::objects
                 add_component(std::move(ptr));
             }
         }
+
+        // TODO: Move this inside scene.cpp
     }
 
 } // namespace raphEngine::objects

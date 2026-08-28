@@ -26,6 +26,7 @@ namespace raphEngine
     private:
         bool parse_file(fs::path path);
         bool save_to_file(const fs::path& path = "");
+        objects::GameObject* find_uuid(const std::string& uuid);
 
         void Imgui_update();
 

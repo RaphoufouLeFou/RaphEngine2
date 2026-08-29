@@ -29,7 +29,7 @@ namespace raphEngine::reflection
         static std::unordered_map<std::type_index, TypeInfo>& registry();
 
         template <typename Derived, typename T>
-        static void addField(const std::string& name, T Derived::*member)
+        static void addField(const std::string& name, T Derived::* member)
         {
             registry()[typeid(Derived)].fields.push_back(FieldInfo{
                 [member, name](const void* obj, nlohmann::json& j) {
@@ -101,7 +101,9 @@ namespace raphEngine::reflection
 
         static std::unique_ptr<Base> create(const std::string& name)
         {
-            return registry().at(name)();
+            if (registry().contains(name))
+                return registry().at(name)();
+            return nullptr;
         }
 
         static const std::string& nameOf(const Base& obj)

@@ -1,123 +1,5 @@
 #pragma once
 
-inline const char* default_shadow_vs_shader = R"(
-#version 410 core
-
-layout(location = 0) in vec3 aPos;
-layout(location = 2) in vec2 aTexCoords;
-
-out vec2 TexCoords;
-
-uniform mat4 lightSpaceMatrix;
-uniform mat4 model;
-
-void main()
-{
-    TexCoords = aTexCoords;
-    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
-}
-
-)";
-
-inline const char* skybox_vs_shader = R"(
-#version 410 core
-layout(location = 0) in vec3 aPos;
-
-out vec3 TexCoords;
-
-uniform mat4 projection;
-uniform mat4 view;
-
-void main()
-{
-    TexCoords = aPos;
-    vec4 pos = projection * view * vec4(aPos, 1.0);
-    gl_Position = pos.xyww;
-}
-
-)";
-
-inline const char* debug_cascade_fs_shader = R"(
-#version 410 core
-out vec4 FragColor;
-
-uniform vec4 color;
-
-void main()
-{             
-    FragColor = color;
-}
-
-)";
-
-inline const char* outline_mask_vs_shader = R"(
-#version 410 core
-
-layout(location = 0) in vec3 aPos;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-void main()
-{
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-}
-
-)";
-
-inline const char* default_shadow_gs_shader = R"(
-#version 410 core
-
-layout(triangles, invocations = 5) in;
-layout(triangle_strip, max_vertices = 3) out;
-
-layout (std140) uniform LightSpaceMatrices
-{
-    mat4 lightSpaceMatrices[16];
-};
-/*
-uniform mat4 lightSpaceMatrices[16];
-*/
-
-void main()
-{          
-	for (int i = 0; i < 3; ++i)
-	{
-		gl_Position = lightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
-		gl_Layer = gl_InvocationID;
-		EmitVertex();
-	}
-	EndPrimitive();
-}  
-
-)";
-
-inline const char* equirect_to_cubemap_fs_shader = R"(
-#version 410 core
-out vec4 FragColor;
-in vec3 localPos;
-
-uniform sampler2D equirectangularMap;
-
-const vec2 invAtan = vec2(0.1591, 0.3183);
-vec2 SampleSphericalMap(vec3 v)
-{
-    vec2 uv = vec2(atan(v.y, v.x), asin(v.z));
-    uv *= invAtan;
-    uv += 0.5;
-    uv.y = 1.0 - uv.y;
-    return uv;
-}
-
-void main()
-{
-    vec2 uv = SampleSphericalMap(normalize(localPos));
-    FragColor = vec4(texture(equirectangularMap, uv).rgb, 1.0);
-}
-
-)";
-
 inline const char* brdf_lut_fs_shader = R"(
 #version 410 core
 
@@ -223,31 +105,74 @@ void main()
 
 )";
 
-inline const char* default_shadow_fs_shader = R"(
+inline const char* cubemap_capture_vs_shader = R"(
 #version 410 core
+layout(location = 0) in vec3 aPos;
 
-in vec2 TexCoords;
+uniform mat4 projection;
+uniform mat4 view;
 
-uniform bool alphaMask;
-uniform float alphaCutoff;
-uniform bool HaveTexture;
-uniform bool HaveOpacityMap;
-uniform sampler2D texture_diffuse;
-uniform sampler2D texture_opacity;
+out vec3 localPos;
 
 void main()
 {
-    if (alphaMask)
-    {
-        float alpha = HaveOpacityMap
-            ? texture(texture_opacity, TexCoords).r
-            : (HaveTexture ? texture(texture_diffuse, TexCoords).a : 1.0);
-
-        if (alpha < alphaCutoff)
-            discard;
-    }
+    localPos = aPos;
+    gl_Position = projection * view * vec4(localPos, 1.0);
 }
 
+)";
+
+inline const char* debug_cascade_fs_shader = R"(
+#version 410 core
+out vec4 FragColor;
+
+uniform vec4 color;
+
+void main()
+{             
+    FragColor = color;
+}
+
+)";
+
+inline const char* debug_cascade_vs_shader = R"(
+#version 410 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * vec4(aPos, 1.0);
+}
+
+)";
+
+inline const char* debug_line_fs_shader = R"(
+#version 330 core
+
+out vec4 FragColor;
+
+uniform vec3 u_Color;
+
+void main()
+{
+    FragColor = vec4(u_Color, 1.0);
+}
+)";
+
+inline const char* debug_line_vs_shader = R"(
+#version 330 core
+
+layout(location = 0) in vec3 aPos;
+
+uniform mat4 u_MVP;
+
+void main()
+{
+    gl_Position = u_MVP * vec4(aPos, 1.0);
+}
 )";
 
 inline const char* default_fs_shader = R"(
@@ -545,6 +470,25 @@ void main()
 
 )";
 
+inline const char* default_instanced_shadow_vs_shader = R"(
+#version 410 core
+
+layout(location = 0) in vec3 aPos;
+layout(location = 2) in vec2 aTexCoords;
+layout(location = 5) in mat4 instanceModel;
+
+out vec2 TexCoords;
+
+uniform mat4 lightSpaceMatrix;
+
+void main()
+{
+    TexCoords = aTexCoords;
+    gl_Position = lightSpaceMatrix * instanceModel * vec4(aPos, 1.0);
+}
+
+)";
+
 inline const char* default_instanced_vs_shader = R"(
 #version 410 core
 
@@ -597,62 +541,75 @@ void main()
 }
 )";
 
-inline const char* debug_line_fs_shader = R"(
-#version 330 core
-
-out vec4 FragColor;
-
-uniform vec3 u_Color;
-
-void main()
-{
-    FragColor = vec4(u_Color, 1.0);
-}
-)";
-
-inline const char* cubemap_capture_vs_shader = R"(
-#version 410 core
-layout(location = 0) in vec3 aPos;
-
-uniform mat4 projection;
-uniform mat4 view;
-
-out vec3 localPos;
-
-void main()
-{
-    localPos = aPos;
-    gl_Position = projection * view * vec4(localPos, 1.0);
-}
-
-)";
-
-inline const char* outline_dilate_h_fs_shader = R"(
+inline const char* default_shadow_fs_shader = R"(
 #version 410 core
 
-in vec2 TexCoord;
-out vec2 FragColor;
+in vec2 TexCoords;
 
-uniform sampler2D maskTex;
-uniform sampler2D depthTex;
-uniform int radius;
-uniform vec2 texelSize;
+uniform bool alphaMask;
+uniform float alphaCutoff;
+uniform bool HaveTexture;
+uniform bool HaveOpacityMap;
+uniform sampler2D texture_diffuse;
+uniform sampler2D texture_opacity;
 
 void main()
 {
-    float coverage = 0.0;
-    float nearestDepth = 1.0;
-    for (int i = -radius; i <= radius; i++)
+    if (alphaMask)
     {
-        vec2 uv = TexCoord + vec2(texelSize.x * float(i), 0.0);
-        float c = texture(maskTex, uv).r;
-        if (c > 0.5)
-        {
-            coverage = 1.0;
-            nearestDepth = min(nearestDepth, texture(depthTex, uv).r);
-        }
+        float alpha = HaveOpacityMap
+            ? texture(texture_opacity, TexCoords).r
+            : (HaveTexture ? texture(texture_diffuse, TexCoords).a : 1.0);
+
+        if (alpha < alphaCutoff)
+            discard;
     }
-    FragColor = vec2(coverage, nearestDepth);
+}
+
+)";
+
+inline const char* default_shadow_gs_shader = R"(
+#version 410 core
+
+layout(triangles, invocations = 5) in;
+layout(triangle_strip, max_vertices = 3) out;
+
+layout (std140) uniform LightSpaceMatrices
+{
+    mat4 lightSpaceMatrices[16];
+};
+/*
+uniform mat4 lightSpaceMatrices[16];
+*/
+
+void main()
+{          
+	for (int i = 0; i < 3; ++i)
+	{
+		gl_Position = lightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
+		gl_Layer = gl_InvocationID;
+		EmitVertex();
+	}
+	EndPrimitive();
+}  
+
+)";
+
+inline const char* default_shadow_vs_shader = R"(
+#version 410 core
+
+layout(location = 0) in vec3 aPos;
+layout(location = 2) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+
+uniform mat4 lightSpaceMatrix;
+uniform mat4 model;
+
+void main()
+{
+    TexCoords = aTexCoords;
+    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
 }
 
 )";
@@ -710,32 +667,112 @@ void main()
 
 )";
 
-inline const char* default_instanced_shadow_vs_shader = R"(
+inline const char* equirect_to_cubemap_fs_shader = R"(
 #version 410 core
+out vec4 FragColor;
+in vec3 localPos;
 
-layout(location = 0) in vec3 aPos;
-layout(location = 2) in vec2 aTexCoords;
-layout(location = 5) in mat4 instanceModel;
+uniform sampler2D equirectangularMap;
 
-out vec2 TexCoords;
-
-uniform mat4 lightSpaceMatrix;
+const vec2 invAtan = vec2(0.1591, 0.3183);
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.y, v.x), asin(v.z));
+    uv *= invAtan;
+    uv += 0.5;
+    uv.y = 1.0 - uv.y;
+    return uv;
+}
 
 void main()
 {
-    TexCoords = aTexCoords;
-    gl_Position = lightSpaceMatrix * instanceModel * vec4(aPos, 1.0);
+    vec2 uv = SampleSphericalMap(normalize(localPos));
+    FragColor = vec4(texture(equirectangularMap, uv).rgb, 1.0);
 }
 
 )";
 
-inline const char* outline_mask_fs_shader = R"(
+inline const char* fullscreen_triangle_vs_shader = R"(
 #version 410 core
 
-layout(location = 0) out float FragColor;
+out vec2 TexCoord;
 void main()
 {
-    FragColor = 1.0;
+    vec2 pos = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);
+    TexCoord = pos;
+    gl_Position = vec4(pos * 2.0 - 1.0, 0.0, 1.0);
+}
+
+)";
+
+inline const char* irradiance_convolution_fs_shader = R"(
+#version 410 core
+out vec4 FragColor;
+in vec3 localPos;
+
+uniform samplerCube environmentMap;
+
+const float PI = 3.14159265359;
+
+void main()
+{
+    vec3 N = normalize(localPos);
+
+    vec3 irradiance = vec3(0.0);
+
+    vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 right = normalize(cross(up, N));
+    up = normalize(cross(N, right));
+
+    float sampleDelta = 0.025;
+    float nrSamples = 0.0;
+    for (float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)
+    {
+        for (float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta)
+        {
+            vec3 tangentSample =
+                vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+            vec3 sampleVec = tangentSample.x * right + tangentSample.y * up
+                + tangentSample.z * N;
+
+            irradiance += texture(environmentMap, sampleVec).rgb * cos(theta)
+                * sin(theta);
+            nrSamples++;
+        }
+    }
+    irradiance = PI * irradiance * (1.0 / nrSamples);
+
+    FragColor = vec4(irradiance, 1.0);
+}
+
+)";
+
+inline const char* outline_dilate_h_fs_shader = R"(
+#version 410 core
+
+in vec2 TexCoord;
+out vec2 FragColor;
+
+uniform sampler2D maskTex;
+uniform sampler2D depthTex;
+uniform int radius;
+uniform vec2 texelSize;
+
+void main()
+{
+    float coverage = 0.0;
+    float nearestDepth = 1.0;
+    for (int i = -radius; i <= radius; i++)
+    {
+        vec2 uv = TexCoord + vec2(texelSize.x * float(i), 0.0);
+        float c = texture(maskTex, uv).r;
+        if (c > 0.5)
+        {
+            coverage = 1.0;
+            nearestDepth = min(nearestDepth, texture(depthTex, uv).r);
+        }
+    }
+    FragColor = vec2(coverage, nearestDepth);
 }
 
 )";
@@ -795,51 +832,31 @@ void main()
 
 )";
 
-inline const char* skybox_fs_shader = R"(
+inline const char* outline_mask_fs_shader = R"(
 #version 410 core
-out vec4 FragColor;
-in vec3 TexCoords;
 
-uniform samplerCube skybox;
-uniform float exposure;
-
+layout(location = 0) out float FragColor;
 void main()
 {
-    vec3 hdrColor = texture(skybox, TexCoords).rgb;
-
-    vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
-
-    mapped = pow(mapped, vec3(1.0 / 2.2));
-
-    FragColor = vec4(mapped, 1.0);
+    FragColor = 1.0;
 }
 
 )";
 
-inline const char* fullscreen_triangle_vs_shader = R"(
+inline const char* outline_mask_vs_shader = R"(
 #version 410 core
-
-out vec2 TexCoord;
-void main()
-{
-    vec2 pos = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);
-    TexCoord = pos;
-    gl_Position = vec4(pos * 2.0 - 1.0, 0.0, 1.0);
-}
-
-)";
-
-inline const char* debug_line_vs_shader = R"(
-#version 330 core
 
 layout(location = 0) in vec3 aPos;
 
-uniform mat4 u_MVP;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main()
 {
-    gl_Position = u_MVP * vec4(aPos, 1.0);
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
+
 )";
 
 inline const char* prefilter_convolution_fs_shader = R"(
@@ -921,58 +938,41 @@ void main()
 
 )";
 
-inline const char* irradiance_convolution_fs_shader = R"(
+inline const char* skybox_fs_shader = R"(
 #version 410 core
 out vec4 FragColor;
-in vec3 localPos;
+in vec3 TexCoords;
 
-uniform samplerCube environmentMap;
-
-const float PI = 3.14159265359;
+uniform samplerCube skybox;
+uniform float exposure;
 
 void main()
 {
-    vec3 N = normalize(localPos);
+    vec3 hdrColor = texture(skybox, TexCoords).rgb;
 
-    vec3 irradiance = vec3(0.0);
+    vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
 
-    vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 right = normalize(cross(up, N));
-    up = normalize(cross(N, right));
+    mapped = pow(mapped, vec3(1.0 / 2.2));
 
-    float sampleDelta = 0.025;
-    float nrSamples = 0.0;
-    for (float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)
-    {
-        for (float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta)
-        {
-            vec3 tangentSample =
-                vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
-            vec3 sampleVec = tangentSample.x * right + tangentSample.y * up
-                + tangentSample.z * N;
-
-            irradiance += texture(environmentMap, sampleVec).rgb * cos(theta)
-                * sin(theta);
-            nrSamples++;
-        }
-    }
-    irradiance = PI * irradiance * (1.0 / nrSamples);
-
-    FragColor = vec4(irradiance, 1.0);
+    FragColor = vec4(mapped, 1.0);
 }
 
 )";
 
-inline const char* debug_cascade_vs_shader = R"(
+inline const char* skybox_vs_shader = R"(
 #version 410 core
-layout (location = 0) in vec3 aPos;
+layout(location = 0) in vec3 aPos;
 
-uniform mat4 view;
+out vec3 TexCoords;
+
 uniform mat4 projection;
+uniform mat4 view;
 
 void main()
 {
-    gl_Position = projection * view * vec4(aPos, 1.0);
+    TexCoords = aPos;
+    vec4 pos = projection * view * vec4(aPos, 1.0);
+    gl_Position = pos.xyww;
 }
 
 )";

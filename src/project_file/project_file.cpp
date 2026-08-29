@@ -50,7 +50,7 @@ namespace raphEngine
 
     bool Project::parse_project_file(const fs::path& path)
     {
-        auto p = open_project_file(std::string(path));
+        auto p = open_project_file(path.string());
         if (!p.has_value())
         {
             return false;
@@ -59,7 +59,7 @@ namespace raphEngine
         // std::filesystem::current_path(path.parent_path());
         auto j = p.value();
 
-        Project::path = expand_home(path);
+        Project::path = expand_home(path.string());
         if (j.contains("Name"))
             j.at("Name").get_to(name);
         if (j.contains("SettingFileName"))

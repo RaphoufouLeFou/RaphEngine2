@@ -38,9 +38,9 @@ namespace raphEngine::component
     {
         if (ImGui::TreeNode(get_name().c_str()))
         {
-            ImGui::DragFloat("FOV", &fov_, 1);
-            ImGui::DragFloat("Far plane", &farPlane_, 1);
-            ImGui::DragFloat("Near Plane", &nearPlane_, 0.01);
+            ImGui::DragFloat("FOV", &fov_, 1.f);
+            ImGui::DragFloat("Far plane", &farPlane_, 1.f);
+            ImGui::DragFloat("Near Plane", &nearPlane_, 0.01f);
             ImGui::TreePop();
         }
     }

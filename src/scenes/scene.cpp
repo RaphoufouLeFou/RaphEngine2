@@ -98,7 +98,7 @@ namespace raphEngine
             {
                 j.at("SkyBox").get_to(skybox_path_);
 
-                graphics::Skybox::getInstance()->set_hdr(skybox_path_);
+                graphics::Skybox::getInstance()->set_hdr(skybox_path_.string());
             }
         }
         catch (const std::exception& e)
@@ -111,8 +111,16 @@ namespace raphEngine
             {
                 try
                 {
+                    auto type_name =
+                        objJson.at("__object_type").get<std::string>();
                     auto obj = reflection::Factory<objects::GameObject>::create(
-                        objJson.at("__object_type").get<std::string>());
+                        type_name);
+                    if (!obj)
+                    {
+                        Logger::LogError("Could not find object of type ",
+                                         type_name);
+                        continue;
+                    }
                     obj->fromJson(objJson);
 
                     if (objJson.contains("parent_uuid"))
@@ -131,7 +139,7 @@ namespace raphEngine
                 }
                 catch (const std::exception& e)
                 {
-                    Logger::LogError("Object parse error: ", e.what());
+                    Logger::LogFatal("Object parse error: ", e.what());
                 }
             }
         }

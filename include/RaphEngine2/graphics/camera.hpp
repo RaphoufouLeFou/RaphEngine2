@@ -1,11 +1,12 @@
 #pragma once
 
+#include <RaphEngine2/export.hpp>
 #include <RaphEngine2/RaphEngine2.hpp>
 #include <RaphEngine2/component/mesh_component.hpp>
 
 namespace raphEngine
 {
-    class Camera
+    class RAPHENGINE_API Camera
     {
     public:
         Camera()

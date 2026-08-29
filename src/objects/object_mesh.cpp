@@ -45,7 +45,7 @@ namespace raphEngine::objects
         cast_shadow_ = cast_shadow;
         outline_ = outline;
         Logger::LogDebug("loading new mesh for ", parent_object->get_name());
-        loadModel(this, info.mesh_path, info.bilinear);
+        loadModel(this, info.mesh_path.string(), info.bilinear);
     }
 
     void ObjectMesh::add_mesh(std::unique_ptr<Mesh> mesh)

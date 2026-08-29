@@ -17,6 +17,9 @@ namespace raphEngine
         Scene(fs::path path);
         ~Scene();
 
+        Scene(const Scene&) = delete;
+        Scene& operator=(const Scene&) = delete;
+
         bool is_valid();
 
         bool remove_gameobject(objects::GameObject*);

@@ -46,7 +46,12 @@ namespace raphEngine::objects
             DIFFUSE,
             SPECULAR,
             NORMAL,
-            HEIGHT
+            HEIGHT,
+            METALLIC,
+            ROUGHNESS,
+            AO,
+            EMISSIVE,
+            OPACITY
         };
         unsigned int id;
         TextureType type;

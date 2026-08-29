@@ -3,7 +3,6 @@
 #include <RaphEngine2/graphics/shader.hpp>
 #include <RaphEngine2/objects/transform.hpp>
 #include <RaphEngine2/objects/game_object.hpp>
-#include "graphics/graphic_api.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <RaphEngine2/logger/logger.hpp>

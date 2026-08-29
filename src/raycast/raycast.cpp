@@ -5,15 +5,18 @@
 #include <algorithm>
 #include <objects/game_object.hpp>
 #include "RaphEngine2/raycast/raycast.hpp"
-#include "component/camera_component.hpp"
+#include "graphics/camera.hpp"
 #include "component/collider_component.hpp"
-#include "graphics/debug.hpp"
 #include "graphics/graphic_api.hpp"
 #include "inputs/mouse.hpp"
 #include "logger/logger.hpp"
 #include "scenes/scene_manager.hpp"
 #include "time_utils.hpp"
 #include "utils.hpp"
+
+#if RAYCAST_DEBUG
+#    include "graphics/debug.hpp"
+#endif
 
 #if defined(__AVX2__)
 #    include <immintrin.h>

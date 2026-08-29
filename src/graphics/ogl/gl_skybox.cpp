@@ -9,10 +9,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "default_shaders.hpp"
 #include <memory>
-#include <sstream>
 #include <string>
 
-#include "component/camera_component.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/graphic_api.hpp"
 #include "graphics/ogl/gl_shader.hpp"
 #include "graphics/shader.hpp"
@@ -73,6 +72,137 @@ namespace raphEngine::graphics::ogl
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
                                   (void*)0);
             glBindVertexArray(0);
+        }
+
+        constexpr unsigned int kBrdfLutSize = 512;
+
+        void GeneratePrefilterMap(unsigned int environment_map,
+                                  unsigned int& prefilter_map,
+                                  unsigned int skybox_vao,
+                                  unsigned int capture_fbo,
+                                  unsigned int capture_rbo)
+        {
+            if (prefilter_map != 0)
+                glDeleteTextures(1, &prefilter_map);
+
+            glGenTextures(1, &prefilter_map);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter_map);
+            for (unsigned int i = 0; i < 6; i++)
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
+                             GL_Skybox::kPrefilterBaseSize,
+                             GL_Skybox::kPrefilterBaseSize, 0, GL_RGB, GL_FLOAT,
+                             nullptr);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S,
+                            GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T,
+                            GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R,
+                            GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
+                            GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER,
+                            GL_LINEAR);
+            // Allocates storage for the full mip chain (box-filtered
+            // placeholder content) — every level we care about (0..4) gets
+            // overwritten by the GGX render passes below.
+            glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL,
+                            GL_Skybox::kPrefilterMipLevels - 1);
+
+            auto prefilter_shader = Shader::loadShader(
+                cubemap_capture_vs_shader, prefilter_convolution_fs_shader);
+            const GlShader* pf =
+                dynamic_cast<const GlShader*>(prefilter_shader.get());
+
+            pf->use();
+            pf->setValue("environmentMap", 0);
+            pf->setValue("projection", kCaptureProjection);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, environment_map);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, capture_fbo);
+            glBindVertexArray(skybox_vao);
+
+            for (unsigned int mip = 0; mip < GL_Skybox::kPrefilterMipLevels;
+                 mip++)
+            {
+                unsigned int mipSize = GL_Skybox::kPrefilterBaseSize >> mip;
+                glBindRenderbuffer(GL_RENDERBUFFER, capture_rbo);
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+                                      mipSize, mipSize);
+                glViewport(0, 0, mipSize, mipSize);
+
+                float roughness =
+                    float(mip) / float(GL_Skybox::kPrefilterMipLevels - 1);
+                pf->setValue("roughness", roughness);
+
+                for (unsigned int face = 0; face < 6; face++)
+                {
+                    pf->setValue("view", kCaptureViews[face]);
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                           GL_TEXTURE_CUBE_MAP_POSITIVE_X
+                                               + face,
+                                           prefilter_map, mip);
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    glDrawArrays(GL_TRIANGLES, 0, 36);
+                }
+            }
+
+            glBindVertexArray(0);
+        }
+
+        void GenerateBRDFLUT(unsigned int& brdf_lut)
+        {
+            if (brdf_lut != 0)
+                return; // universal constant — cook once, reuse forever
+
+            glGenTextures(1, &brdf_lut);
+            glBindTexture(GL_TEXTURE_2D, brdf_lut);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, kBrdfLutSize, kBrdfLutSize,
+                         0, GL_RG, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            unsigned int fbo, rbo;
+            glGenFramebuffers(1, &fbo);
+            glGenRenderbuffers(1, &rbo);
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+            glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+                                  kBrdfLutSize, kBrdfLutSize);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                      GL_RENDERBUFFER, rbo);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                   GL_TEXTURE_2D, brdf_lut, 0);
+
+            int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+            if (status != GL_FRAMEBUFFER_COMPLETE)
+                Logger::LogWarning(
+                    "BRDF LUT framebuffer is not complete! Status: ", status);
+
+            glViewport(0, 0, kBrdfLutSize, kBrdfLutSize);
+
+            auto brdf_shader = Shader::loadShader(fullscreen_triangle_vs_shader,
+                                                  brdf_lut_fs_shader);
+            brdf_shader->use();
+
+            // fullscreen_triangle_vs_shader reads no vertex attributes, but
+            // core profile still requires a bound VAO for glDrawArrays.
+            unsigned int dummy_vao;
+            glGenVertexArrays(1, &dummy_vao);
+            glBindVertexArray(dummy_vao);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+
+            glBindVertexArray(0);
+            glDeleteVertexArrays(1, &dummy_vao);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDeleteFramebuffers(1, &fbo);
+            glDeleteRenderbuffers(1, &rbo);
         }
     } // namespace
 
@@ -219,6 +349,9 @@ namespace raphEngine::graphics::ogl
                 glDrawArrays(GL_TRIANGLES, 0, 36);
             }
         }
+        GeneratePrefilterMap(cube_map_buffer_, prefilter_map_, skybox_vao_,
+                             capture_fbo, capture_rbo);
+        GenerateBRDFLUT(brdf_lut_);
 
         glBindVertexArray(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

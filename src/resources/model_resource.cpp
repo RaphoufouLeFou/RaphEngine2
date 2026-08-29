@@ -3,6 +3,8 @@
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
+#include <assimp/material.h>
+#include <assimp/GltfMaterial.h>
 #include <assimp/scene.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdlib>
@@ -51,6 +53,32 @@ namespace raphEngine::resources
             }
 
             return raw;
+        }
+
+        void readPbrMaterialProperties(aiMaterial* mat, SubmeshData& data)
+        {
+            // Every read is gated on AI_SUCCESS so an older/non-PBR material
+            // (typical FBX) just keeps SubmeshData's sane defaults.
+            float metallic = data.metallic_factor;
+            if (mat->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS)
+                data.metallic_factor = metallic;
+
+            float roughness = data.roughness_factor;
+            if (mat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS)
+                data.roughness_factor = roughness;
+
+            aiColor3D emissive(0.0f, 0.0f, 0.0f);
+            if (mat->Get(AI_MATKEY_COLOR_EMISSIVE, emissive) == AI_SUCCESS)
+                data.emissive_factor =
+                    glm::vec3(emissive.r, emissive.g, emissive.b);
+
+            aiString alphaMode;
+            if (mat->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode) == AI_SUCCESS)
+                data.alpha_mask = (std::strcmp(alphaMode.C_Str(), "MASK") == 0);
+
+            float cutoff = data.alpha_cutoff;
+            if (mat->Get(AI_MATKEY_GLTF_ALPHACUTOFF, cutoff) == AI_SUCCESS)
+                data.alpha_cutoff = cutoff;
         }
 
         std::vector<objects::Texture> loadMaterialTextures(
@@ -139,12 +167,11 @@ namespace raphEngine::resources
                 { aiTextureType_SPECULAR, "SPECULAR" },
                 { aiTextureType_NORMALS, "NORMALS" },
                 { aiTextureType_HEIGHT, "HEIGHT" },
-                { aiTextureType_METALNESS, "METALNESS (unused by the engine)" },
-                { aiTextureType_DIFFUSE_ROUGHNESS,
-                  "DIFFUSE_ROUGHNESS (unused by the engine)" },
-                { aiTextureType_EMISSIVE, "EMISSIVE (unused by the engine)" },
-                { aiTextureType_AMBIENT_OCCLUSION,
-                  "AMBIENT_OCCLUSION (unused by the engine)" },
+                { aiTextureType_METALNESS, "METALNESS" },
+                { aiTextureType_DIFFUSE_ROUGHNESS, "DIFFUSE_ROUGHNESS" },
+                { aiTextureType_EMISSIVE, "EMISSIVE" },
+                { aiTextureType_AMBIENT_OCCLUSION, "AMBIENT_OCCLUSION" },
+                { aiTextureType_OPACITY, "OPACITY" },
             };
             for (const auto& [type, name] : kTypes)
             {
@@ -204,6 +231,8 @@ namespace raphEngine::resources
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
             logMaterialTextureTypes(material);
 
+            readPbrMaterialProperties(material, data);
+
             if (!data.vertices.empty())
             {
                 data.bounds_min = data.bounds_max = data.vertices[0].position;
@@ -241,6 +270,48 @@ namespace raphEngine::resources
                 objects::Texture::HEIGHT, filter);
             data.textures.insert(data.textures.end(), heightMaps.begin(),
                                  heightMaps.end());
+
+            auto metallicMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_METALNESS,
+                objects::Texture::METALLIC, filter);
+            data.textures.insert(data.textures.end(), metallicMaps.begin(),
+                                 metallicMaps.end());
+
+            auto roughnessMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_DIFFUSE_ROUGHNESS,
+                objects::Texture::ROUGHNESS, filter);
+            data.textures.insert(data.textures.end(), roughnessMaps.begin(),
+                                 roughnessMaps.end());
+
+            if (!metallicMaps.empty() && !roughnessMaps.empty()
+                && metallicMaps[0].path == roughnessMaps[0].path)
+            {
+                data.metallic_roughness_packed = true;
+            }
+
+            auto aoMaps = loadMaterialTextures(model_path, scene, material,
+                                               aiTextureType_AMBIENT_OCCLUSION,
+                                               objects::Texture::AO, filter);
+            data.textures.insert(data.textures.end(), aoMaps.begin(),
+                                 aoMaps.end());
+
+            auto emissiveMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_EMISSIVE,
+                objects::Texture::EMISSIVE, filter);
+            data.textures.insert(data.textures.end(), emissiveMaps.begin(),
+                                 emissiveMaps.end());
+
+            if (!emissiveMaps.empty()
+                && data.emissive_factor == glm::vec3(0.0f))
+            {
+                data.emissive_factor = glm::vec3(1.0f);
+            }
+
+            auto opacityMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_OPACITY,
+                objects::Texture::OPACITY, filter);
+            data.textures.insert(data.textures.end(), opacityMaps.begin(),
+                                 opacityMaps.end());
 
             out.push_back(std::move(data));
         }
@@ -314,6 +385,7 @@ namespace raphEngine::resources
                 processNode(model_path, out, node->mChildren[i], scene, filter,
                             import_correction);
         }
+
     } // anonymous namespace
 
     std::unordered_map<std::string, std::weak_ptr<ModelResource>>

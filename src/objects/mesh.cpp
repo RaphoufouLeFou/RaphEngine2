@@ -1,5 +1,6 @@
 #include "objects/mesh.hpp"
 #include <algorithm>
+#include <cstring>
 
 #include "graphics/mesh_renderer.hpp"
 #include "graphics/shadow_renderer.hpp"
@@ -115,6 +116,23 @@ namespace raphEngine::objects
         uint64_t h = 0;
         for (auto& tex : get_textures())
             h = h * 1099511628211ull ^ static_cast<uint64_t>(tex.id);
+
+        auto foldFloat = [&h](float f) {
+            uint32_t bits;
+            std::memcpy(&bits, &f, sizeof(bits));
+            h = h * 1099511628211ull ^ static_cast<uint64_t>(bits);
+        };
+
+        foldFloat(data_->metallic_factor);
+        foldFloat(data_->roughness_factor);
+        foldFloat(data_->emissive_factor.x);
+        foldFloat(data_->emissive_factor.y);
+        foldFloat(data_->emissive_factor.z);
+        foldFloat(data_->alpha_cutoff);
+        h = h * 1099511628211ull ^ static_cast<uint64_t>(data_->alpha_mask);
+        h = h * 1099511628211ull
+            ^ static_cast<uint64_t>(data_->metallic_roughness_packed);
+
         return h;
     }
 

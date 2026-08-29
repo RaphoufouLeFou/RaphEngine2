@@ -20,6 +20,10 @@ namespace raphEngine::graphics
             GLMeshBuffers* buffers;
             unsigned int index_count;
             size_t instance_count;
+            bool alpha_mask = false;
+            float alpha_cutoff = 0.5f;
+            unsigned int diffuse_tex_id = 0;
+            unsigned int opacity_tex_id = 0;
         };
 
         GLShadowRenderer();

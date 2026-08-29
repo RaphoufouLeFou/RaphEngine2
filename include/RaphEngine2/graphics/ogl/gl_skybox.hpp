@@ -22,6 +22,14 @@ namespace raphEngine::graphics::ogl
         {
             return irradiance_map_;
         }
+        unsigned int get_prefilter_map() const
+        {
+            return prefilter_map_;
+        }
+        unsigned int get_brdf_lut() const
+        {
+            return brdf_lut_;
+        }
 
         void set_ambient_intensity(float a)
         {
@@ -42,19 +50,27 @@ namespace raphEngine::graphics::ogl
         }
         bool is_loaded() const
         {
-            return cube_map_buffer_ != 0 && irradiance_map_ != 0;
+            return cube_map_buffer_ != 0 && irradiance_map_ != 0
+                && prefilter_map_ != 0;
         }
 
         static constexpr float kMaxReflectionLod = 10.0f;
 
+        static constexpr unsigned int kPrefilterBaseSize = 128;
+        static constexpr unsigned int kPrefilterMipLevels = 5;
+        static constexpr float kMaxPrefilterLod =
+            float(kPrefilterMipLevels - 1);
+
     private:
         unsigned int cube_map_buffer_ = 0;
         unsigned int irradiance_map_ = 0;
+        unsigned int prefilter_map_ = 0;
+        unsigned int brdf_lut_ = 0;
         unsigned int skybox_vao_ = 0;
         unsigned int skybox_vbo_ = 0;
         std::shared_ptr<Shader> skybox_shader_;
-        float exposure_ = 0.1f;
-        float ambient_intensity_ = 1.f;
+        float exposure_ = 0.2f;
+        float ambient_intensity_ = 2.f;
         float reflection_exposure_ = exposure_;
     };
 } // namespace raphEngine::graphics::ogl

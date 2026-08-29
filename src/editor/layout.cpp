@@ -1,6 +1,5 @@
 #include <RaphEngine2/editor/layout.hpp>
 #include <algorithm>
-#include <cstddef>
 #include <cstdint>
 #include "imgui.h"
 #include "objects/game_object.hpp"

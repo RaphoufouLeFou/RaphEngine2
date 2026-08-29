@@ -15,6 +15,7 @@
 #include "graphics/ogl/gl_mesh_buffers.hpp"
 #include "graphics/shader.hpp"
 #include "objects/mesh.hpp"
+#include "resources/model_resource.hpp"
 #include "settings/graphics.hpp"
 #include <RaphEngine2/settings/settings.hpp>
 #include <RaphEngine2/logger/logger.hpp>
@@ -40,10 +41,40 @@ namespace raphEngine::graphics
     std::vector<GLuint> visualizerEBOs;
     std::vector<glm::mat4> lightMatricesCache;
 
+    void BindShadowAlphaMaterial(const GlShader* sh,
+                                 const raphEngine::objects::Mesh* mesh)
+    {
+        const resources::SubmeshData* data = mesh->data_;
+        sh->setValue("alphaMask", data->alpha_mask);
+
+        if (!data->alpha_mask)
+            return;
+
+        sh->setValue("alphaCutoff", data->alpha_cutoff);
+
+        bool haveDiffuse = false, haveOpacity = false;
+        for (const auto& tex : mesh->get_textures())
+        {
+            if (tex.type == objects::Texture::DIFFUSE)
+            {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, tex.id);
+                haveDiffuse = true;
+            }
+            else if (tex.type == objects::Texture::OPACITY)
+            {
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, tex.id);
+                haveOpacity = true;
+            }
+        }
+        sh->setValue("HaveTexture", haveDiffuse);
+        sh->setValue("HaveOpacityMap", haveOpacity);
+    }
+
     void GLShadowRenderer::drawCascadeVolumeVisualizers(
         const std::vector<glm::mat4>& lightMatrices, Shader* shader)
     {
-        // unchanged from your file
         Logger::LogDebug("Debug drawing...");
         visualizerVAOs.resize(8);
         visualizerEBOs.resize(8);
@@ -102,10 +133,7 @@ namespace raphEngine::graphics
 
     void GLShadowRenderer::generate_shadows_buffer()
     {
-        // unchanged — the whole-array glFramebufferTexture attach here is
-        // now just initial setup; begin_cascade_layer() re-targets a single
-        // layer every frame via glFramebufferTextureLayer before anything
-        // actually renders, so this stays valid as-is.
+        // unchanged
         glGenFramebuffers(1, &depthMapFBO);
 
         glGenTextures(1, &depthMap);
@@ -156,8 +184,6 @@ namespace raphEngine::graphics
         int res = Settings::Get<GraphicsSettings>().getShadowResolution();
         current_active_shadow_shader_ = nullptr;
 
-        // cached both for the UBO the color pass samples against, and for
-        // begin_cascade_layer()'s per-layer lookups below
         current_light_matrices_ = getLightSpaceMatrices();
 
         glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
@@ -170,15 +196,27 @@ namespace raphEngine::graphics
 
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glViewport(0, 0, res, res);
-        // whole-array glClear removed — each cascade layer is cleared
-        // individually in begin_cascade_layer() instead
 
         if (!shadow_shader)
+        {
             shadow_shader = Shader::loadShader(default_shadow_vs_shader,
                                                default_shadow_fs_shader);
+            const GlShader* sh =
+                dynamic_cast<const GlShader*>(shadow_shader.get());
+            sh->use();
+            sh->setValue("texture_diffuse", 0);
+            sh->setValue("texture_opacity", 1);
+        }
         if (!shadow_shader_instanced)
+        {
             shadow_shader_instanced = Shader::loadShader(
                 default_instanced_shadow_vs_shader, default_shadow_fs_shader);
+            const GlShader* sh =
+                dynamic_cast<const GlShader*>(shadow_shader_instanced.get());
+            sh->use();
+            sh->setValue("texture_diffuse", 0);
+            sh->setValue("texture_opacity", 1);
+        }
 
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(2.5f, 10.0f);
@@ -217,10 +255,25 @@ namespace raphEngine::graphics
             dynamic_cast<const graphics::GLMeshBuffers*>(first->get_buffers()));
         buffers->UploadInstanceData(worlds);
 
-        return PreparedInstancedShadowBatch{
+        PreparedInstancedShadowBatch batch{
             buffers, static_cast<unsigned int>(first->get_indices().size()),
             worlds.size()
         };
+
+        batch.alpha_mask = first->data_->alpha_mask;
+        if (batch.alpha_mask)
+        {
+            batch.alpha_cutoff = first->data_->alpha_cutoff;
+            for (const auto& tex : first->get_textures())
+            {
+                if (tex.type == objects::Texture::DIFFUSE)
+                    batch.diffuse_tex_id = tex.id;
+                else if (tex.type == objects::Texture::OPACITY)
+                    batch.opacity_tex_id = tex.id;
+            }
+        }
+
+        return batch;
     }
 
     void GLShadowRenderer::draw_shadow_instances(
@@ -247,6 +300,27 @@ namespace raphEngine::graphics
         shadow_shader_instanced->setValue("lightSpaceMatrix",
                                           current_cascade_light_matrix_);
 
+        sh->setValue("alphaMask", batch.alpha_mask);
+        if (batch.alpha_mask)
+        {
+            sh->setValue("alphaCutoff", batch.alpha_cutoff);
+
+            bool haveDiffuse = batch.diffuse_tex_id != 0;
+            bool haveOpacity = batch.opacity_tex_id != 0;
+            if (haveDiffuse)
+            {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, batch.diffuse_tex_id);
+            }
+            if (haveOpacity)
+            {
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, batch.opacity_tex_id);
+            }
+            sh->setValue("HaveTexture", haveDiffuse);
+            sh->setValue("HaveOpacityMap", haveOpacity);
+        }
+
         glBindVertexArray(batch.buffers->vao_);
         glDrawElementsInstanced(GL_TRIANGLES, batch.index_count,
                                 GL_UNSIGNED_INT, 0,
@@ -257,7 +331,6 @@ namespace raphEngine::graphics
 
     void GLShadowRenderer::debug_draw_lights()
     {
-        // unchanged from your file
         if (!debugCascadeShader)
         {
             debugCascadeShader = Shader::loadShader(debug_cascade_vs_shader,
@@ -298,7 +371,6 @@ namespace raphEngine::graphics
 
     void GLShadowRenderer::cleanup_shadows()
     {
-        // unchanged
         glDisable(GL_POLYGON_OFFSET_FILL);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -335,6 +407,8 @@ namespace raphEngine::graphics
             "model",
             mesh->parent_object->get_transform().get_model_matrix()
                 * mesh->get_model_matrix());
+
+        BindShadowAlphaMaterial(sh, mesh);
 
         const graphics::GLMeshBuffers* mesh_buffers =
             dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers());

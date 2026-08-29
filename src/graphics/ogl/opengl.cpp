@@ -1,6 +1,6 @@
 #include "graphics/ogl/opengl.hpp"
 #include <string>
-#include "component/camera_component.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/debug.hpp"
 #include "graphics/frustum.hpp"
 #include "graphics/outline_renderer.hpp"

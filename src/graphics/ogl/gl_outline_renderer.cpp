@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <string>
 
-#include "component/camera_component.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/graphic_api.hpp"
 #include "graphics/ogl/gl_shader.hpp"
 #include "graphics/ogl/gl_mesh_buffers.hpp"

@@ -1,5 +1,6 @@
 #include "graphics/ogl/gl_mesh_renderer.hpp"
 #include <glm/ext/vector_float3.hpp>
+#include <numbers>
 #include <string>
 #include "graphics/ogl/gl_skybox.hpp"
 
@@ -48,7 +49,8 @@ namespace raphEngine::graphics
 
         if (dir_light)
         {
-            sh->setValue("lightIntensity", dir_light->intensity_);
+            sh->setValue("lightIntensity",
+                         std::numbers::pi_v<float> * dir_light->intensity_);
             sh->setValue("lightDir",
                          Utils::GetForwardFromModelMatrix(
                              dir_light->parent_object->get_transform()
@@ -73,15 +75,17 @@ namespace raphEngine::graphics
                 cam->get_farPlane() / ShadowRenderer::shadowCascadeLevels[i]);
         }
 
-        const char* names[] = { "texture_diffuse", "texture_normal",
-                                "texture_specular", "texture_height" };
-        for (int i = 0; i < 4; i++)
-        {
-            sh->setValue(names[i], i);
-        }
+        sh->setValue("texture_diffuse", 0);
+        sh->setValue("texture_normal", 1);
+        sh->setValue("texture_metallic", 2);
+        sh->setValue("texture_roughness", 3);
+        sh->setValue("texture_ao", 4);
+        sh->setValue("texture_emissive", 5);
+        sh->setValue("texture_opacity", 6);
+        sh->setValue("texture_height", 7);
 
-        glActiveTexture(GL_TEXTURE4);
-        sh->setValue("shadowMap", 4);
+        glActiveTexture(GL_TEXTURE8);
+        sh->setValue("shadowMap", 8);
         glBindTexture(
             GL_TEXTURE_2D_ARRAY,
             dynamic_cast<GLShadowRenderer*>(ShadowRenderer::getInstance())
@@ -94,18 +98,97 @@ namespace raphEngine::graphics
 
         if (have_skybox)
         {
-            glActiveTexture(GL_TEXTURE5);
+            glActiveTexture(GL_TEXTURE9);
             glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->get_irradiance_map());
-            sh->setValue("irradianceMap", 5);
+            sh->setValue("irradianceMap", 9);
 
-            glActiveTexture(GL_TEXTURE6);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->get_environment_map());
-            sh->setValue("environmentMap", 6);
-            sh->setValue("maxReflectionLod", ogl::GL_Skybox::kMaxReflectionLod);
+            glActiveTexture(GL_TEXTURE10);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->get_prefilter_map());
+            sh->setValue("prefilterMap", 10);
+            sh->setValue("maxPrefilterLod", ogl::GL_Skybox::kMaxPrefilterLod);
+
+            glActiveTexture(GL_TEXTURE11);
+            glBindTexture(GL_TEXTURE_2D, skybox->get_brdf_lut());
+            sh->setValue("brdfLUT", 11);
+
             sh->setValue("ambientIntensity", skybox->get_ambient_intensity());
             sh->setValue("reflectionExposure",
                          skybox->get_reflection_exposure());
         }
+    }
+
+    void BindMeshMaterial(const GlShader* sh, const objects::Mesh* mesh)
+    {
+        bool haveDiffuse = false, haveNormal = false, haveMetallic = false,
+             haveRoughness = false, haveAO = false, haveEmissive = false,
+             haveOpacity = false, haveHeight = false;
+
+        for (const auto& tex : mesh->get_textures())
+        {
+            GLenum unit = 0;
+            bool* flag = nullptr;
+
+            switch (tex.type)
+            {
+            case objects::Texture::DIFFUSE:
+                unit = GL_TEXTURE0;
+                flag = &haveDiffuse;
+                break;
+            case objects::Texture::NORMAL:
+                unit = GL_TEXTURE1;
+                flag = &haveNormal;
+                break;
+            case objects::Texture::METALLIC:
+                unit = GL_TEXTURE2;
+                flag = &haveMetallic;
+                break;
+            case objects::Texture::ROUGHNESS:
+                unit = GL_TEXTURE3;
+                flag = &haveRoughness;
+                break;
+            case objects::Texture::AO:
+                unit = GL_TEXTURE4;
+                flag = &haveAO;
+                break;
+            case objects::Texture::EMISSIVE:
+                unit = GL_TEXTURE5;
+                flag = &haveEmissive;
+                break;
+            case objects::Texture::OPACITY:
+                unit = GL_TEXTURE6;
+                flag = &haveOpacity;
+                break;
+            case objects::Texture::HEIGHT:
+                unit = GL_TEXTURE7;
+                flag = &haveHeight;
+                break;
+            case objects::Texture::SPECULAR:
+            default:
+                continue;
+            }
+
+            glActiveTexture(unit);
+            glBindTexture(GL_TEXTURE_2D, tex.id);
+            *flag = true;
+        }
+
+        sh->setValue("HaveTexture", haveDiffuse);
+        sh->setValue("HaveNormalMap", haveNormal);
+        sh->setValue("HaveMetallicMap", haveMetallic);
+        sh->setValue("HaveRoughnessMap", haveRoughness);
+        sh->setValue("HaveAOMap", haveAO);
+        sh->setValue("HaveEmissiveMap", haveEmissive);
+        sh->setValue("HaveOpacityMap", haveOpacity);
+        sh->setValue("HaveHeightMap", haveHeight);
+
+        const resources::SubmeshData* data = mesh->data_;
+        sh->setValue("metallicFactor", data->metallic_factor);
+        sh->setValue("roughnessFactor", data->roughness_factor);
+        sh->setValue("emissiveFactor", data->emissive_factor);
+        sh->setValue("metallicRoughnessPacked",
+                     data->metallic_roughness_packed);
+        sh->setValue("alphaMask", data->alpha_mask);
+        sh->setValue("alphaCutoff", data->alpha_cutoff);
     }
 
     void GLMeshRenderer::render(const raphEngine::objects::Mesh* mesh) const
@@ -147,30 +230,7 @@ namespace raphEngine::graphics
             mesh->parent_object->get_transform().get_model_matrix()
                 * mesh->get_model_matrix());
 
-        bool HaveTexture = false;
-        bool HaveNormalMap = false;
-        bool HaveSpecularMap = false;
-        bool HaveHeightMap = false;
-
-        for (size_t i = 0; i < mesh->get_textures().size(); i++)
-        {
-            if (mesh->get_textures().at(i).type == objects::Texture::DIFFUSE)
-                HaveTexture = true;
-            if (mesh->get_textures().at(i).type == objects::Texture::NORMAL)
-                HaveNormalMap = true;
-            if (mesh->get_textures().at(i).type == objects::Texture::SPECULAR)
-                HaveSpecularMap = true;
-            if (mesh->get_textures().at(i).type == objects::Texture::HEIGHT)
-                HaveHeightMap = true;
-
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, mesh->get_textures().at(i).id);
-        }
-
-        mesh_shader->setValue("HaveTexture", HaveTexture);
-        mesh_shader->setValue("HaveNormalMap", HaveNormalMap);
-        mesh_shader->setValue("HaveSpecularMap", HaveSpecularMap);
-        mesh_shader->setValue("HaveHeightMap", HaveHeightMap);
+        BindMeshMaterial(mesh_shader, mesh);
 
         const graphics::GLMeshBuffers* mesh_buffers =
             dynamic_cast<const graphics::GLMeshBuffers*>(mesh->get_buffers());
@@ -221,30 +281,8 @@ namespace raphEngine::graphics
 
         SetupShader(mesh_shader); // once per batch, not per mesh
 
-        bool HaveTexture = false;
-        bool HaveNormalMap = false;
-        bool HaveSpecularMap = false;
-        bool HaveHeightMap = false;
-
-        for (size_t i = 0; i < first->get_textures().size(); i++)
-        {
-            if (first->get_textures().at(i).type == objects::Texture::DIFFUSE)
-                HaveTexture = true;
-            if (first->get_textures().at(i).type == objects::Texture::NORMAL)
-                HaveNormalMap = true;
-            if (first->get_textures().at(i).type == objects::Texture::SPECULAR)
-                HaveSpecularMap = true;
-            if (first->get_textures().at(i).type == objects::Texture::HEIGHT)
-                HaveHeightMap = true;
-
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, first->get_textures().at(i).id);
-        }
-
-        mesh_shader->setValue("HaveTexture", HaveTexture);
-        mesh_shader->setValue("HaveNormalMap", HaveNormalMap);
-        mesh_shader->setValue("HaveSpecularMap", HaveSpecularMap);
-        mesh_shader->setValue("HaveHeightMap", HaveHeightMap);
+        BindMeshMaterial(mesh_shader, first); // batch key guarantees every
+                                              // instance shares one material
 
         std::vector<glm::mat4> worlds;
         worlds.reserve(meshes.size());

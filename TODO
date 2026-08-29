@@ -1,6 +1,8 @@
 prefab
 Add Semi-shallow GameObject copies
 Proper object destruction
+calibrate shaders
+implement more shader textures
 Start coding the Editor
 In-game console (ImGui)
 Static lights

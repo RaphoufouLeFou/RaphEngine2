@@ -21,6 +21,12 @@ namespace raphEngine::resources
         glm::vec3 bounds_max{ 0.0f };
         glm::vec3 local_sphere_center{ 0.0f };
         float local_sphere_radius = 0.0f;
+        float metallic_factor = 1.0f;
+        float roughness_factor = 1.0f;
+        glm::vec3 emissive_factor{ 0.0f };
+        bool metallic_roughness_packed = false;
+        bool alpha_mask = false;
+        float alpha_cutoff = 0.5f;
     };
 
     class RAPHENGINE_API ModelResource

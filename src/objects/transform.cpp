@@ -1,10 +1,7 @@
 #include "objects/transform.hpp"
-#include <atomic>
 #include <cmath>
 #include <cstddef>
-#include <string>
 #include "logger/logger.hpp"
-#include "time_utils.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <RaphEngine2/export.hpp>
@@ -167,17 +164,6 @@ namespace raphEngine::objects
         {
             return model_matrix_;
         }
-        /*
-                if (parent_)
-                {
-                    if (can_have_moved)
-                    {
-                        calculate_matrix();
-                        return model_matrix_;
-                    }
-                    return parent_->get_model_matrix() * model_matrix_;
-                }
-        */
         calculate_matrix();
         return model_matrix_;
     }

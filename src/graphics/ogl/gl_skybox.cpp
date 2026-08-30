@@ -102,9 +102,7 @@ namespace raphEngine::graphics::ogl
                             GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER,
                             GL_LINEAR);
-            // Allocates storage for the full mip chain (box-filtered
-            // placeholder content) — every level we care about (0..4) gets
-            // overwritten by the GGX render passes below.
+
             glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL,
                             GL_Skybox::kPrefilterMipLevels - 1);
@@ -154,7 +152,7 @@ namespace raphEngine::graphics::ogl
         void GenerateBRDFLUT(unsigned int& brdf_lut)
         {
             if (brdf_lut != 0)
-                return; // universal constant — cook once, reuse forever
+                return;
 
             glGenTextures(1, &brdf_lut);
             glBindTexture(GL_TEXTURE_2D, brdf_lut);
@@ -206,7 +204,7 @@ namespace raphEngine::graphics::ogl
         }
     } // namespace
 
-    void GL_Skybox::set_hdr(const std::string& hdr)
+    void GL_Skybox::set_hdr(const fs::path& hdr)
     {
         auto raw = TextureLoader::getInstance()->load_texture_raw_hdr(hdr);
         if (!raw.data)

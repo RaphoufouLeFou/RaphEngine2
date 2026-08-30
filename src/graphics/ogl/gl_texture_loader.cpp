@@ -49,7 +49,7 @@ namespace raphEngine::graphics::ogl
         return textureID;
     }
 
-    unsigned int GL_TextureLoader::load_texture_cached(const std::string& path,
+    unsigned int GL_TextureLoader::load_texture_cached(const fs::path& path,
                                                        bool filter)
     {
         if (loaded_textures_.contains(path))
@@ -73,7 +73,7 @@ namespace raphEngine::graphics::ogl
     }
 
     unsigned int
-    GL_TextureLoader::upload_texture_cached(const std::string& cache_key,
+    GL_TextureLoader::upload_texture_cached(const fs::path& cache_key,
                                             const RawTexture& raw, bool filter)
     {
         if (loaded_textures_.contains(cache_key))

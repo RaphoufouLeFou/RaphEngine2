@@ -98,7 +98,7 @@ namespace raphEngine
             {
                 j.at("SkyBox").get_to(skybox_path_);
 
-                graphics::Skybox::getInstance()->set_hdr(skybox_path_.string());
+                graphics::Skybox::getInstance()->set_hdr(skybox_path_);
             }
         }
         catch (const std::exception& e)

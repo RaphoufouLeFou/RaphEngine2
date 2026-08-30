@@ -1,10 +1,10 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <filesystem>
 #include "RaphEngine2/export.hpp"
 #include "RaphEngine2/scenes/reflection.hpp"
 
+#include <filesystem>
 namespace fs = std::filesystem;
 
 namespace raphEngine::objects
@@ -18,15 +18,20 @@ namespace raphEngine::objects
         {}
 
         fs::path mesh_path;
-        bool bilinear;
+        bool bilinear = true;
 
         friend void to_json(nlohmann::json& j, const MeshInfo& m)
         {
-            j = reflection::toJson(m);
+            j = nlohmann::json{ { "mesh_path", m.mesh_path },
+                                { "bilinear", m.bilinear } };
         }
+
         friend void from_json(const nlohmann::json& j, MeshInfo& m)
         {
-            reflection::fromJson(m, j);
+            if (j.contains("mesh_path"))
+                m.mesh_path = j.at("mesh_path").get<fs::path>();
+            if (j.contains("bilinear"))
+                m.bilinear = j.at("bilinear").get<bool>();
         }
 
     private:

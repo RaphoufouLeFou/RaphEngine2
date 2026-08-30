@@ -4,8 +4,12 @@
 #include <string>
 #include <memory>
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 namespace raphEngine::graphics
 {
+
     class RAPHENGINE_API TextureLoader
     {
     public:
@@ -21,14 +25,14 @@ namespace raphEngine::graphics
             int width = 0, height = 0, nrChannels = 0;
         };
 
-        virtual unsigned int load_texture_cached(const std::string& path,
+        virtual unsigned int load_texture_cached(const fs::path& path,
                                                  bool filter) = 0;
-        virtual unsigned int upload_texture_cached(const std::string& cache_key,
+        virtual unsigned int upload_texture_cached(const fs::path& cache_key,
                                                    const RawTexture& raw,
                                                    bool filter) = 0;
 
-        RawTexture load_texture_raw(const std::string& path);
-        RawTextureHDR load_texture_raw_hdr(const std::string& path);
+        RawTexture load_texture_raw(const fs::path& path);
+        RawTextureHDR load_texture_raw_hdr(const fs::path& path);
 
         RawTexture load_texture_raw_from_memory(const unsigned char* buffer,
                                                 size_t buffer_len);

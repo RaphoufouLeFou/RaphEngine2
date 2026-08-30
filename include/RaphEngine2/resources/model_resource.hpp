@@ -9,6 +9,9 @@
 
 #include "RaphEngine2/objects/mesh.hpp"
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 namespace raphEngine::resources
 {
     struct RAPHENGINE_API SubmeshData
@@ -32,8 +35,8 @@ namespace raphEngine::resources
     class RAPHENGINE_API ModelResource
     {
     public:
-        static std::shared_ptr<ModelResource>
-        get_or_load(const std::string& path, bool filter);
+        static std::shared_ptr<ModelResource> get_or_load(const fs::path& path,
+                                                          bool filter);
 
         std::vector<SubmeshData>& get_submeshes()
         {
@@ -44,11 +47,11 @@ namespace raphEngine::resources
         ModelResource& operator=(const ModelResource&) = delete;
 
     private:
-        ModelResource(const std::string& path, bool filter);
+        ModelResource(const fs::path& path, bool filter);
 
         std::vector<SubmeshData> submeshes_;
 
-        static std::unordered_map<std::string, std::weak_ptr<ModelResource>>
+        static std::unordered_map<fs::path, std::weak_ptr<ModelResource>>
             cache_;
     };
 } // namespace raphEngine::resources

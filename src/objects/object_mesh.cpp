@@ -9,8 +9,7 @@
 
 namespace raphEngine::objects
 {
-    void loadModel(ObjectMesh* object_mesh, std::string const& path,
-                   bool filter)
+    void loadModel(ObjectMesh* object_mesh, fs::path const& path, bool filter)
     {
         auto model = resources::ModelResource::get_or_load(path, filter);
 

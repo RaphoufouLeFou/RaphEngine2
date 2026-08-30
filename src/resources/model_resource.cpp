@@ -81,10 +81,11 @@ namespace raphEngine::resources
                 data.alpha_cutoff = cutoff;
         }
 
-        std::vector<objects::Texture> loadMaterialTextures(
-            const std::string& model_path, const aiScene* scene,
-            aiMaterial* mat, aiTextureType type,
-            objects::Texture::TextureType typeName, bool filter)
+        std::vector<objects::Texture>
+        loadMaterialTextures(const fs::path& model_path, const aiScene* scene,
+                             aiMaterial* mat, aiTextureType type,
+                             objects::Texture::TextureType typeName,
+                             bool filter)
         {
             std::vector<objects::Texture> textures;
             for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -113,7 +114,8 @@ namespace raphEngine::resources
                 if (const aiTexture* embedded =
                         scene->GetEmbeddedTexture(raw_path))
                 {
-                    std::string cache_key = model_path + "#" + raw_path;
+                    std::string cache_key =
+                        model_path.string() + "#" + raw_path;
 
                     auto raw = loadEmbeddedRaw(embedded);
                     texture.id =
@@ -147,8 +149,8 @@ namespace raphEngine::resources
         }
 
         std::vector<objects::Texture> loadMaterialTexturesWithFallback(
-            const std::string& model_path, const aiScene* scene,
-            aiMaterial* mat, aiTextureType primary, aiTextureType fallback,
+            const fs::path& model_path, const aiScene* scene, aiMaterial* mat,
+            aiTextureType primary, aiTextureType fallback,
             objects::Texture::TextureType typeName, bool filter)
         {
             auto textures = loadMaterialTextures(model_path, scene, mat,
@@ -182,7 +184,7 @@ namespace raphEngine::resources
             }
         }
 
-        void processMesh(const std::string& model_path, aiMesh* mesh,
+        void processMesh(const fs::path& model_path, aiMesh* mesh,
                          const aiScene* scene, bool filter,
                          const glm::mat4& ModelMat,
                          std::vector<SubmeshData>& out)
@@ -363,7 +365,7 @@ namespace raphEngine::resources
                 * glm::scale(glm::mat4(1.0f), glm::vec3(to_meters));
         }
 
-        void processNode(const std::string& model_path,
+        void processNode(const fs::path& model_path,
                          std::vector<SubmeshData>& out, aiNode* node,
                          const aiScene* scene, bool filter,
                          const glm::mat4& import_correction)
@@ -388,11 +390,11 @@ namespace raphEngine::resources
 
     } // anonymous namespace
 
-    std::unordered_map<std::string, std::weak_ptr<ModelResource>>
+    std::unordered_map<fs::path, std::weak_ptr<ModelResource>>
         ModelResource::cache_;
 
     std::shared_ptr<ModelResource>
-    ModelResource::get_or_load(const std::string& path, bool filter)
+    ModelResource::get_or_load(const fs::path& path, bool filter)
     {
         if (auto it = cache_.find(path); it != cache_.end())
             if (auto locked = it->second.lock())
@@ -407,18 +409,19 @@ namespace raphEngine::resources
         return model;
     }
 
-    ModelResource::ModelResource(const std::string& path, bool filter)
+    ModelResource::ModelResource(const fs::path& path, bool filter)
     {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(
-            path,
+            path.string(),
             aiProcess_Triangulate | aiProcess_GenSmoothNormals
                 | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE
             || !scene->mRootNode)
         {
-            Logger::LogError("assimp: ", importer.GetErrorString());
+            Logger::LogError("assimp: ", importer.GetErrorString(),
+                             " for file named ", path);
             return;
         }
 

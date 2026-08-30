@@ -11,7 +11,7 @@ namespace raphEngine::graphics::ogl
     class RAPHENGINE_API GL_Skybox : public Skybox
     {
     public:
-        void set_hdr(const std::string& hdr) override;
+        void set_hdr(const fs::path& hdr) override;
         void render() override;
 
         unsigned int get_environment_map() const

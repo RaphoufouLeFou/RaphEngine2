@@ -52,23 +52,23 @@ namespace raphEngine::graphics
     }
 
     TextureLoader::RawTexture
-    TextureLoader::load_texture_raw(const std::string& path)
+    TextureLoader::load_texture_raw(const fs::path& path)
     {
-        std::string filename = path;
+        fs::path filename = path;
 
         RawTexture res;
 
-        res.data = stbi_load(filename.c_str(), &res.width, &res.height,
+        res.data = stbi_load(filename.string().c_str(), &res.width, &res.height,
                              &res.nrChannels, 0);
 
         return res;
     }
 
     TextureLoader::RawTextureHDR
-    TextureLoader::load_texture_raw_hdr(const std::string& path)
+    TextureLoader::load_texture_raw_hdr(const fs::path& path)
     {
         RawTextureHDR res;
-        res.data = stbi_loadf(path.c_str(), &res.width, &res.height,
+        res.data = stbi_loadf(path.string().c_str(), &res.width, &res.height,
                               &res.nrChannels, 0);
         return res;
     }

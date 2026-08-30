@@ -4,12 +4,15 @@
 #include <string>
 #include <memory>
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 namespace raphEngine::graphics
 {
     class RAPHENGINE_API Skybox
     {
     public:
-        virtual void set_hdr(const std::string& hdr) = 0;
+        virtual void set_hdr(const fs::path& hdr) = 0;
         virtual void render() = 0;
 
         static Skybox* getInstance();

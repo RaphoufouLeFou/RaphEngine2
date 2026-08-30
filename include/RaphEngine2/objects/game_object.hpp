@@ -95,7 +95,7 @@ namespace raphEngine::objects
         friend raphEngine::Core;
 
         bool is_active = true;
-        std::string name_;
+        std::string name_ = "UnNamed";
         objects::Transform transform_;
         std::vector<std::unique_ptr<component::Component>> components_;
 
@@ -113,7 +113,10 @@ namespace raphEngine::objects
 
         void add_component(std::unique_ptr<component::Component> c);
 
-        REFLECT_ROOT(GameObject, name_, id_, uuid_, is_active, raycast_layer_)
+        // REFLECT_ROOT(GameObject, name_, id_, uuid_, is_active,
+        // raycast_layer_)
+
+        REFLECT_ROOT(GameObject)
         REFLECT_FACTORY(GameObject, GameObject, "GameObject")
     };
 } // namespace raphEngine::objects

@@ -20,9 +20,11 @@
 #include "utils.hpp"
 
 #include "editor/layout.hpp"
+#include "RaphEngine2/scenes/reflection.hpp"
 
 namespace raphEngine::objects
 {
+    REFLECT_ROOT_IMPL(GameObject, name_, id_, uuid_, is_active, raycast_layer_)
 
     void GameObject::greed()
     {

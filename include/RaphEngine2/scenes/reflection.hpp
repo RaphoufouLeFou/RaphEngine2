@@ -7,17 +7,18 @@
 #include <unordered_map>
 #include <typeindex>
 #include <nlohmann/json.hpp>
+#include "RaphEngine2/logger/logger.hpp"
 
 namespace raphEngine::reflection
 {
 
-    struct FieldInfo
+    struct RAPHENGINE_API FieldInfo
     {
         std::function<void(const void*, nlohmann::json&)> get;
         std::function<void(void*, const nlohmann::json&)> set;
     };
 
-    struct TypeInfo
+    struct RAPHENGINE_API TypeInfo
     {
         std::vector<FieldInfo> fields;
         TypeInfo* parent = nullptr;
@@ -70,7 +71,7 @@ namespace raphEngine::reflection
     }
 
     template <typename Base>
-    class Factory
+    class RAPHENGINE_API Factory
     {
     public:
         using Creator = std::function<std::unique_ptr<Base>()>;
@@ -97,6 +98,7 @@ namespace raphEngine::reflection
         {
             registry()[name] = [] { return std::make_unique<Derived>(); };
             names()[typeid(Derived)] = name;
+            Logger::LogWarning("Adding ", name, " to the regestery");
         }
 
         static std::unique_ptr<Base> create(const std::string& name)
@@ -140,12 +142,18 @@ namespace raphEngine::reflection
 #define REFL_REGISTER_FIELD(field)                                             \
     raphEngine::reflection::Reflection::addField(#field, &SelfType::field);
 
-#define REFLECT_ROOT(Type, ...)                                                \
-    inline static const bool _reflected = [] {                                 \
+#define REFLECT_ROOT(Type)                                                     \
+    static void _register_reflection();                                        \
+    static const bool _reflected;
+
+// .cpp: define both out-of-line, in the one module that owns this class.
+#define REFLECT_ROOT_IMPL(Type, ...)                                           \
+    void Type::_register_reflection()                                          \
+    {                                                                          \
         using SelfType = Type;                                                 \
         REFL_FOR_EACH(REFL_REGISTER_FIELD, __VA_ARGS__)                        \
-        return true;                                                           \
-    }();
+    }                                                                          \
+    const bool Type::_reflected = (Type::_register_reflection(), true);
 
 // For a subclass that adds new fields of its own.
 #define REFLECT(Type, Base, ...)                                               \

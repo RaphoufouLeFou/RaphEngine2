@@ -10,7 +10,7 @@
 
 namespace raphEngine::component
 {
-    struct TriangleSOA
+    struct RAPHENGINE_API TriangleSOA
     {
         std::vector<float> ax, ay, az, bx, by, bz, cx, cy, cz;
         std::vector<size_t> batch_starts;
@@ -18,7 +18,7 @@ namespace raphEngine::component
         size_t paddedCount = 0;
     };
 
-    struct ColliderGeometry
+    struct RAPHENGINE_API ColliderGeometry
     {
         std::vector<Utils::Triangle> triangles;
         TriangleSOA soa;
@@ -26,13 +26,13 @@ namespace raphEngine::component
         glm::vec3 bounding_max{ 0.0f };
     };
 
-    struct ColliderSourceKey
+    struct RAPHENGINE_API ColliderSourceKey
     {
         std::vector<graphics::MeshSourceKey> parts;
         bool operator==(const ColliderSourceKey&) const = default;
     };
 
-    struct ColliderSourceKeyHash
+    struct RAPHENGINE_API ColliderSourceKeyHash
     {
         size_t operator()(const ColliderSourceKey& k) const
         {
@@ -44,7 +44,7 @@ namespace raphEngine::component
         }
     };
 
-    class ColliderGeometryCache
+    class RAPHENGINE_API ColliderGeometryCache
     {
     public:
         static std::shared_ptr<const ColliderGeometry>

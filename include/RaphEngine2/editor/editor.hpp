@@ -1,8 +1,10 @@
 #pragma once
 
+#include <RaphEngine2/export.hpp>
+
 namespace raphEngine
 {
-    class Editor
+    class RAPHENGINE_API Editor
     {
     public:
         static void Init();

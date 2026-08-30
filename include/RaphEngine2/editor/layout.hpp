@@ -6,7 +6,7 @@
 
 namespace raphEngine::editor
 {
-    class Layout
+    class RAPHENGINE_API Layout
     {
     public:
         static void Update();

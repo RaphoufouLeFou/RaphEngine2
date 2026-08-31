@@ -2,6 +2,8 @@
 #include <memory>
 
 #include "RaphEngine2/time_utils.hpp"
+#include "audio/audio.hpp"
+#include "component/camera_component.hpp"
 #include "editor/editor.hpp"
 #include "editor/layout.hpp"
 #include "graphics/camera.hpp"
@@ -57,6 +59,7 @@ namespace raphEngine
         Core::Run();
 
         Project::store_project_file();
+
         return 0;
     }
 
@@ -81,6 +84,9 @@ namespace raphEngine
         renderer.Init(title);
         graphics::Debug::getInstance()->Init();
         SceneManager::init();
+
+        Audio::Init();
+        Audio::SetListenerWorldUp({ 0.0f, 0.0f, 1.0f });
     }
 
     void Core::Run()
@@ -100,6 +106,11 @@ namespace raphEngine
             {
                 Editor::Update();
             }
+
+            Camera* c = component::CameraComponent::get_active_camera();
+            Audio::SetListenerPosition(c->get_position());
+            Audio::SetListenerDirection(
+                Utils::GetForwardFromRotation(c->get_rotation()));
 
             fps_avr += 1.0f / Time::deltaTime;
             avr_count++;
@@ -121,6 +132,8 @@ namespace raphEngine
             {
                 ImGui::Render();
             }
+            Audio::Update();
+
             bool still_alive = renderer.Refresh();
 
             if (!still_alive)
@@ -137,6 +150,7 @@ namespace raphEngine
         {
             ImGui::DestroyContext();
         }
+        Audio::Shutdown();
     }
 
     void Core::execute_updates()

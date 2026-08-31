@@ -106,6 +106,23 @@ endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glm::glm)
 
+# miniaudio
+FetchContent_Declare(
+    miniaudio
+    GIT_REPOSITORY https://github.com/mackron/miniaudio.git
+    GIT_TAG 0.11.25
+    GIT_SHALLOW TRUE
+    SOURCE_SUBDIR does-not-exist
+)
+FetchContent_MakeAvailable(miniaudio)
+
+add_library(miniaudio INTERFACE)
+target_include_directories(miniaudio INTERFACE ${miniaudio_SOURCE_DIR})
+
+if(UNIX AND NOT APPLE)
+    target_link_libraries(miniaudio INTERFACE pthread m dl)
+endif()
+
 # nlohmann json
 find_package(nlohmann_json QUIET)
 
@@ -186,6 +203,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(rmlui)
 
 target_link_libraries(RaphEngine2 PRIVATE $<BUILD_INTERFACE:RmlUi::RmlUi>)
+
+target_link_libraries(RaphEngine2 PRIVATE miniaudio)
 
 set(RMLUI_BACKEND_DIR ${rmlui_SOURCE_DIR}/Backends)
 

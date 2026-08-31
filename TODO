@@ -2,6 +2,7 @@ add prefab instancing
 Add Semi-shallow GameObject copies
 Proper object destruction
 calibrate shaders
+Redo the settings using reflection
 add loading scene
 Start coding the Editor
 In-game console (ImGui)

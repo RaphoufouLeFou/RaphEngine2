@@ -93,6 +93,18 @@ void main()
 
 )";
 
+inline const char* startup_screen_fs_shader = R"(
+#version 410 core
+in vec2 vUV;
+out vec4 FragColor;
+uniform sampler2D uTex;
+void main()
+{
+    FragColor = texture(uTex, vUV);
+}
+
+)";
+
 inline const char* equirect_to_cubemap_fs_shader = R"(
 #version 410 core
 out vec4 FragColor;
@@ -246,6 +258,19 @@ void main()
         if (alpha < alphaCutoff)
             discard;
     }
+}
+
+)";
+
+inline const char* startup_screen_vs_shader = R"(
+#version 410 core
+layout(location = 0) in vec2 aPos;
+layout(location = 1) in vec2 aUV;
+out vec2 vUV;
+void main()
+{
+    vUV = aUV;
+    gl_Position = vec4(aPos, 0.0, 1.0);
 }
 
 )";

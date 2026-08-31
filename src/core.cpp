@@ -78,7 +78,6 @@ namespace raphEngine
             io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
             ImGui::StyleColorsDark();
         }
-
         renderer.Init(title);
         graphics::Debug::getInstance()->Init();
         SceneManager::init();

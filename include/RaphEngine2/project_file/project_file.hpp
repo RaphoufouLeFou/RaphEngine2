@@ -20,5 +20,6 @@ namespace raphEngine
         static std::string setting_file_name;
         static fs::path path;
         static fs::path main_scene_path;
+        static fs::path startup_screen_path;
     };
 } // namespace raphEngine

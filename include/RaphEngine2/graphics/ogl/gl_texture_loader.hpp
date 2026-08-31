@@ -19,8 +19,7 @@ namespace raphEngine::graphics::ogl
                                            const RawTexture& raw,
                                            bool filter) override;
 
-    private:
-        unsigned int upload_to_gl(const RawTexture& raw, bool filter);
+        static unsigned int upload_to_gl(const RawTexture& raw, bool filter);
         std::unordered_map<fs::path, unsigned int> loaded_textures_;
     };
 } // namespace raphEngine::graphics::ogl

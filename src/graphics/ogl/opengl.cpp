@@ -1,10 +1,14 @@
 #include "graphics/ogl/opengl.hpp"
 #include <string>
+#include "default_shaders.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/debug.hpp"
 #include "graphics/frustum.hpp"
+#include "graphics/ogl/gl_texture_loader.hpp"
 #include "graphics/outline_renderer.hpp"
 #include "graphics/skybox.hpp"
+#include "graphics/texture_loader.hpp"
+#include "project_file/project_file.hpp"
 #include "settings/graphics.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -55,6 +59,79 @@ namespace raphEngine::graphics::ogl
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    }
+
+    void OpenGL::ShowStartupScreen() const
+    {
+        TextureLoader::RawTexture StartupImage =
+            TextureLoader::getInstance()->load_texture_raw(
+                Project::startup_screen_path);
+        unsigned int textureId =
+            GL_TextureLoader::upload_to_gl(StartupImage, true);
+        if (textureId == 0)
+            return;
+
+        auto shader = GlShader::create_shader(startup_screen_vs_shader,
+                                              startup_screen_fs_shader);
+
+        int fbWidth = 0, fbHeight = 0;
+        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+
+        float windowAspect =
+            fbHeight > 0 ? float(fbWidth) / float(fbHeight) : 1.0f;
+        float imageAspect = StartupImage.height > 0
+            ? float(StartupImage.width) / float(StartupImage.height)
+            : 1.0f;
+
+        float scaleX = 1.0f, scaleY = 1.0f;
+        if (imageAspect > windowAspect)
+            scaleX = imageAspect / windowAspect;
+        else
+            scaleY = windowAspect / imageAspect;
+
+        float x0 = -scaleX, x1 = scaleX, y0 = -scaleY, y1 = scaleY;
+
+        float vertices[] = {
+            x0, y0, 0.0f, 1.0f, x1, y0, 1.0f, 1.0f, x1, y1, 1.0f, 0.0f,
+
+            x0, y0, 0.0f, 1.0f, x1, y1, 1.0f, 0.0f, x0, y1, 0.0f, 0.0f,
+        };
+
+        unsigned int vao = 0, vbo = 0;
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+                     GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                              (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                              (void*)(2 * sizeof(float)));
+
+        glViewport(0, 0, fbWidth, fbHeight);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_BLEND);
+        glDisable(GL_SCISSOR_TEST);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        shader->use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        shader->setValue("uTex", 0);
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glfwSwapBuffers(window);
+
+        glBindVertexArray(0);
+        glDeleteVertexArrays(1, &vao);
+        glDeleteBuffers(1, &vbo);
+        glDeleteTextures(1, &textureId);
     }
 
     void OpenGL::Init(const std::string& window_name)
@@ -150,6 +227,8 @@ namespace raphEngine::graphics::ogl
             ImGui_ImplOpenGL3_Init();
             CreateViewportFramebuffer(viewport_res_x, viewport_res_y);
         }
+
+        ShowStartupScreen();
     }
 
     void OpenGL::StartFrame()
@@ -464,7 +543,7 @@ namespace raphEngine::graphics::ogl
         return glfwGetWindowAttrib(window, GLFW_FOCUSED);
     }
 
-    void OpenGL::RequestQuit()
+    void OpenGL::RequestQuit() const
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }

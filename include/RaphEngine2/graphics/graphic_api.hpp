@@ -28,7 +28,8 @@ namespace raphEngine::graphics
         virtual bool GetMouseButtonPressed(int button) const = 0;
         virtual void SetMouseVisibility(bool visible) const = 0;
         virtual bool IsWindowFocused() const = 0;
-        virtual void RequestQuit() = 0;
+        virtual void RequestQuit() const = 0;
+        virtual void ShowStartupScreen() const = 0;
 
         static const GraphicApi* get_api();
 

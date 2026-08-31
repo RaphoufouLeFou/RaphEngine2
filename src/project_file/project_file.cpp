@@ -47,6 +47,8 @@ namespace raphEngine
     std::string Project::setting_file_name = "settings.json";
     fs::path Project::path = get_default_projet();
     fs::path Project::main_scene_path = "assets/scenes/main.sc";
+    fs::path Project::startup_screen_path =
+        "assets/textures/startup_screen.png";
 
     bool Project::parse_project_file(const fs::path& path)
     {
@@ -64,8 +66,10 @@ namespace raphEngine
             j.at("Name").get_to(name);
         if (j.contains("SettingFileName"))
             j.at("SettingFileName").get_to(setting_file_name);
-        if (j.contains("MainSscenePath"))
-            j.at("MainSscenePath").get_to(main_scene_path);
+        if (j.contains("MainScenePath"))
+            j.at("MainScenePath").get_to(main_scene_path);
+        if (j.contains("StartupScreenPath"))
+            j.at("StartupScreenPath").get_to(startup_screen_path);
 
         return true;
     }
@@ -93,7 +97,8 @@ namespace raphEngine
 
         nlohmann::json p = { { "Name", name },
                              { "SettingFileName", setting_file_name },
-                             { "MainSscenePath", main_scene_path } };
+                             { "MainScenePath", main_scene_path },
+                             { "StartupScreenPath", startup_screen_path } };
 
         Logger::LogDebug("Saved at ", path);
         file << p.dump(4);

@@ -22,7 +22,8 @@ namespace raphEngine::graphics::ogl
         bool GetMouseButtonPressed(int button) const override;
         void SetMouseVisibility(bool visible) const override;
         bool IsWindowFocused() const override;
-        void RequestQuit() override;
+        void RequestQuit() const override;
+        void ShowStartupScreen() const override;
 
         RmlUiRenderer& GetRmlUiRenderer()
         {

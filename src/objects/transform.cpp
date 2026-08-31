@@ -82,7 +82,7 @@ namespace raphEngine::objects
 
     void Transform::scale_by(const glm::vec3& delta)
     {
-        scale_ += delta;
+        scale_ *= delta;
         can_have_moved = true;
     }
 
@@ -109,6 +109,14 @@ namespace raphEngine::objects
         if (position != parent_list.end())
             parent_list.erase(position);
 
+        if (parent_ && worldPositionStay)
+        {
+            position_ += parent_->position_;
+            rotation_ += parent_->rotation_;
+            scale_ *= parent_->scale_;
+            can_have_moved = true;
+        }
+
         parent_ = parent;
         if (!parent_)
         {
@@ -118,11 +126,12 @@ namespace raphEngine::objects
         {
             parent_->children_.push_back(this);
         }
-        if (parent_ && !worldPositionStay)
+
+        if (parent_ && worldPositionStay)
         {
-            position_ += parent_->position_;
-            rotation_ += parent_->rotation_;
-            scale_ += parent_->scale_;
+            position_ -= parent_->position_;
+            rotation_ -= parent_->rotation_;
+            scale_ /= parent_->scale_;
             can_have_moved = true;
         }
     }

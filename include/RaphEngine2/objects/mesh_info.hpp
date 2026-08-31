@@ -35,7 +35,7 @@ namespace raphEngine::objects
         }
 
     private:
-        REFLECT_ROOT(MeshInfo, mesh_path, bilinear)
+        REFLECT_ROOT(MeshInfo)
     };
 
 } // namespace raphEngine::objects

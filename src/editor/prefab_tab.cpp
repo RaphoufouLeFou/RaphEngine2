@@ -27,6 +27,10 @@ namespace raphEngine::editor
         ImGui::Begin("Prefabs");
         static std::string s = prefab_folder.string();
         ImGui::InputText("Prefabs path", &s);
+        if (ImGui::Button("Refresh"))
+        {
+            load_prefabs_json();
+        }
         prefab_folder = s;
         ImGui::SeparatorText("Avaliable prefabs");
         display_json();

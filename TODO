@@ -1,4 +1,4 @@
-prefab
+add prefab instancing
 Add Semi-shallow GameObject copies
 Proper object destruction
 calibrate shaders

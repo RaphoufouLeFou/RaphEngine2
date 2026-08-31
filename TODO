@@ -1,7 +1,7 @@
 add prefab instancing
 Add Semi-shallow GameObject copies
 fix object destruction
-Redo the settings using reflection
+Redo the settings using reflect
 Start coding the Editor
 In-game console (ImGui)
 Static lights

@@ -14,7 +14,6 @@
 #    endif
 #endif
 
-// Export important stuff for the editor engine version
-#define EDITOR_BUILD
-
 #define RAYCAST_DEBUG 0
+
+#define RMLUI_DEBUG 0

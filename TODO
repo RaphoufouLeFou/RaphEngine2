@@ -1,9 +1,7 @@
 add prefab instancing
 Add Semi-shallow GameObject copies
-Proper object destruction
-calibrate shaders
+fix object destruction
 Redo the settings using reflection
-add loading scene
 Start coding the Editor
 In-game console (ImGui)
 Static lights

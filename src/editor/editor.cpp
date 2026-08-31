@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "editor/editor_camera.hpp"
+#include "editor/prefab_tab.hpp"
 #include "graphics/graphic_api.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -13,6 +14,7 @@ namespace raphEngine
     void Editor::Init()
     {
         editor_camera = std::make_unique<EditorCamera>();
+        editor::PrefabTab::Init();
     }
 
     void Editor::Update()
@@ -69,23 +71,7 @@ namespace raphEngine
         }
 
         ImGui::End();
-
-        ImGui::Begin("Prefabs");
-        ImGui::SeparatorText("Spawn Prefab");
-
-        for (auto [name, creator] : objs)
-        {
-            if (ImGui::Button(name.c_str()))
-            {
-                Logger::LogDebug("creating ", name);
-
-                if (SceneManager::get_active_scene())
-                    SceneManager::get_active_scene()->add_gameobject(creator());
-            }
-        }
-
-        ImGui::End();
-
+        editor::PrefabTab::Update();
         ImGui::BeginMainMenuBar();
         if (ImGui::BeginMenu("File"))
         {

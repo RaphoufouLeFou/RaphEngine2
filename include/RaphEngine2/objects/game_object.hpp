@@ -48,7 +48,7 @@ namespace raphEngine::objects
         virtual void Start() {};
         virtual void Update() {};
 
-        std::string& get_name();
+        const std::string& get_name() const;
         objects::Transform& get_transform();
         const std::string& get_uuid();
 

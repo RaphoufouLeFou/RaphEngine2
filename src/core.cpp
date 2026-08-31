@@ -40,8 +40,6 @@ namespace raphEngine
 
     int Core::Launch(const std::string& project_file, bool editor_mode)
     {
-        Logger::LogWarning("[DLL] sizeof(GameObject) = ",
-                           sizeof(objects::GameObject));
         editor_mode_ = editor_mode;
         if (!Project::parse_project_file(project_file))
         {

@@ -10,6 +10,7 @@
 #include <vector>
 #include "component/component.hpp"
 #include "component/mesh_component.hpp"
+#include "editor/prefab_tab.hpp"
 #include "imgui.h"
 
 #include "misc/cpp/imgui_stdlib.h"
@@ -160,6 +161,13 @@ namespace raphEngine::objects
                     ImGui::EndPopup();
                 }
             }
+
+            ImGui::Separator();
+
+            if (ImGui::Button("Save as prefab"))
+            {
+                editor::PrefabTab::save_as_prefab(this);
+            }
             // ImGui::End();
             // ImGui::TreePop();
         }
@@ -224,7 +232,7 @@ namespace raphEngine::objects
             c->Update();
     }
 
-    std::string& GameObject::get_name()
+    const std::string& GameObject::get_name() const
     {
         return name_;
     }
@@ -255,9 +263,6 @@ namespace raphEngine::objects
 
     GameObject* GameObject::find_uuid(const std::string& uuid)
     {
-        Logger::LogDebug("looking for UUID of ", uuid, " there is ",
-                         SceneManager::get_active_scene()->get_objects().size(),
-                         " objects");
         if (SceneManager::get_active_scene())
         {
             for (const auto& go :

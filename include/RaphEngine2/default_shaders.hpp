@@ -458,6 +458,16 @@ vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
         * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+vec3 ACESFilm(vec3 x)
+{
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
 void main()
 {
     vec2 uv = fs_in.TexCoords;
@@ -550,13 +560,11 @@ void main()
         vec3 R = reflect(-V, N);
         vec3 prefilteredColor =
             textureLod(prefilterMap, R, roughness * maxPrefilterLod).rgb;
+
         vec2 envBRDF = texture(brdfLUT, vec2(NdotV, roughness)).rg;
         vec3 specularIBL = prefilteredColor * (F_amb * envBRDF.x + envBRDF.y);
 
-        vec3 ambientHDR = kD_amb * diffuseIBL + specularIBL;
-        ambientHDR = vec3(1.0) - exp(-ambientHDR * reflectionExposure);
-
-        ambient = ambientHDR * ao;
+        ambient = (kD_amb * diffuseIBL + specularIBL) * ao;
     }
     else
     {
@@ -564,6 +572,10 @@ void main()
     }
 
     vec3 color = Lo + ambient + emissive;
+
+    color *= reflectionExposure;
+    color = ACESFilm(color);
+    color = pow(color, vec3(1.0 / 2.2));
 
     FragColor = vec4(color, 1.0);
 }
@@ -869,12 +881,13 @@ void main()
 
 inline const char* prefilter_convolution_fs_shader = R"(
 #version 410 core
-
 out vec4 FragColor;
 in vec3 localPos;
 
 uniform samplerCube environmentMap;
 uniform float roughness;
+uniform float envResolution; // per-face resolution of the source cubemap
+uniform float maxRadiance;
 
 const float PI = 3.14159265359;
 
@@ -914,6 +927,19 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
     return normalize(sampleVec);
 }
 
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return a2 / max(denom, 0.0000001);
+}
+
 void main()
 {
     vec3 N = normalize(localPos);
@@ -924,6 +950,8 @@ void main()
     vec3 prefilteredColor = vec3(0.0);
     float totalWeight = 0.0;
 
+    float saTexel = 4.0 * PI / (6.0 * envResolution * envResolution);
+
     for (uint i = 0u; i < SAMPLE_COUNT; ++i)
     {
         vec2 Xi = Hammersley(i, SAMPLE_COUNT);
@@ -933,7 +961,19 @@ void main()
         float NdotL = max(dot(N, L), 0.0);
         if (NdotL > 0.0)
         {
-            prefilteredColor += texture(environmentMap, L).rgb * NdotL;
+            float NdotH = max(dot(N, H), 0.0);
+            float HdotV = max(dot(H, V), 0.0);
+            float D = DistributionGGX(N, H, roughness);
+            float pdf = D * NdotH / (4.0 * HdotV) + 0.0001;
+
+            float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
+            float mipLevel =
+                roughness < 0.01 ? 0.0 : 0.5 * log2(saSample / saTexel);
+
+            vec3 sampleColor = textureLod(environmentMap, L, mipLevel).rgb;
+            sampleColor = min(sampleColor, vec3(maxRadiance));
+
+            prefilteredColor += sampleColor * NdotL;
             totalWeight += NdotL;
         }
     }
@@ -952,6 +992,8 @@ out vec4 FragColor;
 in vec3 localPos;
 
 uniform samplerCube environmentMap;
+uniform float sourceLod;
+uniform float maxRadiance;
 
 const float PI = 3.14159265359;
 
@@ -976,8 +1018,11 @@ void main()
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up
                 + tangentSample.z * N;
 
-            irradiance += texture(environmentMap, sampleVec).rgb * cos(theta)
-                * sin(theta);
+            vec3 sampleColor =
+                textureLod(environmentMap, sampleVec, sourceLod).rgb;
+            sampleColor = min(sampleColor, vec3(maxRadiance));
+
+            irradiance += sampleColor * cos(theta) * sin(theta);
             nrSamples++;
         }
     }

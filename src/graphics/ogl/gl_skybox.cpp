@@ -10,6 +10,7 @@
 #include "default_shaders.hpp"
 #include <memory>
 #include <string>
+#include <cmath>
 
 #include "graphics/camera.hpp"
 #include "graphics/graphic_api.hpp"
@@ -80,7 +81,8 @@ namespace raphEngine::graphics::ogl
                                   unsigned int& prefilter_map,
                                   unsigned int skybox_vao,
                                   unsigned int capture_fbo,
-                                  unsigned int capture_rbo)
+                                  unsigned int capture_rbo,
+                                  float ibl_radiance_clamp)
         {
             if (prefilter_map != 0)
                 glDeleteTextures(1, &prefilter_map);
@@ -115,6 +117,8 @@ namespace raphEngine::graphics::ogl
             pf->use();
             pf->setValue("environmentMap", 0);
             pf->setValue("projection", kCaptureProjection);
+            pf->setValue("envResolution", float(kCaptureFaceSize));
+            pf->setValue("maxRadiance", ibl_radiance_clamp);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, environment_map);
 
@@ -328,6 +332,10 @@ namespace raphEngine::graphics::ogl
             irr->use();
             irr->setValue("environmentMap", 0);
             irr->setValue("projection", kCaptureProjection);
+            irr->setValue("sourceLod",
+                          std::log2(float(kCaptureFaceSize)
+                                    / float(kIrradianceFaceSize)));
+            irr->setValue("maxRadiance", ibl_radiance_clamp_);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map_buffer_);
 
@@ -348,7 +356,7 @@ namespace raphEngine::graphics::ogl
             }
         }
         GeneratePrefilterMap(cube_map_buffer_, prefilter_map_, skybox_vao_,
-                             capture_fbo, capture_rbo);
+                             capture_fbo, capture_rbo, ibl_radiance_clamp_);
         GenerateBRDFLUT(brdf_lut_);
 
         glBindVertexArray(0);

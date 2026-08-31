@@ -180,6 +180,16 @@ vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
         * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+vec3 ACESFilm(vec3 x)
+{
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
 void main()
 {
     vec2 uv = fs_in.TexCoords;
@@ -272,13 +282,11 @@ void main()
         vec3 R = reflect(-V, N);
         vec3 prefilteredColor =
             textureLod(prefilterMap, R, roughness * maxPrefilterLod).rgb;
+
         vec2 envBRDF = texture(brdfLUT, vec2(NdotV, roughness)).rg;
         vec3 specularIBL = prefilteredColor * (F_amb * envBRDF.x + envBRDF.y);
 
-        vec3 ambientHDR = kD_amb * diffuseIBL + specularIBL;
-        ambientHDR = vec3(1.0) - exp(-ambientHDR * reflectionExposure);
-
-        ambient = ambientHDR * ao;
+        ambient = (kD_amb * diffuseIBL + specularIBL) * ao;
     }
     else
     {
@@ -286,6 +294,10 @@ void main()
     }
 
     vec3 color = Lo + ambient + emissive;
+
+    color *= reflectionExposure;
+    color = ACESFilm(color);
+    color = pow(color, vec3(1.0 / 2.2));
 
     FragColor = vec4(color, 1.0);
 }

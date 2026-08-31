@@ -3,6 +3,8 @@ out vec4 FragColor;
 in vec3 localPos;
 
 uniform samplerCube environmentMap;
+uniform float sourceLod;
+uniform float maxRadiance;
 
 const float PI = 3.14159265359;
 
@@ -27,8 +29,11 @@ void main()
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up
                 + tangentSample.z * N;
 
-            irradiance += texture(environmentMap, sampleVec).rgb * cos(theta)
-                * sin(theta);
+            vec3 sampleColor =
+                textureLod(environmentMap, sampleVec, sourceLod).rgb;
+            sampleColor = min(sampleColor, vec3(maxRadiance));
+
+            irradiance += sampleColor * cos(theta) * sin(theta);
             nrSamples++;
         }
     }

@@ -48,6 +48,16 @@ namespace raphEngine::graphics::ogl
         {
             return reflection_exposure_;
         }
+
+        void set_ibl_radiance_clamp(float c)
+        {
+            ibl_radiance_clamp_ = c;
+        }
+        float get_ibl_radiance_clamp() const
+        {
+            return ibl_radiance_clamp_;
+        }
+
         bool is_loaded() const
         {
             return cube_map_buffer_ != 0 && irradiance_map_ != 0
@@ -69,8 +79,9 @@ namespace raphEngine::graphics::ogl
         unsigned int skybox_vao_ = 0;
         unsigned int skybox_vbo_ = 0;
         std::shared_ptr<Shader> skybox_shader_;
-        float exposure_ = 0.2f;
-        float ambient_intensity_ = 2.f;
-        float reflection_exposure_ = exposure_;
+        float exposure_ = 0.5f;
+        float ambient_intensity_ = 1.f;
+        float reflection_exposure_ = exposure_ * 2;
+        float ibl_radiance_clamp_ = 10.0f;
     };
 } // namespace raphEngine::graphics::ogl

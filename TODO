@@ -1,4 +1,6 @@
 add prefab instancing
+Sound settings
+Light color
 Add Semi-shallow GameObject copies
 fix object destruction
 Redo the settings using reflect

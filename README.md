@@ -26,12 +26,13 @@ As of today, the engine handle :
 - Skybox Reflection
 - Scene manager
 - Object outline
+- Prefabs
+- Sound system
 
 And more little things.
 
 ## In the TODO list (Not in order)
 
-- Prefabs
 - Spot and point lights
 - Handle big terrains
 - Vegetation
@@ -39,7 +40,6 @@ And more little things.
 - Particle system
 - Bloom
 - Terrain painting
-- Sound system
 - Animations
 - Shader clouds
 - God rays

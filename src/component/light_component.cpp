@@ -11,7 +11,7 @@
 namespace raphEngine::component
 {
 
-    LightComponent::LightComponent(Type light_type, float intensity,
+    LightComponent::LightComponent(Type light_type, glm::vec3 color, float intensity,
                                    bool cast_shadows)
     {
         if (cast_shadows)
@@ -27,6 +27,7 @@ namespace raphEngine::component
         cast_shadows_ = cast_shadows;
         intensity_ = intensity;
         type = light_type;
+        set_color(color);
     }
 
     void LightComponent::set_direction(glm::vec3 direction)
@@ -43,6 +44,16 @@ namespace raphEngine::component
         rotation.z = 0.0f;
 
         t.set_rotation(rotation);
+    }
+
+    const glm::vec3& LightComponent::get_color() const
+    {
+        return color_;
+    }
+
+    void LightComponent::set_color(const glm::vec3& color)
+    {
+        color_ = color;
     }
 
     void LightComponent::Start()

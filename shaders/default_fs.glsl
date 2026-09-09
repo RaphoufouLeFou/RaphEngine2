@@ -263,7 +263,7 @@ void main()
 
         vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
 
-        vec3 radiance = vec3(lightIntensity);
+        vec3 radiance = lightColor * lightIntensity;
         Lo = (kD * albedo / PI + specular) * radiance * NdotL;
 
         float shadow = ShadowCalculation(fs_in.FragPos, N);

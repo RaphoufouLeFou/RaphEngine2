@@ -9,7 +9,6 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(FetchContent)
 
-
 option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" ON)
 
 file(GLOB RaphEngine2_SRC
@@ -52,6 +51,8 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 if(WIN32)
     target_compile_options(RaphEngine2 PRIVATE /W4 /permissive- /wd4251 /arch:AVX2)
+elseif(ANDROID)
+    target_compile_options(RaphEngine2 PRIVATE -pedantic -fPIC -O3)
 else()
     target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -fPIC -mavx2 -mfma -O3)
 endif()
@@ -160,13 +161,17 @@ target_link_libraries(RaphEngine2 PRIVATE libglew_static)
 find_package(glfw3 QUIET)
 
 if(NOT glfw3_FOUND)
-    FetchContent_Declare(
-        glfw3
-        GIT_REPOSITORY https://github.com/glfw/glfw.git
-        GIT_TAG 3.3.9
-    )
-    FetchContent_MakeAvailable(glfw3)
-endif()
+	    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+	        set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+		    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+
+		        FetchContent_Declare(
+				        glfw3
+					        GIT_REPOSITORY https://github.com/glfw/glfw.git
+						        GIT_TAG 3.3.9
+							    )
+							        FetchContent_MakeAvailable(glfw3)
+							endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glfw)
 
@@ -200,7 +205,12 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/mikke89/RmlUi.git
     GIT_TAG 6.2
 )
+
+set(_rmlui_saved_cmake_version "${CMAKE_VERSION}")
+set(CMAKE_VERSION "3.20.0")
 FetchContent_MakeAvailable(rmlui)
+set(CMAKE_VERSION "${_rmlui_saved_cmake_version}")
+unset(_rmlui_saved_cmake_version)
 
 target_link_libraries(RaphEngine2 PRIVATE $<BUILD_INTERFACE:RmlUi::RmlUi>)
 
@@ -241,13 +251,15 @@ target_include_directories(RaphEngine2 PRIVATE ${stb_image_SOURCE_DIR})
 find_package(assimp QUIET)
 
 if(NOT assimp_FOUND)
-    FetchContent_Declare(
-        assimp
-        GIT_REPOSITORY https://github.com/assimp/assimp.git
-        GIT_TAG v5.2.5
-    )
-    FetchContent_MakeAvailable(assimp)
-endif()
+	    set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+
+	        FetchContent_Declare(
+			        assimp
+				        GIT_REPOSITORY https://github.com/assimp/assimp.git
+					        GIT_TAG v5.2.5
+						    )
+						        FetchContent_MakeAvailable(assimp)
+						endif()
 
 target_link_libraries(RaphEngine2 PRIVATE assimp::assimp)
 

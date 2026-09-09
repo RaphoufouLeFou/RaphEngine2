@@ -45,7 +45,7 @@ namespace raphEngine::component
     private:
         glm::vec3 color_;
 
-        REFLECT(LightComponent, Component, intensity_, cast_shadows_, type, color_)
+        REFLECT(LightComponent, Component, intensity_, cast_shadows_, type)
         REFLECT_FACTORY(LightComponent, Component, "Light")
     };
 } // namespace raphEngine::component

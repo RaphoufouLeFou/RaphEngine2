@@ -2,6 +2,7 @@
 #include <RaphEngine2/logger/logger.hpp>
 #include <RaphEngine2/settings/graphics.hpp>
 #include <string>
+#include <sstream>
 
 namespace raphEngine
 {

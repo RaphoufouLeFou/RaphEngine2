@@ -1,6 +1,7 @@
 #include "time_utils.hpp"
 
 #include <chrono>
+#include <sstream>
 
 namespace raphEngine
 {

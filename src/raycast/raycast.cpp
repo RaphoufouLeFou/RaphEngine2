@@ -299,7 +299,10 @@ namespace raphEngine
         const auto& tris = collider.get_collider_mesh();
 
         return std::transform_reduce(
-            std::execution::par, tris.begin(), tris.end(), RayHit{},
+#if defined(__GLIBCXX__) || defined(_MSC_VER)
+            std::execution::par, 
+#endif
+	    tris.begin(), tris.end(), RayHit{},
             [](const RayHit& a, const RayHit& b) { return a.t < b.t ? a : b; },
             [&](const Utils::Triangle& tri) -> RayHit {
                 glm::vec3 hitPoint;

@@ -55,11 +55,13 @@ namespace raphEngine::graphics
                          Utils::GetForwardFromModelMatrix(
                              dir_light->parent_object->get_transform()
                                  .get_model_matrix()));
+            sh->setValue("lightColor", dir_light->get_color());
         }
         else
         {
             sh->setValue("lightIntensity", 0.0f);
             sh->setValue("lightDir", glm::vec3(0));
+            sh->setValue("lightColor", glm::vec3(1));
         }
 
         sh->setValue("viewPos", cam->get_position());

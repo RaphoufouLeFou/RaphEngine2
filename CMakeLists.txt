@@ -161,17 +161,23 @@ target_link_libraries(RaphEngine2 PRIVATE libglew_static)
 find_package(glfw3 QUIET)
 
 if(NOT glfw3_FOUND)
-	    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-	        set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-		    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+	set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+	set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+	set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 
-		        FetchContent_Declare(
-				        glfw3
-					        GIT_REPOSITORY https://github.com/glfw/glfw.git
-						        GIT_TAG 3.3.9
-							    )
-							        FetchContent_MakeAvailable(glfw3)
-							endif()
+	FetchContent_Declare(
+		glfw3
+		GIT_REPOSITORY https://github.com/glfw/glfw.git
+		GIT_TAG 3.3.9
+	)
+	
+	set(_real_system_name "${CMAKE_SYSTEM_NAME}")
+	set(CMAKE_SYSTEM_NAME "Linux")
+	FetchContent_MakeAvailable(glfw3)
+	set(CMAKE_SYSTEM_NAME "${_real_system_name}")
+	unset(_real_system_name)
+
+endif()
 
 target_link_libraries(RaphEngine2 PRIVATE glfw)
 

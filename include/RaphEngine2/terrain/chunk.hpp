@@ -4,10 +4,12 @@
 
 namespace fs = std::filesystem;
 
-namespace raphEngine
+namespace raphEngine::terrain
 {
-    class RAPHENGINE_API Terrain
+    class RAPHENGINE_API Chunk
     {
+    public:
+
         static void Load(const fs::path&);
         static void Save(const fs::path&);
     };

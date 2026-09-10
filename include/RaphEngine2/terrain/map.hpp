@@ -13,8 +13,8 @@ namespace raphEngine::terrain
     {
     public:
 
-        static void Load(const fs::path&);
-        static void Save(const fs::path&);
+        void Load(const fs::path&);
+        void Save(const fs::path&);
 
     private:
 	std::vector<std::vector<std::unqiue_ptr<Chunk>>> chunks;

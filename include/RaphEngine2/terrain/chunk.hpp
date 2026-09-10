@@ -10,7 +10,7 @@ namespace raphEngine::terrain
     {
     public:
 
-        static void Load(const fs::path&);
-        static void Save(const fs::path&);
+        void Load(const fs::path&);
+        void Save(const fs::path&);
     };
 } // namespace raphEngine

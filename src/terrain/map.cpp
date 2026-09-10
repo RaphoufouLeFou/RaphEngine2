@@ -1,5 +1,3 @@
-#pragma once
-
 #include <RaphEngine2/RaphEngine2.hpp>
 #include <RaphEngine2/terrain/chunk.hpp>
 #include <RaphEngine2/terrain/map.hpp>

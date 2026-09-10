@@ -2,6 +2,7 @@ add prefab instancing
 Sound settings
 Light color
 Add Semi-shallow GameObject copies
+Ass language pack system
 fix object destruction
 Redo the settings using reflect
 Start coding the Editor

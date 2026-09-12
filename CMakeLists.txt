@@ -60,7 +60,7 @@ endif()
 
 if(RAPHENGINE2_ENABLE_ASAN AND NOT WIN32)
     target_compile_options(RaphEngine2 PRIVATE -fsanitize=address -fno-omit-frame-pointer -g)
-    target_link_options(RaphEngine2 PRIVATE -fsanitize=address)
+    target_link_options(RaphEngine2 PRIVATE -fsanitize=address -g)
 endif()
 
 target_include_directories(RaphEngine2
@@ -151,11 +151,14 @@ FetchContent_Declare(
     glew
     GIT_REPOSITORY https://github.com/Perlmint/glew-cmake.git
     GIT_TAG glew-cmake-2.2.0
+    #    PATCH_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch-glew-getstring.cmake
 )
 
+add_compile_definitions(GLEW_EGL)
 FetchContent_MakeAvailable(glew)
 
 target_link_libraries(RaphEngine2 PRIVATE libglew_static)
+target_link_libraries(RaphEngine2 PRIVATE EGL)
 
 # GLFW
 find_package(glfw3 QUIET)
@@ -212,6 +215,7 @@ FetchContent_Declare(
     GIT_TAG 6.2
 )
 
+target_compile_definitions(RaphEngine2 PRIVATE RMLUI_NUM_MSAA_SAMPLES=0)
 set(_rmlui_saved_cmake_version "${CMAKE_VERSION}")
 set(CMAKE_VERSION "3.20.0")
 FetchContent_MakeAvailable(rmlui)

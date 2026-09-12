@@ -52,6 +52,7 @@ namespace raphEngine::graphics::ogl
 
     void SetHints()
     {
+	glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
         glfwWindowHint(GLFW_SAMPLES, 8);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
@@ -180,14 +181,44 @@ namespace raphEngine::graphics::ogl
 
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-        glewExperimental = true; // Needed in core profile
-        if (glewInit() != GLEW_OK)
-        {
-            Logger::LogError("Failed to initialize GLEW");
-            exit(EXIT_FAILURE);
-            return;
-        }
+#define CHECK_GL_FN(name) \
+	    Logger::LogDebug(#name, " = ", (void*)name, (name ? "" : "  <-- NULL!"))
 
+	Logger::LogDebug("GL_VERSION: ", (const char*)glGetString(GL_VERSION));
+	Logger::LogDebug("GL_RENDERER: ", (const char*)glGetString(GL_RENDERER));
+	Logger::LogDebug("GL_VENDOR: ", (const char*)glGetString(GL_VENDOR));
+
+	glewExperimental = true; // Needed in core profile
+				 GLenum glewErr = glewInit();
+				  if (glewErr != GLEW_OK)
+				  {
+				     Logger::LogError("Failed to initialize GLEW: ",
+				                         (const char*)glewGetErrorString(glewErr));
+				                      exit(EXIT_FAILURE);
+			
+				  }
+
+
+	        CHECK_GL_FN(glGenFramebuffers);
+		        CHECK_GL_FN(glBindFramebuffer);
+			        CHECK_GL_FN(glFramebufferTexture2D);                        CHECK_GL_FN(glFramebufferTexture);
+				        CHECK_GL_FN(glGenRenderbuffers);
+					        CHECK_GL_FN(glBindRenderbuffer);                            CHECK_GL_FN(glRenderbufferStorage);                         CHECK_GL_FN(glCheckFramebufferStatus);
+						        CHECK_GL_FN(glTexImage3D);                                  CHECK_GL_FN(glTexParameteri);
+							        CHECK_GL_FN(glGenTextures);
+								        CHECK_GL_FN(glCreateShader);                                CHECK_GL_FN(glCreateProgram);                               CHECK_GL_FN(glGenVertexArrays);
+									        CHECK_GL_FN(glBindVertexArray);
+										        CHECK_GL_FN(glGenBuffers);                                  CHECK_GL_FN(glBufferData);                                  CHECK_GL_FN(glVertexAttribPointer);
+											        CHECK_GL_FN(glActiveTexture);                               CHECK_GL_FN(glDrawArrays);
+
+
+								GLint maxTexSize, maxArrayLayers, maxSamples;
+								glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+								glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxArrayLayers);
+								glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+								Logger::LogDebug("GL_MAX_TEXTURE_SIZE=", maxTexSize,
+										                 " GL_MAX_ARRAY_TEXTURE_LAYERS=", maxArrayLayers,
+												                  " GL_MAX_SAMPLES=", maxSamples);
         rmlui_renderer_.Init(window, viewport_res_x, viewport_res_y);
         glfwSetCursorPosCallback(window, inputs::rmlui_cursor_pos_callback);
         glfwSetMouseButtonCallback(window, inputs::rmlui_mouse_button_callback);

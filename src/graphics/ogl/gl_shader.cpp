@@ -14,58 +14,93 @@ namespace raphEngine::graphics
 {
     std::vector<GlShader*> GlShader::loadedShaders_ = std::vector<GlShader*>();
 
+    unsigned int GlShader::CompileStage(const std::string& source,
+                                        unsigned int stageType,
+                                        const std::string& stageLabel)
+    {
+        unsigned int shader = glCreateShader(stageType);
+        const char* code = source.c_str();
+        glShaderSource(shader, 1, &code, NULL);
+        glCompileShader(shader);
+        checkCompileErrors(shader, stageLabel);
+        return shader;
+    }
+
     std::shared_ptr<GlShader>
     GlShader::create_shader(const std::string& vShaderCode,
                             const std::string& fShaderCode,
                             const std::string& gShaderCode)
     {
-        return std::make_shared<GlShader>(
-            vShaderCode.empty() ? default_vs_shader : vShaderCode,
-            fShaderCode.empty() ? default_fs_shader : fShaderCode, gShaderCode);
+        return create_shader(ShaderStages{ .vertex = vShaderCode,
+                                           .geometry = gShaderCode,
+                                           .fragment = fShaderCode });
+    }
+
+    std::shared_ptr<GlShader>
+    GlShader::create_shader(const ShaderStages& stages)
+    {
+        ShaderStages resolved = stages;
+        if (resolved.vertex.empty())
+            resolved.vertex = default_vs_shader;
+        if (resolved.fragment.empty())
+            resolved.fragment = default_fs_shader;
+
+        return std::make_shared<GlShader>(resolved);
     }
 
     GlShader::GlShader(const std::string& vShaderCode,
                        const std::string& fShaderCode,
                        const std::string& gShaderCode)
-    {
-        unsigned int vertex, fragment;
+        : GlShader(ShaderStages{ .vertex = vShaderCode,
+                                 .geometry = gShaderCode,
+                                 .fragment = fShaderCode })
+    {}
 
+    GlShader::GlShader(const ShaderStages& stages)
+    {
         Logger::LogDebug("compiling a shader");
 
-        vertex = glCreateShader(GL_VERTEX_SHADER);
-        const char* vertexCode = vShaderCode.c_str();
-        const char* fragmentCode = fShaderCode.c_str();
-        glShaderSource(vertex, 1, &vertexCode, NULL);
-        glCompileShader(vertex);
-        checkCompileErrors(vertex, "VERTEX");
+        unsigned int vertex =
+            CompileStage(stages.vertex, GL_VERTEX_SHADER, "VERTEX");
+        unsigned int fragment =
+            CompileStage(stages.fragment, GL_FRAGMENT_SHADER, "FRAGMENT");
 
-        fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &fragmentCode, NULL);
-        glCompileShader(fragment);
-        checkCompileErrors(fragment, "FRAGMENT");
+        unsigned int tessControl = 0;
+        if (!stages.tessControl.empty())
+            tessControl = CompileStage(stages.tessControl,
+                                       GL_TESS_CONTROL_SHADER, "TESS_CONTROL");
+
+        unsigned int tessEval = 0;
+        if (!stages.tessEval.empty())
+            tessEval = CompileStage(stages.tessEval, GL_TESS_EVALUATION_SHADER,
+                                    "TESS_EVALUATION");
 
         unsigned int geometry = 0;
-        if (!gShaderCode.empty())
-        {
-            const char* geometryCode = gShaderCode.c_str();
-            geometry = glCreateShader(GL_GEOMETRY_SHADER);
-            glShaderSource(geometry, 1, &geometryCode, NULL);
-            glCompileShader(geometry);
-            checkCompileErrors(geometry, "GEOMETRY");
-        }
+        if (!stages.geometry.empty())
+            geometry =
+                CompileStage(stages.geometry, GL_GEOMETRY_SHADER, "GEOMETRY");
 
         id_ = glCreateProgram();
         glAttachShader(id_, vertex);
         glAttachShader(id_, fragment);
-        if (!gShaderCode.empty())
+        if (tessControl != 0)
+            glAttachShader(id_, tessControl);
+        if (tessEval != 0)
+            glAttachShader(id_, tessEval);
+        if (geometry != 0)
             glAttachShader(id_, geometry);
         glLinkProgram(id_);
         checkCompileErrors(id_, "PROGRAM");
 
         glDeleteShader(vertex);
         glDeleteShader(fragment);
-        if (!gShaderCode.empty())
+        if (tessControl != 0)
+            glDeleteShader(tessControl);
+        if (tessEval != 0)
+            glDeleteShader(tessEval);
+        if (geometry != 0)
             glDeleteShader(geometry);
+
         GlShader::loadedShaders_.push_back(this);
     }
 
@@ -74,7 +109,8 @@ namespace raphEngine::graphics
         glUseProgram(id_);
     }
 
-    void GlShader::checkCompileErrors(GLuint shader, const std::string& type)
+    void GlShader::checkCompileErrors(unsigned int shader,
+                                      const std::string& type)
     {
         GLint success;
         GLchar infoLog[1024];
@@ -100,7 +136,7 @@ namespace raphEngine::graphics
         }
     }
 
-    GLint GlShader::getUniformLocation(const std::string& name) const
+    int GlShader::getUniformLocation(const std::string& name) const
     {
         if (auto it = uniform_location_cache_.find(name);
             it != uniform_location_cache_.end())

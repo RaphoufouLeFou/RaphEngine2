@@ -71,7 +71,7 @@ namespace raphEngine::graphics
         glBindVertexArray(vao_);
         glGenBuffers(1, &instance_vbo_);
         glBindBuffer(GL_ARRAY_BUFFER, instance_vbo_);
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 4; i++)
         {
             glEnableVertexAttribArray(5 + i);
             glVertexAttribPointer(5 + i, 4, GL_FLOAT, GL_FALSE,

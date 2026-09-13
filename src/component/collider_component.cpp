@@ -98,7 +98,7 @@ namespace raphEngine::component
             parent_object->get_transform().get_model_matrix();
 
         glm::vec3 corners[8];
-        for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < 8; i++)
         {
             corners[i] = glm::vec3(model * glm::vec4(local_corners[i], 1.0f));
         }

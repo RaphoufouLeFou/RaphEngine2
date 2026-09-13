@@ -64,7 +64,7 @@ namespace raphEngine
             }
             else
             {
-                ++it;
+                it++;
             }
         }
     }

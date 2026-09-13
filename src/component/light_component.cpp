@@ -11,8 +11,8 @@
 namespace raphEngine::component
 {
 
-    LightComponent::LightComponent(Type light_type, glm::vec3 color, float intensity,
-                                   bool cast_shadows)
+    LightComponent::LightComponent(Type light_type, glm::vec3 color,
+                                   float intensity, bool cast_shadows)
     {
         if (cast_shadows)
         {
@@ -70,6 +70,7 @@ namespace raphEngine::component
         {
             ImGui::Checkbox("cast shadows", &cast_shadows_);
             ImGui::DragFloat("intensity", &intensity_, 0.01);
+            ImGui::SliderFloat3("color", &color_[0], 0, 1);
             ImGui::TreePop();
         }
     }

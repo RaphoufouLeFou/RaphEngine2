@@ -1,32 +1,32 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
-#include <glm/glm.hpp>
+#include <RaphEngine2/graphics/shader.hpp>
+
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "graphics/shader.hpp"
+#include <glm/glm.hpp>
 
 namespace raphEngine::graphics
 {
-    class RAPHENGINE_API GlShader : public Shader
+    class RAPHENGINE_API GlShader final : public Shader
     {
     public:
+        GlShader(const std::string& vShaderCode, const std::string& fShaderCode,
+                 const std::string& gShaderCode = "");
+        explicit GlShader(const ShaderStages& stages);
+
         static std::shared_ptr<GlShader>
         create_shader(const std::string& vShaderCode,
                       const std::string& fShaderCode,
                       const std::string& gShaderCode = "");
-
-        GlShader(const std::string& vShaderCode, const std::string& fShaderCode,
-                 const std::string& gShaderCode = "");
+        static std::shared_ptr<GlShader>
+        create_shader(const ShaderStages& stages);
 
         void use() const override;
-        unsigned int get_id() const
-        {
-            return id_;
-        }
 
         void setValue(const std::string& name, bool value) const override;
         void setValue(const std::string& name, int value) const override;
@@ -52,12 +52,18 @@ namespace raphEngine::graphics
         void setValueArray(const std::string& name, size_t count,
                            const glm::vec3* array) const override;
 
-    private:
         static std::vector<GlShader*> loadedShaders_;
-        unsigned int id_;
-        void checkCompileErrors(unsigned int shader, const std::string& type);
 
-        mutable std::unordered_map<std::string, int> uniform_location_cache_;
+    private:
         int getUniformLocation(const std::string& name) const;
+
+        static unsigned int CompileStage(const std::string& source,
+                                         unsigned int stageType,
+                                         const std::string& stageLabel);
+        static void checkCompileErrors(unsigned int shader,
+                                       const std::string& type);
+
+        unsigned int id_ = 0;
+        mutable std::unordered_map<std::string, int> uniform_location_cache_;
     };
 } // namespace raphEngine::graphics

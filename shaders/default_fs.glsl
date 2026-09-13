@@ -33,6 +33,7 @@ uniform float ambientIntensity;
 uniform float reflectionExposure;
 
 uniform vec3 lightDir; // world space
+uniform vec3 lightColor;
 uniform float lightIntensity;
 uniform vec3 viewPos;
 
@@ -65,7 +66,7 @@ const float PI = 3.14159265359;
 
 float GetCascadeLayer(float depthViewSpace)
 {
-    for (int i = 0; i < cascadeCount; ++i)
+    for (int i = 0; i < cascadeCount; i++)
     {
         if (depthViewSpace < cascadePlaneDistances[i])
             return float(i);

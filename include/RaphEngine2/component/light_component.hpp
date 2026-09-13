@@ -19,7 +19,8 @@ namespace raphEngine::component
             POINT,
         };
 
-        LightComponent(Type light_type = DIRECTIONAL, glm::vec3 color = glm::vec3(1), float intensity = 1.0f,
+        LightComponent(Type light_type = DIRECTIONAL,
+                       glm::vec3 color = glm::vec3(1), float intensity = 1.0f,
                        bool cast_shadows = true);
         const std::string component_name = "Light";
 
@@ -38,13 +39,14 @@ namespace raphEngine::component
         float intensity_;
         bool cast_shadows_ = true;
         Type type;
-        
+
         const glm::vec3& get_color() const;
         void set_color(const glm::vec3& color);
 
     private:
         glm::vec3 color_;
 
+        // TODO: add color_ to the reflect
         REFLECT(LightComponent, Component, intensity_, cast_shadows_, type)
         REFLECT_FACTORY(LightComponent, Component, "Light")
     };

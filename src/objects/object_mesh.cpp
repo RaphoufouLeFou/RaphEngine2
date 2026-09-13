@@ -13,7 +13,7 @@ namespace raphEngine::objects
     {
         auto model = resources::ModelResource::get_or_load(path, filter);
 
-        for (size_t i = 0; i < model->get_submeshes().size(); ++i)
+        for (size_t i = 0; i < model->get_submeshes().size(); i++)
         {
             auto& data = model->get_submeshes()[i];
 

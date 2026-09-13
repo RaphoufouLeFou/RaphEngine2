@@ -173,6 +173,7 @@ namespace raphEngine::resources
                 { aiTextureType_DIFFUSE_ROUGHNESS, "DIFFUSE_ROUGHNESS" },
                 { aiTextureType_EMISSIVE, "EMISSIVE" },
                 { aiTextureType_AMBIENT_OCCLUSION, "AMBIENT_OCCLUSION" },
+                { aiTextureType_LIGHTMAP, "LIGHTMAP" },
                 { aiTextureType_OPACITY, "OPACITY" },
             };
             for (const auto& [type, name] : kTypes)
@@ -273,15 +274,51 @@ namespace raphEngine::resources
             data.textures.insert(data.textures.end(), heightMaps.begin(),
                                  heightMaps.end());
 
+            auto opacityMaps = loadMaterialTextures(
+                model_path, scene, material, aiTextureType_OPACITY,
+                objects::Texture::OPACITY, filter);
+            data.textures.insert(data.textures.end(), opacityMaps.begin(),
+                                 opacityMaps.end());
+
+            std::vector<std::string> nonPbrPaths;
+            for (const auto& t : data.textures)
+                nonPbrPaths.push_back(t.path);
+
+            auto isReusedFromOtherChannel =
+                [&nonPbrPaths](const std::string& path) {
+                    for (const auto& p : nonPbrPaths)
+                        if (p == path)
+                            return true;
+                    return false;
+                };
+
             auto metallicMaps = loadMaterialTextures(
                 model_path, scene, material, aiTextureType_METALNESS,
                 objects::Texture::METALLIC, filter);
+            if (!metallicMaps.empty()
+                && isReusedFromOtherChannel(metallicMaps[0].path))
+            {
+                Logger::LogWarning(
+                    "Discarding METALNESS texture for '", model_path,
+                    "' — reused from another channel, not real PBR data: ",
+                    metallicMaps[0].path);
+                metallicMaps.clear();
+            }
             data.textures.insert(data.textures.end(), metallicMaps.begin(),
                                  metallicMaps.end());
 
             auto roughnessMaps = loadMaterialTextures(
                 model_path, scene, material, aiTextureType_DIFFUSE_ROUGHNESS,
                 objects::Texture::ROUGHNESS, filter);
+            if (!roughnessMaps.empty()
+                && isReusedFromOtherChannel(roughnessMaps[0].path))
+            {
+                Logger::LogWarning(
+                    "Discarding DIFFUSE_ROUGHNESS texture for '", model_path,
+                    "' — reused from another channel, not real PBR data: ",
+                    roughnessMaps[0].path);
+                roughnessMaps.clear();
+            }
             data.textures.insert(data.textures.end(), roughnessMaps.begin(),
                                  roughnessMaps.end());
 
@@ -291,29 +328,19 @@ namespace raphEngine::resources
                 data.metallic_roughness_packed = true;
             }
 
-            auto aoMaps = loadMaterialTextures(model_path, scene, material,
-                                               aiTextureType_AMBIENT_OCCLUSION,
-                                               objects::Texture::AO, filter);
+            auto aoMaps = loadMaterialTexturesWithFallback(
+                model_path, scene, material, aiTextureType_AMBIENT_OCCLUSION,
+                aiTextureType_LIGHTMAP, objects::Texture::AO, filter);
+            if (!aoMaps.empty() && isReusedFromOtherChannel(aoMaps[0].path))
+            {
+                Logger::LogWarning(
+                    "Discarding AO/LIGHTMAP texture for '", model_path,
+                    "' — reused from another channel, not real PBR data: ",
+                    aoMaps[0].path);
+                aoMaps.clear();
+            }
             data.textures.insert(data.textures.end(), aoMaps.begin(),
                                  aoMaps.end());
-
-            auto emissiveMaps = loadMaterialTextures(
-                model_path, scene, material, aiTextureType_EMISSIVE,
-                objects::Texture::EMISSIVE, filter);
-            data.textures.insert(data.textures.end(), emissiveMaps.begin(),
-                                 emissiveMaps.end());
-
-            if (!emissiveMaps.empty()
-                && data.emissive_factor == glm::vec3(0.0f))
-            {
-                data.emissive_factor = glm::vec3(1.0f);
-            }
-
-            auto opacityMaps = loadMaterialTextures(
-                model_path, scene, material, aiTextureType_OPACITY,
-                objects::Texture::OPACITY, filter);
-            data.textures.insert(data.textures.end(), opacityMaps.begin(),
-                                 opacityMaps.end());
 
             out.push_back(std::move(data));
         }

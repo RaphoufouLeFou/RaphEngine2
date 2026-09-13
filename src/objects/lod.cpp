@@ -105,7 +105,7 @@ namespace raphEngine::objects
         }
         transitions_distances_.reserve(lod_count - 1);
 
-        for (int i = 1; i < lod_count; ++i)
+        for (int i = 1; i < lod_count; i++)
         {
             float t = static_cast<float>(i) / lod_count;
             transitions_distances_.push_back(std::pow(t, exponent));

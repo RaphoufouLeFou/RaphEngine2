@@ -7,9 +7,11 @@
 #include "graphics/ogl/gl_texture_loader.hpp"
 #include "graphics/outline_renderer.hpp"
 #include "graphics/skybox.hpp"
+#include "graphics/terrain_renderer.hpp"
 #include "graphics/texture_loader.hpp"
 #include "project_file/project_file.hpp"
 #include "settings/graphics.hpp"
+#include "terrain/map.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
@@ -52,12 +54,12 @@ namespace raphEngine::graphics::ogl
 
     void SetHints()
     {
-	glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
         glfwWindowHint(GLFW_SAMPLES, 8);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     }
@@ -181,44 +183,20 @@ namespace raphEngine::graphics::ogl
 
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-#define CHECK_GL_FN(name) \
-	    Logger::LogDebug(#name, " = ", (void*)name, (name ? "" : "  <-- NULL!"))
+        Logger::LogDebug("GL_VERSION: ", (const char*)glGetString(GL_VERSION));
+        Logger::LogDebug("GL_RENDERER: ",
+                         (const char*)glGetString(GL_RENDERER));
+        Logger::LogDebug("GL_VENDOR: ", (const char*)glGetString(GL_VENDOR));
 
-	Logger::LogDebug("GL_VERSION: ", (const char*)glGetString(GL_VERSION));
-	Logger::LogDebug("GL_RENDERER: ", (const char*)glGetString(GL_RENDERER));
-	Logger::LogDebug("GL_VENDOR: ", (const char*)glGetString(GL_VENDOR));
+        glewExperimental = true; // Needed in core profile
+        GLenum glewErr = glewInit();
+        if (glewErr != GLEW_OK)
+        {
+            Logger::LogError("Failed to initialize GLEW: ",
+                             (const char*)glewGetErrorString(glewErr));
+            exit(EXIT_FAILURE);
+        }
 
-	glewExperimental = true; // Needed in core profile
-				 GLenum glewErr = glewInit();
-				  if (glewErr != GLEW_OK)
-				  {
-				     Logger::LogError("Failed to initialize GLEW: ",
-				                         (const char*)glewGetErrorString(glewErr));
-				                      exit(EXIT_FAILURE);
-			
-				  }
-
-
-	        CHECK_GL_FN(glGenFramebuffers);
-		        CHECK_GL_FN(glBindFramebuffer);
-			        CHECK_GL_FN(glFramebufferTexture2D);                        CHECK_GL_FN(glFramebufferTexture);
-				        CHECK_GL_FN(glGenRenderbuffers);
-					        CHECK_GL_FN(glBindRenderbuffer);                            CHECK_GL_FN(glRenderbufferStorage);                         CHECK_GL_FN(glCheckFramebufferStatus);
-						        CHECK_GL_FN(glTexImage3D);                                  CHECK_GL_FN(glTexParameteri);
-							        CHECK_GL_FN(glGenTextures);
-								        CHECK_GL_FN(glCreateShader);                                CHECK_GL_FN(glCreateProgram);                               CHECK_GL_FN(glGenVertexArrays);
-									        CHECK_GL_FN(glBindVertexArray);
-										        CHECK_GL_FN(glGenBuffers);                                  CHECK_GL_FN(glBufferData);                                  CHECK_GL_FN(glVertexAttribPointer);
-											        CHECK_GL_FN(glActiveTexture);                               CHECK_GL_FN(glDrawArrays);
-
-
-								GLint maxTexSize, maxArrayLayers, maxSamples;
-								glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
-								glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxArrayLayers);
-								glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
-								Logger::LogDebug("GL_MAX_TEXTURE_SIZE=", maxTexSize,
-										                 " GL_MAX_ARRAY_TEXTURE_LAYERS=", maxArrayLayers,
-												                  " GL_MAX_SAMPLES=", maxSamples);
         rmlui_renderer_.Init(window, viewport_res_x, viewport_res_y);
         glfwSetCursorPosCallback(window, inputs::rmlui_cursor_pos_callback);
         glfwSetMouseButtonCallback(window, inputs::rmlui_mouse_button_callback);
@@ -250,11 +228,7 @@ namespace raphEngine::graphics::ogl
 
         if (Core::is_editor_mode())
         {
-            ImGui_ImplGlfw_InitForOpenGL(
-                window,
-                true); // Second param install_callback=true will install
-                       // GLFW callbacks and chain to existing ones.
-            Logger::LogDebug("imgui opengl3 init");
+            ImGui_ImplGlfw_InitForOpenGL(window, true);
             ImGui_ImplOpenGL3_Init();
             CreateViewportFramebuffer(viewport_res_x, viewport_res_y);
         }
@@ -372,7 +346,7 @@ namespace raphEngine::graphics::ogl
 
         if (do_shadows)
         {
-            for (size_t layer = 0; layer < cascade_count; ++layer)
+            for (size_t layer = 0; layer < cascade_count; layer++)
             {
                 GLShadowRenderer::begin_cascade_layer(layer);
 
@@ -407,6 +381,15 @@ namespace raphEngine::graphics::ogl
         glViewport(0, 0, viewport_res_x, viewport_res_y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
                 | GL_STENCIL_BUFFER_BIT);
+
+        terrain::Map* map = terrain::Map::GetInstace();
+
+        if (map)
+        {
+            map->UpdateStreaming(camPos, 2000.0f);
+
+            graphics::TerrainRenderer::getInstance()->render(*map);
+        }
 
         for (auto& [key, meshes] : color_batches)
         {

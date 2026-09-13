@@ -70,7 +70,7 @@ void main()
 
     float saTexel = 4.0 * PI / (6.0 * envResolution * envResolution);
 
-    for (uint i = 0u; i < SAMPLE_COUNT; ++i)
+    for (uint i = 0u; i < SAMPLE_COUNT; i++)
     {
         vec2 Xi = Hammersley(i, SAMPLE_COUNT);
         vec3 H = ImportanceSampleGGX(Xi, N, roughness);

@@ -1,16 +1,41 @@
 #pragma once
 
 #include <RaphEngine2/export.hpp>
+
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
 
+namespace fs = std::filesystem;
+
 namespace raphEngine::graphics
 {
+    struct ShaderStages
+    {
+        std::string vertex = "";
+        std::string tessControl = "";
+        std::string tessEval = "";
+        std::string geometry = "";
+        std::string fragment = "";
+
+        bool operator==(const ShaderStages&) const = default;
+    };
+
+    struct ShaderFilePaths
+    {
+        fs::path vertex;
+        fs::path tessControl;
+        fs::path tessEval;
+        fs::path geometry;
+        fs::path fragment;
+    };
+
     class RAPHENGINE_API Shader
     {
     public:
         Shader();
+        virtual ~Shader() = default;
 
         virtual void use() const = 0;
 
@@ -42,6 +67,11 @@ namespace raphEngine::graphics
         loadShader(const std::string& vShaderCode = "",
                    const std::string& fShaderCode = "",
                    const std::string& gShaderCode = "");
+
+        static std::shared_ptr<Shader> loadShader(const ShaderStages& stages);
+
+        static std::shared_ptr<Shader>
+        loadShaderFromFile(const ShaderFilePaths& paths);
     };
 
 } // namespace raphEngine::graphics

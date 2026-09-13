@@ -90,7 +90,7 @@ namespace raphEngine::graphics
             { 0.0, 0.0, 1.0, 0.5f },
         };
 
-        for (size_t i = 0; i < lightMatrices.size(); ++i)
+        for (size_t i = 0; i < lightMatrices.size(); i++)
         {
             const auto corners = getFrustumCornersWorldSpace(lightMatrices[i]);
             std::vector<glm::vec3> vec3s;

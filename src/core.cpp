@@ -18,6 +18,7 @@
 #include "settings/settings.hpp"
 
 #include "imgui.h"
+#include "terrain/map.hpp"
 
 namespace raphEngine
 {

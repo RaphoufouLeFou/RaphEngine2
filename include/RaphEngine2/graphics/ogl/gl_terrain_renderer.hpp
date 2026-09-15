@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <memory>
 #include <span>
-#include <unordered_map>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -19,8 +18,7 @@ namespace raphEngine::graphics
 namespace raphEngine::terrain
 {
     class Map;
-    class Chunk;
-} // namespace raphEngine::terrain
+}
 
 namespace raphEngine::graphics::ogl
 {
@@ -36,54 +34,58 @@ namespace raphEngine::graphics::ogl
         void render(const terrain::Map& map) override;
 
     private:
-        struct ChunkGpuSlot
+        struct RingState
         {
-            uint32_t textureLayer;
-            uint64_t uploadedVersion;
-            bool inUseThisFrame;
+            glm::vec2 snappedOrigin{ 0.0f, 0.0f };
+            bool initialized = false;
         };
 
-        struct LayerAcquireResult
-        {
-            uint32_t layer;
-            bool needsUpload;
-        };
-
-        void CreatePatchMesh();
-        void CreateHeightTextureArray();
-        void CreatePaintMaskTextureArray();
+        void CreateRingMeshes();
+        void CreateHeightRingArray();
+        void CreateNormalRingArray();
         void CreateMaterialTextureArrays();
         void CreateGaussianAlbedoArrays();
-        void CreateInstanceBuffer();
-
         unsigned int
         CreateMaterialMapArray(std::span<const char* const> paths) const;
 
-        LayerAcquireResult AcquireTextureLayer(glm::ivec2 gridCoord,
-                                               uint64_t currentVersion);
-        void ReleaseUnusedLayers();
-        void UploadChunkHeights(const terrain::Chunk& chunk, uint32_t layer);
-        void UploadChunkPaintMask(const terrain::Chunk& chunk, uint32_t layer);
+        float GetRingWorldSize(uint32_t ringIndex) const;
+        glm::vec2 ComputeSnappedOrigin(uint32_t ringIndex,
+                                       glm::vec2 cameraXY) const;
+        void UpdateRingTexture(uint32_t ringIndex, const terrain::Map& map,
+                               glm::vec2 snappedOrigin);
+        void DrawRing(uint32_t ringIndex, const Shader* shader) const;
 
-        static constexpr uint32_t kMaxResidentChunks = 512;
-        static constexpr uint32_t kPatchGridSize = 8;
+        static constexpr uint32_t kRingCount = 12;
+        static constexpr uint32_t kRingResolution = 128;
+        static constexpr float kBaseRingWorldSize = 64.0f;
 
-        unsigned int patchVao_ = 0;
-        unsigned int patchVbo_ = 0;
-        unsigned int patchEbo_ = 0;
-        uint32_t patchCount_ = 0;
+        static constexpr float kRockPatchScale = 60.0f;
+        static constexpr float kDirtPatchScale = 45.0f;
+        static constexpr float kMinNormalSampleDistance = 2.0f;
 
-        unsigned int heightTextureArray_ = 0;
-        unsigned int paintMaskTextureArray_ = 0;
+        static constexpr float kFogDensity = 0.00006f;
+        static constexpr glm::vec3 kFogColor = glm::vec3(0.55f, 0.62f, 0.70f);
+
+        unsigned int ringVertexBuffer_ = 0;
+        unsigned int solidVao_ = 0;
+        unsigned int solidEbo_ = 0;
+        uint32_t solidIndexCount_ = 0;
+
+        unsigned int heightRingArray_ = 0;
+        unsigned int normalRingArray_ = 0;
+
         unsigned int materialGaussianAlbedoArray_ = 0;
         unsigned int materialAlbedoLutArray_ = 0;
         unsigned int materialNormalArray_ = 0;
         unsigned int materialOrmArray_ = 0;
-        unsigned int chunkInstanceSsbo_ = 0;
-        void* chunkInstanceSsboPtr_ = nullptr;
 
-        std::unordered_map<uint64_t, ChunkGpuSlot> residentChunks_;
-        std::vector<bool> layerInUse_;
+        std::vector<RingState> ringStates_;
+
+        std::vector<float> scratchHeights_;
+        std::vector<float> scratchNormalGridHeights_;
+        std::vector<glm::vec3> scratchNormalGridNormals_;
+        std::vector<glm::vec4> scratchRingData_;
+        std::vector<glm::vec3> scratchNormalData_;
 
         std::shared_ptr<Shader> terrainShader_;
     };

@@ -3,6 +3,7 @@
 #include <RaphEngine2/export.hpp>
 #include <RaphEngine2/graphics/shader.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -52,6 +53,9 @@ namespace raphEngine::graphics
         void setValueArray(const std::string& name, size_t count,
                            const glm::vec3* array) const override;
 
+        void bindUniformBlock(const std::string& blockName,
+                              unsigned int bindingPoint) const override;
+
         static std::vector<GlShader*> loadedShaders_;
 
     private:
@@ -62,6 +66,9 @@ namespace raphEngine::graphics
                                          const std::string& stageLabel);
         static void checkCompileErrors(unsigned int shader,
                                        const std::string& type);
+
+        bool TryLoadCachedBinary(const std::filesystem::path& cachePath);
+        void SaveCachedBinary(const std::filesystem::path& cachePath) const;
 
         unsigned int id_ = 0;
         mutable std::unordered_map<std::string, int> uniform_location_cache_;

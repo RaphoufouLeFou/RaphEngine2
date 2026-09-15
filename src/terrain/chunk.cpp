@@ -513,13 +513,19 @@ namespace raphEngine::terrain
         texel = glm::clamp(texel, glm::ivec2(0),
                            glm::ivec2(static_cast<int>(kChunkResolution) - 1));
 
-        const uint32_t tileId = ComputeTileId(texel);
-        const auto it = m_editTiles.find(tileId);
-        if (it != m_editTiles.end())
+        if (!m_editTiles.empty())
         {
-            const int localX = texel.x % static_cast<int>(kEditTileResolution);
-            const int localY = texel.y % static_cast<int>(kEditTileResolution);
-            return it->second.heights[localY * kEditTileResolution + localX];
+            const uint32_t tileId = ComputeTileId(texel);
+            const auto it = m_editTiles.find(tileId);
+            if (it != m_editTiles.end())
+            {
+                const int localX =
+                    texel.x % static_cast<int>(kEditTileResolution);
+                const int localY =
+                    texel.y % static_cast<int>(kEditTileResolution);
+                return it->second
+                    .heights[localY * kEditTileResolution + localX];
+            }
         }
 
         return m_baseHeights[texel.y * kChunkResolution + texel.x];

@@ -8,12 +8,12 @@
 #include <array>
 #include <cmath>
 #include <numbers>
-#include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <RaphEngine2/component/camera_component.hpp>
 #include <RaphEngine2/default_shaders.hpp>
@@ -24,7 +24,6 @@
 #include <RaphEngine2/graphics/stochastic_texture_baker.hpp>
 #include <RaphEngine2/graphics/texture_loader.hpp>
 #include <RaphEngine2/logger/logger.hpp>
-#include <RaphEngine2/terrain/chunk.hpp>
 #include <RaphEngine2/terrain/map.hpp>
 #include <RaphEngine2/utils.hpp>
 
@@ -35,24 +34,6 @@ namespace raphEngine::graphics::ogl
 {
     namespace
     {
-        uint64_t PackCoord(glm::ivec2 coord)
-        {
-            return (static_cast<uint64_t>(static_cast<uint32_t>(coord.x)) << 32)
-                | static_cast<uint32_t>(coord.y);
-        }
-
-        struct ChunkInstanceGpuData
-        {
-            glm::vec2 worldOrigin;
-            glm::vec2 heightRange;
-            uint32_t textureLayer;
-            float pad0;
-        };
-
-        static_assert(sizeof(ChunkInstanceGpuData) == 24,
-                      "ChunkInstanceGpuData must match the std430 layout the "
-                      "terrain shader expects");
-
         struct TerrainMaterialDefinition
         {
             const char* albedoPath;
@@ -63,152 +44,156 @@ namespace raphEngine::graphics::ogl
 
         constexpr int kAlbedoLutResolution = 256;
 
+        // index 0=grass, 1=rock, 2=snow, 3=dirt — must match the kMaterial*
+        // constants in terrain_ring_fs.glsl.
         constexpr std::array<TerrainMaterialDefinition, 4> kMaterials = { {
             { "assets/textures/terrain/forrest_ground_01_diff_4k.jpg",
               "assets/textures/terrain/forrest_ground_01_nor_gl_4k.jpg",
               "assets/textures/terrain/forrest_ground_01_arm_4k.jpg", 2.0f },
-
-            { "assets/textures/terrain/rocks_ground_04_diff_4k.jpg",
-              "assets/textures/terrain/rocks_ground_04_nor_gl_4k.jpg",
-              "assets/textures/terrain/rocks_ground_04_arm_4k.jpg", 2.0f },
-
+            { "assets/textures/terrain/rock_face_03_diff_4k.jpg",
+              "assets/textures/terrain/rock_face_03_nor_gl_4k.jpg",
+              "assets/textures/terrain/rock_face_03_arm_4k.jpg", 2.0f },
             { "assets/textures/terrain/snow_02_diff_4k.jpg",
               "assets/textures/terrain/snow_02_nor_gl_4k.jpg",
               "assets/textures/terrain/snow_02_arm_4k.jpg", 2.0f },
-
             { "assets/textures/terrain/forest_ground_05_diff_4k.jpg",
               "assets/textures/terrain/forest_ground_05_nor_gl_4k.jpg",
               "assets/textures/terrain/forest_ground_05_arm_4k.jpg", 2.0f },
         } };
+
+        float MacroHash(glm::vec2 p)
+        {
+            p = 50.0f * glm::fract(p * 0.3183099f + glm::vec2(0.71f, 0.113f));
+            return glm::fract(p.x * p.y * (p.x + p.y));
+        }
+
+        float MacroNoise(glm::vec2 p)
+        {
+            glm::vec2 i = glm::floor(p);
+            glm::vec2 f = glm::fract(p);
+            glm::vec2 u = f * f * (3.0f - 2.0f * f);
+
+            float a = MacroHash(i);
+            float b = MacroHash(i + glm::vec2(1.0f, 0.0f));
+            float c = MacroHash(i + glm::vec2(0.0f, 1.0f));
+            float d = MacroHash(i + glm::vec2(1.0f, 1.0f));
+
+            return glm::mix(glm::mix(a, b, u.x), glm::mix(c, d, u.x), u.y);
+        }
     } // namespace
 
     GLTerrainRenderer::GLTerrainRenderer()
     {
-        CreatePatchMesh();
-        CreateHeightTextureArray();
-        CreatePaintMaskTextureArray();
+        CreateRingMeshes();
+        CreateHeightRingArray();
+        CreateNormalRingArray();
         CreateMaterialTextureArrays();
-        CreateInstanceBuffer();
 
-        terrainShader_ =
-            Shader::loadShader(ShaderStages{ .vertex = terrain_vs_shader,
-                                             .tessControl = terrain_tcs_shader,
-                                             .tessEval = terrain_tes_shader,
-                                             .fragment = terrain_fs_shader });
+        terrainShader_ = Shader::loadShader(
+            ShaderStages{ .vertex = terrain_ring_vs_shader,
+                          .fragment = terrain_ring_fs_shader });
+
+        terrainShader_->bindUniformBlock("LightSpaceMatrices", 0);
     }
 
     GLTerrainRenderer::~GLTerrainRenderer()
     {
-        if (chunkInstanceSsboPtr_ != nullptr)
-        {
-            glUnmapNamedBuffer(chunkInstanceSsbo_);
-        }
-
-        glDeleteBuffers(1, &chunkInstanceSsbo_);
         glDeleteTextures(1, &materialOrmArray_);
         glDeleteTextures(1, &materialNormalArray_);
         glDeleteTextures(1, &materialAlbedoLutArray_);
         glDeleteTextures(1, &materialGaussianAlbedoArray_);
-        glDeleteTextures(1, &paintMaskTextureArray_);
-        glDeleteTextures(1, &heightTextureArray_);
-        glDeleteBuffers(1, &patchEbo_);
-        glDeleteBuffers(1, &patchVbo_);
-        glDeleteVertexArrays(1, &patchVao_);
+        glDeleteTextures(1, &normalRingArray_);
+        glDeleteTextures(1, &heightRingArray_);
+        glDeleteBuffers(1, &solidEbo_);
+        glDeleteVertexArrays(1, &solidVao_);
+        glDeleteBuffers(1, &ringVertexBuffer_);
     }
 
-    void GLTerrainRenderer::CreatePatchMesh()
+    void GLTerrainRenderer::CreateRingMeshes()
     {
         std::vector<glm::vec2> vertices;
-        vertices.reserve((kPatchGridSize + 1) * (kPatchGridSize + 1));
+        vertices.reserve((kRingResolution + 1) * (kRingResolution + 1));
 
-        for (uint32_t y = 0; y <= kPatchGridSize; ++y)
+        for (uint32_t y = 0; y <= kRingResolution; ++y)
         {
-            for (uint32_t x = 0; x <= kPatchGridSize; ++x)
+            for (uint32_t x = 0; x <= kRingResolution; ++x)
             {
-                vertices.emplace_back(static_cast<float>(x) / kPatchGridSize,
-                                      static_cast<float>(y) / kPatchGridSize);
+                vertices.emplace_back(static_cast<float>(x) / kRingResolution,
+                                      static_cast<float>(y) / kRingResolution);
             }
         }
 
+        const uint32_t rowStride = kRingResolution + 1;
         std::vector<uint32_t> indices;
-        indices.reserve(kPatchGridSize * kPatchGridSize * 4);
+        indices.reserve(static_cast<size_t>(kRingResolution) * kRingResolution
+                        * 6);
 
-        const uint32_t rowStride = kPatchGridSize + 1;
-        for (uint32_t y = 0; y < kPatchGridSize; ++y)
+        for (uint32_t y = 0; y < kRingResolution; ++y)
         {
-            for (uint32_t x = 0; x < kPatchGridSize; ++x)
+            for (uint32_t x = 0; x < kRingResolution; ++x)
             {
                 const uint32_t i0 = y * rowStride + x;
                 const uint32_t i1 = i0 + 1;
                 const uint32_t i2 = i0 + rowStride;
                 const uint32_t i3 = i2 + 1;
 
-                indices.push_back(i0);
-                indices.push_back(i1);
-                indices.push_back(i3);
-                indices.push_back(i2);
+                indices.insert(indices.end(), { i0, i1, i2, i1, i3, i2 });
             }
         }
 
-        patchCount_ = static_cast<uint32_t>(indices.size() / 4);
+        solidIndexCount_ = static_cast<uint32_t>(indices.size());
 
-        glCreateVertexArrays(1, &patchVao_);
-        glCreateBuffers(1, &patchVbo_);
-        glCreateBuffers(1, &patchEbo_);
-
+        glCreateBuffers(1, &ringVertexBuffer_);
         glNamedBufferStorage(
-            patchVbo_,
+            ringVertexBuffer_,
             static_cast<GLsizeiptr>(vertices.size() * sizeof(glm::vec2)),
             vertices.data(), 0);
+
+        glCreateVertexArrays(1, &solidVao_);
+        glCreateBuffers(1, &solidEbo_);
         glNamedBufferStorage(
-            patchEbo_,
+            solidEbo_,
             static_cast<GLsizeiptr>(indices.size() * sizeof(uint32_t)),
             indices.data(), 0);
-
-        glVertexArrayVertexBuffer(patchVao_, 0, patchVbo_, 0,
+        glVertexArrayVertexBuffer(solidVao_, 0, ringVertexBuffer_, 0,
                                   sizeof(glm::vec2));
-        glVertexArrayElementBuffer(patchVao_, patchEbo_);
-
-        glEnableVertexArrayAttrib(patchVao_, 0);
-        glVertexArrayAttribFormat(patchVao_, 0, 2, GL_FLOAT, GL_FALSE, 0);
-        glVertexArrayAttribBinding(patchVao_, 0, 0);
+        glVertexArrayElementBuffer(solidVao_, solidEbo_);
+        glEnableVertexArrayAttrib(solidVao_, 0);
+        glVertexArrayAttribFormat(solidVao_, 0, 2, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(solidVao_, 0, 0);
     }
 
-    void GLTerrainRenderer::CreateHeightTextureArray()
+    void GLTerrainRenderer::CreateHeightRingArray()
     {
-        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &heightTextureArray_);
-        glTextureStorage3D(heightTextureArray_, 1, GL_R16,
-                           static_cast<GLsizei>(terrain::kChunkResolution),
-                           static_cast<GLsizei>(terrain::kChunkResolution),
-                           static_cast<GLsizei>(kMaxResidentChunks));
+        const GLsizei texSize = static_cast<GLsizei>(kRingResolution + 1);
 
-        glTextureParameteri(heightTextureArray_, GL_TEXTURE_MIN_FILTER,
-                            GL_LINEAR);
-        glTextureParameteri(heightTextureArray_, GL_TEXTURE_MAG_FILTER,
-                            GL_LINEAR);
-        glTextureParameteri(heightTextureArray_, GL_TEXTURE_WRAP_S,
+        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &heightRingArray_);
+        glTextureStorage3D(heightRingArray_, 1, GL_RGBA32F, texSize, texSize,
+                           static_cast<GLsizei>(kRingCount));
+
+        glTextureParameteri(heightRingArray_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(heightRingArray_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(heightRingArray_, GL_TEXTURE_WRAP_S,
                             GL_CLAMP_TO_EDGE);
-        glTextureParameteri(heightTextureArray_, GL_TEXTURE_WRAP_T,
+        glTextureParameteri(heightRingArray_, GL_TEXTURE_WRAP_T,
                             GL_CLAMP_TO_EDGE);
 
-        layerInUse_.assign(kMaxResidentChunks, false);
+        ringStates_.assign(kRingCount, RingState{});
     }
 
-    void GLTerrainRenderer::CreatePaintMaskTextureArray()
+    void GLTerrainRenderer::CreateNormalRingArray()
     {
-        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &paintMaskTextureArray_);
-        glTextureStorage3D(paintMaskTextureArray_, 1, GL_R8UI,
-                           static_cast<GLsizei>(terrain::kChunkResolution),
-                           static_cast<GLsizei>(terrain::kChunkResolution),
-                           static_cast<GLsizei>(kMaxResidentChunks));
+        const GLsizei texSize = static_cast<GLsizei>(kRingResolution + 1);
 
-        glTextureParameteri(paintMaskTextureArray_, GL_TEXTURE_MIN_FILTER,
-                            GL_NEAREST);
-        glTextureParameteri(paintMaskTextureArray_, GL_TEXTURE_MAG_FILTER,
-                            GL_NEAREST);
-        glTextureParameteri(paintMaskTextureArray_, GL_TEXTURE_WRAP_S,
+        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &normalRingArray_);
+        glTextureStorage3D(normalRingArray_, 1, GL_RGB16F, texSize, texSize,
+                           static_cast<GLsizei>(kRingCount));
+
+        glTextureParameteri(normalRingArray_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(normalRingArray_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(normalRingArray_, GL_TEXTURE_WRAP_S,
                             GL_CLAMP_TO_EDGE);
-        glTextureParameteri(paintMaskTextureArray_, GL_TEXTURE_WRAP_T,
+        glTextureParameteri(normalRingArray_, GL_TEXTURE_WRAP_T,
                             GL_CLAMP_TO_EDGE);
     }
 
@@ -408,101 +393,207 @@ namespace raphEngine::graphics::ogl
         materialOrmArray_ = CreateMaterialMapArray(ormPaths);
     }
 
-    void GLTerrainRenderer::CreateInstanceBuffer()
+    float GLTerrainRenderer::GetRingWorldSize(uint32_t ringIndex) const
     {
-        glCreateBuffers(1, &chunkInstanceSsbo_);
-
-        const GLbitfield flags =
-            GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-        const GLsizeiptr bufferSize = static_cast<GLsizeiptr>(
-            kMaxResidentChunks * sizeof(ChunkInstanceGpuData));
-
-        glNamedBufferStorage(chunkInstanceSsbo_, bufferSize, nullptr, flags);
-        chunkInstanceSsboPtr_ =
-            glMapNamedBufferRange(chunkInstanceSsbo_, 0, bufferSize, flags);
-
-        if (chunkInstanceSsboPtr_ == nullptr)
-        {
-            Logger::LogError("GLTerrainRenderer: failed to persistently map "
-                             "the chunk instance buffer");
-        }
+        return kBaseRingWorldSize * static_cast<float>(1u << ringIndex);
     }
 
-    GLTerrainRenderer::LayerAcquireResult
-    GLTerrainRenderer::AcquireTextureLayer(glm::ivec2 gridCoord,
-                                           uint64_t currentVersion)
+    glm::vec2 GLTerrainRenderer::ComputeSnappedOrigin(uint32_t ringIndex,
+                                                      glm::vec2 cameraXY) const
     {
-        const uint64_t key = PackCoord(gridCoord);
-        auto it = residentChunks_.find(key);
-        if (it != residentChunks_.end())
-        {
-            it->second.inUseThisFrame = true;
-            const bool needsUpload =
-                it->second.uploadedVersion != currentVersion;
-            if (needsUpload)
-            {
-                it->second.uploadedVersion = currentVersion;
-            }
-            return { it->second.textureLayer, needsUpload };
-        }
+        const float worldSize = GetRingWorldSize(ringIndex);
+        const float texelSize = worldSize / static_cast<float>(kRingResolution);
 
-        for (uint32_t layer = 0; layer < layerInUse_.size(); ++layer)
+        const glm::vec2 idealOrigin = cameraXY - glm::vec2(worldSize * 0.5f);
+        return glm::floor(idealOrigin / texelSize) * texelSize;
+    }
+
+    void GLTerrainRenderer::UpdateRingTexture(uint32_t ringIndex,
+                                              const terrain::Map& map,
+                                              glm::vec2 snappedOrigin)
+    {
+        const uint32_t texSize = kRingResolution + 1;
+        const float worldSize = GetRingWorldSize(ringIndex);
+        const float texelSize = worldSize / static_cast<float>(kRingResolution);
+
+        scratchHeights_.resize(static_cast<size_t>(texSize) * texSize);
+        for (uint32_t y = 0; y < texSize; ++y)
         {
-            if (!layerInUse_[layer])
+            for (uint32_t x = 0; x < texSize; ++x)
             {
-                layerInUse_[layer] = true;
-                residentChunks_[key] =
-                    ChunkGpuSlot{ layer, currentVersion, true };
-                return { layer, true };
+                const glm::vec2 worldXY = snappedOrigin
+                    + glm::vec2(static_cast<float>(x), static_cast<float>(y))
+                        * texelSize;
+                scratchHeights_[y * texSize + x] = map.GetHeightAt(worldXY);
             }
         }
 
-        Logger::LogError("GLTerrainRenderer: exceeded kMaxResidentChunks, "
-                         "terrain will show gaps");
-        return { 0, false };
-    }
+        const float gridStep = std::max(kMinNormalSampleDistance, texelSize);
+        const float gridOriginX =
+            std::floor((snappedOrigin.x - gridStep) / gridStep) * gridStep;
+        const float gridOriginY =
+            std::floor((snappedOrigin.y - gridStep) / gridStep) * gridStep;
+        const glm::vec2 gridOrigin(gridOriginX, gridOriginY);
 
-    void GLTerrainRenderer::ReleaseUnusedLayers()
-    {
-        for (auto it = residentChunks_.begin(); it != residentChunks_.end();)
+        const float gridSpanX =
+            (snappedOrigin.x + worldSize + gridStep) - gridOriginX;
+        const float gridSpanY =
+            (snappedOrigin.y + worldSize + gridStep) - gridOriginY;
+        const int gridCountX =
+            static_cast<int>(std::ceil(gridSpanX / gridStep)) + 1;
+        const int gridCountY =
+            static_cast<int>(std::ceil(gridSpanY / gridStep)) + 1;
+
+        scratchNormalGridHeights_.resize(static_cast<size_t>(gridCountX)
+                                         * gridCountY);
+        for (int gy = 0; gy < gridCountY; ++gy)
         {
-            if (!it->second.inUseThisFrame)
+            for (int gx = 0; gx < gridCountX; ++gx)
             {
-                layerInUse_[it->second.textureLayer] = false;
-                it = residentChunks_.erase(it);
-            }
-            else
-            {
-                it->second.inUseThisFrame = false;
-                ++it;
+                const glm::vec2 worldXY = gridOrigin
+                    + glm::vec2(static_cast<float>(gx), static_cast<float>(gy))
+                        * gridStep;
+                scratchNormalGridHeights_[gy * gridCountX + gx] =
+                    map.GetHeightAt(worldXY);
             }
         }
+
+        scratchNormalGridNormals_.resize(scratchNormalGridHeights_.size());
+        for (int gy = 0; gy < gridCountY; ++gy)
+        {
+            for (int gx = 0; gx < gridCountX; ++gx)
+            {
+                const int xL = std::max(gx - 1, 0);
+                const int xR = std::min(gx + 1, gridCountX - 1);
+                const int yD = std::max(gy - 1, 0);
+                const int yU = std::min(gy + 1, gridCountY - 1);
+
+                const float hL =
+                    scratchNormalGridHeights_[gy * gridCountX + xL];
+                const float hR =
+                    scratchNormalGridHeights_[gy * gridCountX + xR];
+                const float hD =
+                    scratchNormalGridHeights_[yD * gridCountX + gx];
+                const float hU =
+                    scratchNormalGridHeights_[yU * gridCountX + gx];
+
+                scratchNormalGridNormals_[gy * gridCountX + gx] =
+                    glm::normalize(
+                        glm::vec3(hL - hR, hD - hU, 2.0f * gridStep));
+            }
+        }
+
+        auto sampleNormalGrid = [&](glm::vec2 worldXY) -> glm::vec3 {
+            const glm::vec2 coordF = (worldXY - gridOrigin) / gridStep;
+            const int gx = std::clamp(static_cast<int>(std::floor(coordF.x)), 0,
+                                      gridCountX - 2);
+            const int gy = std::clamp(static_cast<int>(std::floor(coordF.y)), 0,
+                                      gridCountY - 2);
+            const glm::vec2 frac = coordF
+                - glm::vec2(static_cast<float>(gx), static_cast<float>(gy));
+
+            const glm::vec3& n00 =
+                scratchNormalGridNormals_[gy * gridCountX + gx];
+            const glm::vec3& n10 =
+                scratchNormalGridNormals_[gy * gridCountX + gx + 1];
+            const glm::vec3& n01 =
+                scratchNormalGridNormals_[(gy + 1) * gridCountX + gx];
+            const glm::vec3& n11 =
+                scratchNormalGridNormals_[(gy + 1) * gridCountX + gx + 1];
+
+            return glm::normalize(glm::mix(glm::mix(n00, n10, frac.x),
+                                           glm::mix(n01, n11, frac.x), frac.y));
+        };
+
+        scratchRingData_.resize(scratchHeights_.size());
+        scratchNormalData_.resize(scratchHeights_.size());
+
+        for (uint32_t y = 0; y < texSize; ++y)
+        {
+            for (uint32_t x = 0; x < texSize; ++x)
+            {
+                const float h = scratchHeights_[y * texSize + x];
+                const glm::vec2 worldXY = snappedOrigin
+                    + glm::vec2(static_cast<float>(x), static_cast<float>(y))
+                        * texelSize;
+
+                const glm::vec3 fixedNormal = sampleNormalGrid(worldXY);
+                const float slope = 1.0f - fixedNormal.z;
+
+                const float jitter =
+                    MacroNoise(worldXY / 24.0f + glm::vec2(5.2f, 9.8f)) - 0.5f;
+
+                const float rockByNoise =
+                    glm::smoothstep(0.6f, 0.85f,
+                                    MacroNoise(worldXY / kRockPatchScale
+                                               + glm::vec2(37.1f, 58.9f)));
+                const float rockBySlope =
+                    glm::smoothstep(0.5f + jitter * 0.1f, 0.85f, slope);
+                const float rockWeight = std::max(rockBySlope, rockByNoise);
+
+                const float snowRetention =
+                    1.0f - glm::smoothstep(0.5f, 0.9f, slope);
+                const float snowByHeight = glm::smoothstep(
+                    200.0f + jitter * 30.0f, 320.0f + jitter * 30.0f, h);
+                const float snowWeight =
+                    snowByHeight * snowRetention * (1.0f - rockWeight * 0.3f);
+
+                const float dirtByNoise =
+                    glm::smoothstep(0.55f + jitter * 0.1f, 0.8f,
+                                    MacroNoise(worldXY / kDirtPatchScale
+                                               + glm::vec2(91.7f, 12.3f)));
+                const float dirtWeight =
+                    dirtByNoise * (1.0f - rockWeight) * (1.0f - snowWeight);
+
+                scratchRingData_[y * texSize + x] =
+                    glm::vec4(h, rockWeight, snowWeight, dirtWeight);
+                scratchNormalData_[y * texSize + x] = fixedNormal;
+            }
+        }
+
+        glTextureSubImage3D(
+            heightRingArray_, 0, 0, 0, static_cast<GLint>(ringIndex),
+            static_cast<GLsizei>(texSize), static_cast<GLsizei>(texSize), 1,
+            GL_RGBA, GL_FLOAT, glm::value_ptr(scratchRingData_[0]));
+
+        glTextureSubImage3D(
+            normalRingArray_, 0, 0, 0, static_cast<GLint>(ringIndex),
+            static_cast<GLsizei>(texSize), static_cast<GLsizei>(texSize), 1,
+            GL_RGB, GL_FLOAT, glm::value_ptr(scratchNormalData_[0]));
     }
 
-    void GLTerrainRenderer::UploadChunkHeights(const terrain::Chunk& chunk,
-                                               uint32_t layer)
+    void GLTerrainRenderer::DrawRing(uint32_t ringIndex,
+                                     const Shader* shaderBase) const
     {
-        const std::span<const uint16_t> heights =
-            chunk.GetHeightDataForUpload();
+        const GlShader* shader = dynamic_cast<const GlShader*>(shaderBase);
 
-        glTextureSubImage3D(heightTextureArray_, 0, 0, 0,
-                            static_cast<GLint>(layer),
-                            static_cast<GLsizei>(terrain::kChunkResolution),
-                            static_cast<GLsizei>(terrain::kChunkResolution), 1,
-                            GL_RED, GL_UNSIGNED_SHORT, heights.data());
-    }
+        shader->setValue("ringOrigin", ringStates_[ringIndex].snappedOrigin);
+        shader->setValue("ringWorldSize", GetRingWorldSize(ringIndex));
+        shader->setValue("ringLayer", static_cast<int>(ringIndex));
 
-    void GLTerrainRenderer::UploadChunkPaintMask(const terrain::Chunk& chunk,
-                                                 uint32_t layer)
-    {
-        const std::span<const uint8_t> paintMask =
-            chunk.GetPaintDataForUpload();
+        const bool hasNextRing = ringIndex + 1 < kRingCount;
+        shader->setValue("hasNextRing", hasNextRing);
+        if (hasNextRing)
+        {
+            shader->setValue("nextRingOrigin",
+                             ringStates_[ringIndex + 1].snappedOrigin);
+            shader->setValue("nextRingWorldSize",
+                             GetRingWorldSize(ringIndex + 1));
+        }
 
-        glTextureSubImage3D(paintMaskTextureArray_, 0, 0, 0,
-                            static_cast<GLint>(layer),
-                            static_cast<GLsizei>(terrain::kChunkResolution),
-                            static_cast<GLsizei>(terrain::kChunkResolution), 1,
-                            GL_RED_INTEGER, GL_UNSIGNED_BYTE, paintMask.data());
+        const bool hasInnerRing = ringIndex > 0;
+        shader->setValue("hasInnerRing", hasInnerRing);
+        if (hasInnerRing)
+        {
+            shader->setValue("innerRingOrigin",
+                             ringStates_[ringIndex - 1].snappedOrigin);
+            shader->setValue("innerRingWorldSize",
+                             GetRingWorldSize(ringIndex - 1));
+        }
+
+        glBindVertexArray(solidVao_);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(solidIndexCount_),
+                       GL_UNSIGNED_INT, 0);
     }
 
     void GLTerrainRenderer::render(const terrain::Map& map)
@@ -513,85 +604,23 @@ namespace raphEngine::graphics::ogl
             return;
         }
 
-        if (chunkInstanceSsboPtr_ == nullptr)
-        {
-            return;
-        }
-
         Camera* cam = Camera::get_active_camera();
         cam->calculate_matrices();
 
         const glm::vec3 cameraPos = cam->get_position();
+        const glm::vec2 cameraXY(cameraPos.x, cameraPos.y);
 
-        struct VisibleChunk
+        for (uint32_t ringIndex = 0; ringIndex < kRingCount; ++ringIndex)
         {
-            glm::ivec2 coord;
-            const terrain::Chunk* chunk;
-            float distanceSq;
-        };
+            const glm::vec2 snapped = ComputeSnappedOrigin(ringIndex, cameraXY);
+            RingState& state = ringStates_[ringIndex];
 
-        std::vector<VisibleChunk> visible;
-        const glm::ivec2 gridSize = map.GetGridSize();
-
-        for (int y = 0; y < gridSize.y; ++y)
-        {
-            for (int x = 0; x < gridSize.x; ++x)
+            if (!state.initialized || snapped != state.snappedOrigin)
             {
-                const glm::ivec2 coord(x, y);
-                if (!map.IsChunkResident(coord))
-                {
-                    continue;
-                }
-
-                const terrain::Chunk* chunk = map.GetChunkAt(coord);
-                const glm::vec2 chunkCenter = map.GridCoordToWorldOrigin(coord)
-                    + glm::vec2(static_cast<float>(terrain::kChunkResolution)
-                                * 0.5f);
-
-                const glm::vec2 diff =
-                    chunkCenter - glm::vec2(cameraPos.x, cameraPos.y);
-                visible.push_back({ coord, chunk, glm::dot(diff, diff) });
+                state.snappedOrigin = snapped;
+                state.initialized = true;
+                UpdateRingTexture(ringIndex, map, snapped);
             }
-        }
-
-        std::sort(visible.begin(), visible.end(),
-                  [](const VisibleChunk& a, const VisibleChunk& b) {
-                      return a.distanceSq < b.distanceSq;
-                  });
-
-        if (visible.size() > kMaxResidentChunks)
-        {
-            visible.resize(kMaxResidentChunks);
-        }
-
-        auto* instanceData =
-            static_cast<ChunkInstanceGpuData*>(chunkInstanceSsboPtr_);
-        uint32_t instanceCount = 0;
-
-        for (const VisibleChunk& v : visible)
-        {
-            const LayerAcquireResult acquired =
-                AcquireTextureLayer(v.coord, v.chunk->GetGpuDataVersion());
-            if (acquired.needsUpload)
-            {
-                UploadChunkHeights(*v.chunk, acquired.layer);
-                UploadChunkPaintMask(*v.chunk, acquired.layer);
-            }
-
-            instanceData[instanceCount].worldOrigin =
-                map.GridCoordToWorldOrigin(v.coord);
-            instanceData[instanceCount].heightRange =
-                v.chunk->GetWorldHeightRange();
-            instanceData[instanceCount].textureLayer = acquired.layer;
-
-            ++instanceCount;
-        }
-
-        ReleaseUnusedLayers();
-
-        if (instanceCount == 0)
-        {
-            return;
         }
 
         const GlShader* shader =
@@ -601,8 +630,9 @@ namespace raphEngine::graphics::ogl
         shader->setValue("projection", cam->get_projection_matrix_());
         shader->setValue("view", cam->get_view_matrix_());
         shader->setValue("viewPos", cameraPos);
-        shader->setValue("chunkResolution",
-                         static_cast<float>(terrain::kChunkResolution));
+        shader->setValue("ringTexelCount", static_cast<float>(kRingResolution));
+        shader->setValue("fogColor", kFogColor);
+        shader->setValue("fogDensity", kFogDensity);
 
         for (size_t i = 0; i < kMaterials.size(); ++i)
         {
@@ -626,7 +656,7 @@ namespace raphEngine::graphics::ogl
         {
             shader->setValue("lightDir", glm::vec3(0.0f, 0.0f, -1.0f));
             shader->setValue("lightColor", glm::vec3(1.0f));
-            shader->setValue("lightIntensity", 0.0f);
+            shader->setValue("lightIntensity", 1.0f);
         }
 
         shader->setValue(
@@ -653,29 +683,15 @@ namespace raphEngine::graphics::ogl
         {
             glBindTextureUnit(7, skybox->get_irradiance_map());
             shader->setValue("irradianceMap", 7);
-
-            glBindTextureUnit(8, skybox->get_prefilter_map());
-            shader->setValue("prefilterMap", 8);
-            shader->setValue("maxPrefilterLod", GL_Skybox::kMaxPrefilterLod);
-
-            glBindTextureUnit(9, skybox->get_brdf_lut());
-            shader->setValue("brdfLUT", 9);
-
             shader->setValue("ambientIntensity",
                              skybox->get_ambient_intensity());
-            shader->setValue("reflectionExposure",
-                             skybox->get_reflection_exposure());
-        }
-        else
-        {
-            shader->setValue("reflectionExposure", 1.0f);
         }
 
-        glBindTextureUnit(0, heightTextureArray_);
-        shader->setValue("heightMapArray", 0);
+        glBindTextureUnit(0, heightRingArray_);
+        shader->setValue("heightRingArray", 0);
 
-        glBindTextureUnit(1, paintMaskTextureArray_);
-        shader->setValue("paintMaskArray", 1);
+        glBindTextureUnit(1, normalRingArray_);
+        shader->setValue("normalRingArray", 1);
 
         glBindTextureUnit(2, materialGaussianAlbedoArray_);
         shader->setValue("materialGaussianAlbedoArray", 2);
@@ -689,13 +705,19 @@ namespace raphEngine::graphics::ogl
         glBindTextureUnit(5, materialOrmArray_);
         shader->setValue("materialOrmArray", 5);
 
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, chunkInstanceSsbo_);
+        glEnable(GL_POLYGON_OFFSET_FILL);
 
-        glPatchParameteri(GL_PATCH_VERTICES, 4);
+        for (uint32_t i = 0; i < kRingCount; ++i)
+        {
+            const uint32_t ringIndex = kRingCount - 1 - i;
 
-        glBindVertexArray(patchVao_);
-        glDrawElementsInstanced(
-            GL_PATCHES, static_cast<GLsizei>(patchCount_ * 4), GL_UNSIGNED_INT,
-            0, static_cast<GLsizei>(instanceCount));
+            const float biasUnits =
+                -static_cast<float>((kRingCount - 1) - ringIndex);
+            glPolygonOffset(0.0f, biasUnits);
+
+            DrawRing(ringIndex, terrainShader_.get());
+        }
+
+        glDisable(GL_POLYGON_OFFSET_FILL);
     }
 } // namespace raphEngine::graphics::ogl

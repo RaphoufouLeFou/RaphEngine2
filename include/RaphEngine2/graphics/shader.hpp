@@ -24,11 +24,11 @@ namespace raphEngine::graphics
 
     struct ShaderFilePaths
     {
-        fs::path vertex;
-        fs::path tessControl;
-        fs::path tessEval;
-        fs::path geometry;
-        fs::path fragment;
+        fs::path vertex = "";
+        fs::path tessControl = "";
+        fs::path tessEval = "";
+        fs::path geometry = "";
+        fs::path fragment = "";
     };
 
     class RAPHENGINE_API Shader
@@ -62,6 +62,9 @@ namespace raphEngine::graphics
                                    const glm::vec2* array) const = 0;
         virtual void setValueArray(const std::string& name, size_t count,
                                    const glm::vec3* array) const = 0;
+
+        virtual void bindUniformBlock(const std::string& blockName,
+                                      unsigned int bindingPoint) const = 0;
 
         static std::shared_ptr<Shader>
         loadShader(const std::string& vShaderCode = "",

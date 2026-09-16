@@ -7,7 +7,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
+#include <limits>
 #include <numbers>
+#include <queue>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -45,7 +48,7 @@ namespace raphEngine::graphics::ogl
         constexpr int kAlbedoLutResolution = 256;
 
         // index 0=grass, 1=rock, 2=snow, 3=dirt — must match the kMaterial*
-        // constants in terrain_ring_fs.glsl.
+        // constants in terrain_quad_fs.glsl.
         constexpr std::array<TerrainMaterialDefinition, 4> kMaterials = { {
             { "assets/textures/terrain/forrest_ground_01_diff_4k.jpg",
               "assets/textures/terrain/forrest_ground_01_nor_gl_4k.jpg",
@@ -84,15 +87,14 @@ namespace raphEngine::graphics::ogl
 
     GLTerrainRenderer::GLTerrainRenderer()
     {
-        CreateRingMeshes();
-        CreateHeightRingArray();
-        CreateNormalRingArray();
+        CreateNodeMesh();
+        CreateHeightNodeArray();
+        CreateNormalNodeArray();
         CreateMaterialTextureArrays();
 
         terrainShader_ = Shader::loadShader(
-            ShaderStages{ .vertex = terrain_ring_vs_shader,
-                          .fragment = terrain_ring_fs_shader });
-
+            ShaderStages{ .vertex = terrain_quad_vs_shader,
+                          .fragment = terrain_quad_fs_shader });
         terrainShader_->bindUniformBlock("LightSpaceMatrices", 0);
     }
 
@@ -102,99 +104,149 @@ namespace raphEngine::graphics::ogl
         glDeleteTextures(1, &materialNormalArray_);
         glDeleteTextures(1, &materialAlbedoLutArray_);
         glDeleteTextures(1, &materialGaussianAlbedoArray_);
-        glDeleteTextures(1, &normalRingArray_);
-        glDeleteTextures(1, &heightRingArray_);
-        glDeleteBuffers(1, &solidEbo_);
-        glDeleteVertexArrays(1, &solidVao_);
-        glDeleteBuffers(1, &ringVertexBuffer_);
+        glDeleteTextures(1, &normalNodeArray_);
+        glDeleteTextures(1, &heightNodeArray_);
+        glDeleteBuffers(1, &nodeEbo_);
+        glDeleteVertexArrays(1, &nodeVao_);
+        glDeleteBuffers(1, &nodeVertexBuffer_);
     }
 
-    void GLTerrainRenderer::CreateRingMeshes()
+    void GLTerrainRenderer::CreateNormalNodeArray()
     {
-        std::vector<glm::vec2> vertices;
-        vertices.reserve((kRingResolution + 1) * (kRingResolution + 1));
+        const GLsizei texSize = static_cast<GLsizei>(kNodeResolution + 1);
 
-        for (uint32_t y = 0; y <= kRingResolution; ++y)
-        {
-            for (uint32_t x = 0; x <= kRingResolution; ++x)
-            {
-                vertices.emplace_back(static_cast<float>(x) / kRingResolution,
-                                      static_cast<float>(y) / kRingResolution);
-            }
-        }
+        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &normalNodeArray_);
+        glTextureStorage3D(normalNodeArray_, 1, GL_RGB16F, texSize, texSize,
+                           static_cast<GLsizei>(kMaxActiveNodes));
 
-        const uint32_t rowStride = kRingResolution + 1;
+        // LINEAR, sampled via texture() (not texelFetch) in the fragment
+        // shader — smooth bilinear shading normal, decoupled from the
+        // node's own vertex density.
+        glTextureParameteri(normalNodeArray_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(normalNodeArray_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(normalNodeArray_, GL_TEXTURE_WRAP_S,
+                            GL_CLAMP_TO_EDGE);
+        glTextureParameteri(normalNodeArray_, GL_TEXTURE_WRAP_T,
+                            GL_CLAMP_TO_EDGE);
+    }
+
+    void GLTerrainRenderer::CreateNodeMesh()
+    {
+        const uint32_t N = kNodeResolution;
+        const uint32_t rowStride = N + 1;
+        const uint32_t topVertexCount = rowStride * rowStride;
+
+        // xy = aLocalPos (used for height sampling — always the true,
+        // un-shifted edge position), zw = outward skirt direction, (0,0)
+        // for top-surface vertices.
+        std::vector<glm::vec4> vertices;
+        vertices.reserve(topVertexCount + 4 * rowStride);
+
+        for (uint32_t y = 0; y <= N; ++y)
+            for (uint32_t x = 0; x <= N; ++x)
+                vertices.emplace_back(static_cast<float>(x) / N,
+                                      static_cast<float>(y) / N, 0.0f, 0.0f);
+
+        auto topIndex = [&](uint32_t x, uint32_t y) {
+            return y * rowStride + x;
+        };
+
+        const uint32_t leftSkirtStart = topVertexCount;
+        for (uint32_t y = 0; y <= N; ++y)
+            vertices.emplace_back(0.0f, static_cast<float>(y) / N, -1.0f, 0.0f);
+
+        const uint32_t rightSkirtStart = leftSkirtStart + rowStride;
+        for (uint32_t y = 0; y <= N; ++y)
+            vertices.emplace_back(1.0f, static_cast<float>(y) / N, 1.0f, 0.0f);
+
+        const uint32_t bottomSkirtStart = rightSkirtStart + rowStride;
+        for (uint32_t x = 0; x <= N; ++x)
+            vertices.emplace_back(static_cast<float>(x) / N, 0.0f, 0.0f, -1.0f);
+
+        const uint32_t topSkirtStart = bottomSkirtStart + rowStride;
+        for (uint32_t x = 0; x <= N; ++x)
+            vertices.emplace_back(static_cast<float>(x) / N, 1.0f, 0.0f, 1.0f);
+
         std::vector<uint32_t> indices;
-        indices.reserve(static_cast<size_t>(kRingResolution) * kRingResolution
-                        * 6);
+        indices.reserve(static_cast<size_t>(N) * N * 6 + 4 * N * 6);
 
-        for (uint32_t y = 0; y < kRingResolution; ++y)
+        for (uint32_t y = 0; y < N; ++y)
         {
-            for (uint32_t x = 0; x < kRingResolution; ++x)
+            for (uint32_t x = 0; x < N; ++x)
             {
-                const uint32_t i0 = y * rowStride + x;
-                const uint32_t i1 = i0 + 1;
-                const uint32_t i2 = i0 + rowStride;
-                const uint32_t i3 = i2 + 1;
-
+                uint32_t i0 = topIndex(x, y);
+                uint32_t i1 = topIndex(x + 1, y);
+                uint32_t i2 = topIndex(x, y + 1);
+                uint32_t i3 = topIndex(x + 1, y + 1);
                 indices.insert(indices.end(), { i0, i1, i2, i1, i3, i2 });
             }
         }
 
-        solidIndexCount_ = static_cast<uint32_t>(indices.size());
+        // Face winding here isn't guaranteed consistent from every viewing
+        // side (a vertical curtain doesn't have a natural "top-down CCW"
+        // convention the way the flat surface does) — GL_CULL_FACE is
+        // disabled for the whole terrain draw in render() specifically so
+        // this never matters, rather than trying to get 4 different edge
+        // orientations individually correct.
+        auto addSkirtStrip = [&](auto topIndexFn, uint32_t skirtStart) {
+            for (uint32_t j = 0; j < N; ++j)
+            {
+                uint32_t topA = topIndexFn(j);
+                uint32_t topB = topIndexFn(j + 1);
+                uint32_t skirtA = skirtStart + j;
+                uint32_t skirtB = skirtStart + j + 1;
+                indices.insert(indices.end(),
+                               { topA, topB, skirtA, topB, skirtB, skirtA });
+            }
+        };
 
-        glCreateBuffers(1, &ringVertexBuffer_);
+        addSkirtStrip([&](uint32_t j) { return topIndex(0, j); },
+                      leftSkirtStart);
+        addSkirtStrip([&](uint32_t j) { return topIndex(N, j); },
+                      rightSkirtStart);
+        addSkirtStrip([&](uint32_t j) { return topIndex(j, 0); },
+                      bottomSkirtStart);
+        addSkirtStrip([&](uint32_t j) { return topIndex(j, N); },
+                      topSkirtStart);
+
+        nodeIndexCount_ = static_cast<uint32_t>(indices.size());
+
+        glCreateBuffers(1, &nodeVertexBuffer_);
         glNamedBufferStorage(
-            ringVertexBuffer_,
-            static_cast<GLsizeiptr>(vertices.size() * sizeof(glm::vec2)),
+            nodeVertexBuffer_,
+            static_cast<GLsizeiptr>(vertices.size() * sizeof(glm::vec4)),
             vertices.data(), 0);
 
-        glCreateVertexArrays(1, &solidVao_);
-        glCreateBuffers(1, &solidEbo_);
+        glCreateVertexArrays(1, &nodeVao_);
+        glCreateBuffers(1, &nodeEbo_);
         glNamedBufferStorage(
-            solidEbo_,
+            nodeEbo_,
             static_cast<GLsizeiptr>(indices.size() * sizeof(uint32_t)),
             indices.data(), 0);
-        glVertexArrayVertexBuffer(solidVao_, 0, ringVertexBuffer_, 0,
-                                  sizeof(glm::vec2));
-        glVertexArrayElementBuffer(solidVao_, solidEbo_);
-        glEnableVertexArrayAttrib(solidVao_, 0);
-        glVertexArrayAttribFormat(solidVao_, 0, 2, GL_FLOAT, GL_FALSE, 0);
-        glVertexArrayAttribBinding(solidVao_, 0, 0);
+        glVertexArrayVertexBuffer(nodeVao_, 0, nodeVertexBuffer_, 0,
+                                  sizeof(glm::vec4));
+        glVertexArrayElementBuffer(nodeVao_, nodeEbo_);
+        glEnableVertexArrayAttrib(nodeVao_, 0);
+        glVertexArrayAttribFormat(nodeVao_, 0, 4, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(nodeVao_, 0, 0);
     }
 
-    void GLTerrainRenderer::CreateHeightRingArray()
+    void GLTerrainRenderer::CreateHeightNodeArray()
     {
-        const GLsizei texSize = static_cast<GLsizei>(kRingResolution + 1);
+        const GLsizei texSize = static_cast<GLsizei>(kNodeResolution + 1);
 
-        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &heightRingArray_);
-        glTextureStorage3D(heightRingArray_, 1, GL_RGBA32F, texSize, texSize,
-                           static_cast<GLsizei>(kRingCount));
+        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &heightNodeArray_);
+        glTextureStorage3D(heightNodeArray_, 1, GL_RGBA32F, texSize, texSize,
+                           static_cast<GLsizei>(kMaxActiveNodes));
 
-        glTextureParameteri(heightRingArray_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(heightRingArray_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(heightRingArray_, GL_TEXTURE_WRAP_S,
+        glTextureParameteri(heightNodeArray_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(heightNodeArray_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(heightNodeArray_, GL_TEXTURE_WRAP_S,
                             GL_CLAMP_TO_EDGE);
-        glTextureParameteri(heightRingArray_, GL_TEXTURE_WRAP_T,
+        glTextureParameteri(heightNodeArray_, GL_TEXTURE_WRAP_T,
                             GL_CLAMP_TO_EDGE);
 
-        ringStates_.assign(kRingCount, RingState{});
-    }
-
-    void GLTerrainRenderer::CreateNormalRingArray()
-    {
-        const GLsizei texSize = static_cast<GLsizei>(kRingResolution + 1);
-
-        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &normalRingArray_);
-        glTextureStorage3D(normalRingArray_, 1, GL_RGB16F, texSize, texSize,
-                           static_cast<GLsizei>(kRingCount));
-
-        glTextureParameteri(normalRingArray_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(normalRingArray_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(normalRingArray_, GL_TEXTURE_WRAP_S,
-                            GL_CLAMP_TO_EDGE);
-        glTextureParameteri(normalRingArray_, GL_TEXTURE_WRAP_T,
-                            GL_CLAMP_TO_EDGE);
+        layerInUse_.assign(kMaxActiveNodes, false);
     }
 
     unsigned int GLTerrainRenderer::CreateMaterialMapArray(
@@ -393,131 +445,258 @@ namespace raphEngine::graphics::ogl
         materialOrmArray_ = CreateMaterialMapArray(ormPaths);
     }
 
-    float GLTerrainRenderer::GetRingWorldSize(uint32_t ringIndex) const
+    GLTerrainRenderer::QuadCandidate
+    GLTerrainRenderer::MakeCandidate(int level, int x, int y,
+                                     glm::vec2 cameraXY) const
     {
-        return kBaseRingWorldSize * static_cast<float>(1u << ringIndex);
+        const float size =
+            kLeafWorldSize * static_cast<float>(1 << (kMaxLevel - level));
+        const glm::vec2 origin(static_cast<float>(x) * size,
+                               static_cast<float>(y) * size);
+        const glm::vec2 closest =
+            glm::clamp(cameraXY, origin, origin + glm::vec2(size));
+        const float dist = glm::length(cameraXY - closest);
+
+        return QuadCandidate{ QuadNode{ level, x, y, origin, size }, dist };
     }
 
-    glm::vec2 GLTerrainRenderer::ComputeSnappedOrigin(uint32_t ringIndex,
-                                                      glm::vec2 cameraXY) const
+    void GLTerrainRenderer::RasterizeLevelGrid(
+        const std::vector<QuadNode>& leaves, int64_t& outMinX, int64_t& outMinY,
+        int64_t& outWidth, int64_t& outHeight) const
     {
-        const float worldSize = GetRingWorldSize(ringIndex);
-        const float texelSize = worldSize / static_cast<float>(kRingResolution);
+        int64_t minX = std::numeric_limits<int64_t>::max();
+        int64_t minY = std::numeric_limits<int64_t>::max();
+        int64_t maxX = std::numeric_limits<int64_t>::min();
+        int64_t maxY = std::numeric_limits<int64_t>::min();
 
-        const glm::vec2 idealOrigin = cameraXY - glm::vec2(worldSize * 0.5f);
-        return glm::floor(idealOrigin / texelSize) * texelSize;
+        for (const QuadNode& n : leaves)
+        {
+            const int64_t units = 1ll << (kMaxLevel - n.level);
+            const int64_t x0 = static_cast<int64_t>(n.x) * units;
+            const int64_t y0 = static_cast<int64_t>(n.y) * units;
+            minX = std::min(minX, x0);
+            minY = std::min(minY, y0);
+            maxX = std::max(maxX, x0 + units);
+            maxY = std::max(maxY, y0 + units);
+        }
+
+        outMinX = minX;
+        outMinY = minY;
+        outWidth = maxX - minX;
+        outHeight = maxY - minY;
+
+        scratchLevelGrid_.assign(static_cast<size_t>(outWidth * outHeight),
+                                 static_cast<int16_t>(-1));
+
+        for (const QuadNode& n : leaves)
+        {
+            const int64_t units = 1ll << (kMaxLevel - n.level);
+            const int64_t x0 = static_cast<int64_t>(n.x) * units - minX;
+            const int64_t y0 = static_cast<int64_t>(n.y) * units - minY;
+
+            for (int64_t dy = 0; dy < units; ++dy)
+            {
+                int16_t* row = &scratchLevelGrid_[static_cast<size_t>(
+                    (y0 + dy) * outWidth + x0)];
+                std::fill(row, row + units, static_cast<int16_t>(n.level));
+            }
+        }
     }
 
-    void GLTerrainRenderer::UpdateRingTexture(uint32_t ringIndex,
-                                              const terrain::Map& map,
-                                              glm::vec2 snappedOrigin)
+    void GLTerrainRenderer::BalanceLeafSet(std::vector<QuadNode>& leaves) const
     {
-        const uint32_t texSize = kRingResolution + 1;
-        const float worldSize = GetRingWorldSize(ringIndex);
-        const float texelSize = worldSize / static_cast<float>(kRingResolution);
+        if (leaves.empty())
+            return;
 
-        scratchHeights_.resize(static_cast<size_t>(texSize) * texSize);
-        for (uint32_t y = 0; y < texSize; ++y)
+        size_t currentTotal = leaves.size();
+        bool budgetExhausted = false;
+        bool changed = true;
+
+        while (changed)
         {
-            for (uint32_t x = 0; x < texSize; ++x)
+            changed = false;
+
+            int64_t minX, minY, width, height;
+            RasterizeLevelGrid(leaves, minX, minY, width, height);
+
+            auto maxInStrip = [&](int64_t gx, int64_t gy0, int64_t gy1) -> int {
+                if (gx < 0 || gx >= width)
+                    return -1;
+                int m = -1;
+                for (int64_t y = std::max<int64_t>(gy0, 0);
+                     y < std::min<int64_t>(gy1, height); ++y)
+                    m = std::max<int>(
+                        m,
+                        scratchLevelGrid_[static_cast<size_t>(y * width + gx)]);
+                return m;
+            };
+            auto maxInRow = [&](int64_t gy, int64_t gx0, int64_t gx1) -> int {
+                if (gy < 0 || gy >= height)
+                    return -1;
+                int m = -1;
+                for (int64_t x = std::max<int64_t>(gx0, 0);
+                     x < std::min<int64_t>(gx1, width); ++x)
+                    m = std::max<int>(
+                        m,
+                        scratchLevelGrid_[static_cast<size_t>(gy * width + x)]);
+                return m;
+            };
+
+            std::vector<QuadNode> nextLeaves;
+            nextLeaves.reserve(leaves.size());
+
+            for (const QuadNode& node : leaves)
             {
-                const glm::vec2 worldXY = snappedOrigin
-                    + glm::vec2(static_cast<float>(x), static_cast<float>(y))
+                const int64_t units = 1ll << (kMaxLevel - node.level);
+                const int64_t x0 = static_cast<int64_t>(node.x) * units - minX;
+                const int64_t y0 = static_cast<int64_t>(node.y) * units - minY;
+
+                const int worst =
+                    std::max({ maxInStrip(x0 + units, y0, y0 + units),
+                               maxInStrip(x0 - 1, y0, y0 + units),
+                               maxInRow(y0 + units, x0, x0 + units),
+                               maxInRow(y0 - 1, x0, x0 + units) });
+
+                const bool needsSplit =
+                    node.level < kMaxLevel && worst > node.level + 1;
+
+                if (needsSplit && currentTotal + 3 > kMaxActiveNodes)
+                {
+                    budgetExhausted = true;
+                    nextLeaves.push_back(node);
+                    continue;
+                }
+
+                if (needsSplit)
+                {
+                    for (int cy = 0; cy < 2; ++cy)
+                    {
+                        for (int cx = 0; cx < 2; ++cx)
+                        {
+                            const int childLevel = node.level + 1;
+                            const int childX = node.x * 2 + cx;
+                            const int childY = node.y * 2 + cy;
+                            const float childSize = node.size * 0.5f;
+                            const glm::vec2 childOrigin = node.origin
+                                + glm::vec2(static_cast<float>(cx),
+                                            static_cast<float>(cy))
+                                    * childSize;
+
+                            nextLeaves.push_back({ childLevel, childX, childY,
+                                                   childOrigin, childSize });
+                        }
+                    }
+                    currentTotal += 3;
+                    changed = true;
+                }
+                else
+                {
+                    nextLeaves.push_back(node);
+                }
+            }
+
+            leaves = std::move(nextLeaves);
+        }
+
+        if (budgetExhausted)
+        {
+            Logger::LogWarning("GLTerrainRenderer: node budget too tight to "
+                               "fully 2:1-balance the quadtree this frame; "
+                               "some LOD boundaries may show a wider step than "
+                               "usual. Consider raising kMaxActiveNodes.");
+        }
+    }
+
+    void GLTerrainRenderer::BuildLeafSet(glm::vec2 cameraXY,
+                                         std::vector<QuadNode>& outLeaves) const
+    {
+        outLeaves.clear();
+
+        const float rootSize =
+            kLeafWorldSize * static_cast<float>(1 << kMaxLevel);
+        const int cameraRootX =
+            static_cast<int>(std::floor(cameraXY.x / rootSize));
+        const int cameraRootY =
+            static_cast<int>(std::floor(cameraXY.y / rootSize));
+
+        std::priority_queue<QuadCandidate, std::vector<QuadCandidate>,
+                            QuadCandidateCompare>
+            frontier;
+
+        uint32_t activeLeafCount = 0;
+        for (int ry = -1; ry <= 1; ++ry)
+        {
+            for (int rx = -1; rx <= 1; ++rx)
+            {
+                frontier.push(MakeCandidate(0, cameraRootX + rx,
+                                            cameraRootY + ry, cameraXY));
+                ++activeLeafCount;
+            }
+        }
+
+        while (!frontier.empty())
+        {
+            QuadCandidate candidate = frontier.top();
+            frontier.pop();
+
+            const bool tooDeep = candidate.node.level >= kMaxLevel;
+            const bool farEnough = candidate.distance
+                >= candidate.node.size * kSplitDistanceFactor;
+            const bool wouldExceedBudget =
+                activeLeafCount + 3 > kMaxActiveNodes;
+
+            if (tooDeep || farEnough || wouldExceedBudget)
+            {
+                outLeaves.push_back(candidate.node);
+                continue;
+            }
+
+            activeLeafCount += 3;
+            for (int cy = 0; cy < 2; ++cy)
+            {
+                for (int cx = 0; cx < 2; ++cx)
+                {
+                    frontier.push(MakeCandidate(
+                        candidate.node.level + 1, candidate.node.x * 2 + cx,
+                        candidate.node.y * 2 + cy, cameraXY));
+                }
+            }
+        }
+
+        BalanceLeafSet(outLeaves);
+    }
+
+    void GLTerrainRenderer::BuildNodeData(const QuadNode& node,
+                                          const terrain::Map& map,
+                                          uint32_t layer)
+    {
+        const uint32_t texSize = kNodeResolution + 1;
+        const float texelSize = node.size / static_cast<float>(kNodeResolution);
+
+        const float slopeSampleDist = kFixedNormalSampleDistance;
+
+        std::vector<glm::vec4> data(static_cast<size_t>(texSize) * texSize);
+        std::vector<glm::vec3> normals(static_cast<size_t>(texSize) * texSize);
+
+        for (uint32_t ty = 0; ty < texSize; ++ty)
+        {
+            for (uint32_t tx = 0; tx < texSize; ++tx)
+            {
+                const glm::vec2 worldXY = node.origin
+                    + glm::vec2(static_cast<float>(tx), static_cast<float>(ty))
                         * texelSize;
-                scratchHeights_[y * texSize + x] = map.GetHeightAt(worldXY);
-            }
-        }
+                const float h = map.GetHeightAt(worldXY);
 
-        const float gridStep = std::max(kMinNormalSampleDistance, texelSize);
-        const float gridOriginX =
-            std::floor((snappedOrigin.x - gridStep) / gridStep) * gridStep;
-        const float gridOriginY =
-            std::floor((snappedOrigin.y - gridStep) / gridStep) * gridStep;
-        const glm::vec2 gridOrigin(gridOriginX, gridOriginY);
-
-        const float gridSpanX =
-            (snappedOrigin.x + worldSize + gridStep) - gridOriginX;
-        const float gridSpanY =
-            (snappedOrigin.y + worldSize + gridStep) - gridOriginY;
-        const int gridCountX =
-            static_cast<int>(std::ceil(gridSpanX / gridStep)) + 1;
-        const int gridCountY =
-            static_cast<int>(std::ceil(gridSpanY / gridStep)) + 1;
-
-        scratchNormalGridHeights_.resize(static_cast<size_t>(gridCountX)
-                                         * gridCountY);
-        for (int gy = 0; gy < gridCountY; ++gy)
-        {
-            for (int gx = 0; gx < gridCountX; ++gx)
-            {
-                const glm::vec2 worldXY = gridOrigin
-                    + glm::vec2(static_cast<float>(gx), static_cast<float>(gy))
-                        * gridStep;
-                scratchNormalGridHeights_[gy * gridCountX + gx] =
-                    map.GetHeightAt(worldXY);
-            }
-        }
-
-        scratchNormalGridNormals_.resize(scratchNormalGridHeights_.size());
-        for (int gy = 0; gy < gridCountY; ++gy)
-        {
-            for (int gx = 0; gx < gridCountX; ++gx)
-            {
-                const int xL = std::max(gx - 1, 0);
-                const int xR = std::min(gx + 1, gridCountX - 1);
-                const int yD = std::max(gy - 1, 0);
-                const int yU = std::min(gy + 1, gridCountY - 1);
-
-                const float hL =
-                    scratchNormalGridHeights_[gy * gridCountX + xL];
-                const float hR =
-                    scratchNormalGridHeights_[gy * gridCountX + xR];
-                const float hD =
-                    scratchNormalGridHeights_[yD * gridCountX + gx];
-                const float hU =
-                    scratchNormalGridHeights_[yU * gridCountX + gx];
-
-                scratchNormalGridNormals_[gy * gridCountX + gx] =
-                    glm::normalize(
-                        glm::vec3(hL - hR, hD - hU, 2.0f * gridStep));
-            }
-        }
-
-        auto sampleNormalGrid = [&](glm::vec2 worldXY) -> glm::vec3 {
-            const glm::vec2 coordF = (worldXY - gridOrigin) / gridStep;
-            const int gx = std::clamp(static_cast<int>(std::floor(coordF.x)), 0,
-                                      gridCountX - 2);
-            const int gy = std::clamp(static_cast<int>(std::floor(coordF.y)), 0,
-                                      gridCountY - 2);
-            const glm::vec2 frac = coordF
-                - glm::vec2(static_cast<float>(gx), static_cast<float>(gy));
-
-            const glm::vec3& n00 =
-                scratchNormalGridNormals_[gy * gridCountX + gx];
-            const glm::vec3& n10 =
-                scratchNormalGridNormals_[gy * gridCountX + gx + 1];
-            const glm::vec3& n01 =
-                scratchNormalGridNormals_[(gy + 1) * gridCountX + gx];
-            const glm::vec3& n11 =
-                scratchNormalGridNormals_[(gy + 1) * gridCountX + gx + 1];
-
-            return glm::normalize(glm::mix(glm::mix(n00, n10, frac.x),
-                                           glm::mix(n01, n11, frac.x), frac.y));
-        };
-
-        scratchRingData_.resize(scratchHeights_.size());
-        scratchNormalData_.resize(scratchHeights_.size());
-
-        for (uint32_t y = 0; y < texSize; ++y)
-        {
-            for (uint32_t x = 0; x < texSize; ++x)
-            {
-                const float h = scratchHeights_[y * texSize + x];
-                const glm::vec2 worldXY = snappedOrigin
-                    + glm::vec2(static_cast<float>(x), static_cast<float>(y))
-                        * texelSize;
-
-                const glm::vec3 fixedNormal = sampleNormalGrid(worldXY);
+                const float mL =
+                    map.GetHeightAt(worldXY - glm::vec2(slopeSampleDist, 0.0f));
+                const float mR =
+                    map.GetHeightAt(worldXY + glm::vec2(slopeSampleDist, 0.0f));
+                const float mD =
+                    map.GetHeightAt(worldXY - glm::vec2(0.0f, slopeSampleDist));
+                const float mU =
+                    map.GetHeightAt(worldXY + glm::vec2(0.0f, slopeSampleDist));
+                const glm::vec3 fixedNormal = glm::normalize(
+                    glm::vec3(mL - mR, mD - mU, 2.0f * slopeSampleDist));
                 const float slope = 1.0f - fixedNormal.z;
 
                 const float jitter =
@@ -545,54 +724,34 @@ namespace raphEngine::graphics::ogl
                 const float dirtWeight =
                     dirtByNoise * (1.0f - rockWeight) * (1.0f - snowWeight);
 
-                scratchRingData_[y * texSize + x] =
+                data[ty * texSize + tx] =
                     glm::vec4(h, rockWeight, snowWeight, dirtWeight);
-                scratchNormalData_[y * texSize + x] = fixedNormal;
+                normals[ty * texSize + tx] = fixedNormal;
             }
         }
 
         glTextureSubImage3D(
-            heightRingArray_, 0, 0, 0, static_cast<GLint>(ringIndex),
+            heightNodeArray_, 0, 0, 0, static_cast<GLint>(layer),
             static_cast<GLsizei>(texSize), static_cast<GLsizei>(texSize), 1,
-            GL_RGBA, GL_FLOAT, glm::value_ptr(scratchRingData_[0]));
+            GL_RGBA, GL_FLOAT, glm::value_ptr(data[0]));
 
         glTextureSubImage3D(
-            normalRingArray_, 0, 0, 0, static_cast<GLint>(ringIndex),
+            normalNodeArray_, 0, 0, 0, static_cast<GLint>(layer),
             static_cast<GLsizei>(texSize), static_cast<GLsizei>(texSize), 1,
-            GL_RGB, GL_FLOAT, glm::value_ptr(scratchNormalData_[0]));
+            GL_RGB, GL_FLOAT, glm::value_ptr(normals[0]));
     }
 
-    void GLTerrainRenderer::DrawRing(uint32_t ringIndex,
+    void GLTerrainRenderer::DrawNode(const QuadNode& node, uint32_t layer,
                                      const Shader* shaderBase) const
     {
         const GlShader* shader = dynamic_cast<const GlShader*>(shaderBase);
 
-        shader->setValue("ringOrigin", ringStates_[ringIndex].snappedOrigin);
-        shader->setValue("ringWorldSize", GetRingWorldSize(ringIndex));
-        shader->setValue("ringLayer", static_cast<int>(ringIndex));
+        shader->setValue("nodeOrigin", node.origin);
+        shader->setValue("nodeWorldSize", node.size);
+        shader->setValue("nodeLayer", static_cast<int>(layer));
 
-        const bool hasNextRing = ringIndex + 1 < kRingCount;
-        shader->setValue("hasNextRing", hasNextRing);
-        if (hasNextRing)
-        {
-            shader->setValue("nextRingOrigin",
-                             ringStates_[ringIndex + 1].snappedOrigin);
-            shader->setValue("nextRingWorldSize",
-                             GetRingWorldSize(ringIndex + 1));
-        }
-
-        const bool hasInnerRing = ringIndex > 0;
-        shader->setValue("hasInnerRing", hasInnerRing);
-        if (hasInnerRing)
-        {
-            shader->setValue("innerRingOrigin",
-                             ringStates_[ringIndex - 1].snappedOrigin);
-            shader->setValue("innerRingWorldSize",
-                             GetRingWorldSize(ringIndex - 1));
-        }
-
-        glBindVertexArray(solidVao_);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(solidIndexCount_),
+        glBindVertexArray(nodeVao_);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(nodeIndexCount_),
                        GL_UNSIGNED_INT, 0);
     }
 
@@ -610,16 +769,66 @@ namespace raphEngine::graphics::ogl
         const glm::vec3 cameraPos = cam->get_position();
         const glm::vec2 cameraXY(cameraPos.x, cameraPos.y);
 
-        for (uint32_t ringIndex = 0; ringIndex < kRingCount; ++ringIndex)
-        {
-            const glm::vec2 snapped = ComputeSnappedOrigin(ringIndex, cameraXY);
-            RingState& state = ringStates_[ringIndex];
+        std::vector<QuadNode> leaves;
+        BuildLeafSet(cameraXY, leaves);
 
-            if (!state.initialized || snapped != state.snappedOrigin)
+        for (auto& slot : residentNodes_)
+        {
+            slot.second.inUseThisFrame = false;
+        }
+
+        struct DrawEntry
+        {
+            const QuadNode* node;
+            uint32_t layer;
+        };
+        std::vector<DrawEntry> toDraw;
+        toDraw.reserve(leaves.size());
+
+        for (const QuadNode& node : leaves)
+        {
+            const NodeKey key{ node.level, node.x, node.y };
+            auto it = residentNodes_.find(key);
+            if (it != residentNodes_.end())
             {
-                state.snappedOrigin = snapped;
-                state.initialized = true;
-                UpdateRingTexture(ringIndex, map, snapped);
+                it->second.inUseThisFrame = true;
+                toDraw.push_back({ &node, it->second.layer });
+                continue;
+            }
+
+            uint32_t freeLayer = kMaxActiveNodes;
+            for (uint32_t l = 0; l < layerInUse_.size(); ++l)
+            {
+                if (!layerInUse_[l])
+                {
+                    freeLayer = l;
+                    break;
+                }
+            }
+
+            if (freeLayer == kMaxActiveNodes)
+            {
+                Logger::LogError("GLTerrainRenderer: out of texture layers for "
+                                 "quadtree nodes");
+                continue;
+            }
+
+            layerInUse_[freeLayer] = true;
+            BuildNodeData(node, map, freeLayer);
+            residentNodes_[key] = ResidentNode{ freeLayer, true };
+            toDraw.push_back({ &node, freeLayer });
+        }
+
+        for (auto it = residentNodes_.begin(); it != residentNodes_.end();)
+        {
+            if (!it->second.inUseThisFrame)
+            {
+                layerInUse_[it->second.layer] = false;
+                it = residentNodes_.erase(it);
+            }
+            else
+            {
+                ++it;
             }
         }
 
@@ -630,9 +839,7 @@ namespace raphEngine::graphics::ogl
         shader->setValue("projection", cam->get_projection_matrix_());
         shader->setValue("view", cam->get_view_matrix_());
         shader->setValue("viewPos", cameraPos);
-        shader->setValue("ringTexelCount", static_cast<float>(kRingResolution));
-        shader->setValue("fogColor", kFogColor);
-        shader->setValue("fogDensity", kFogDensity);
+        shader->setValue("nodeTexelCount", static_cast<float>(kNodeResolution));
 
         for (size_t i = 0; i < kMaterials.size(); ++i)
         {
@@ -670,10 +877,10 @@ namespace raphEngine::graphics::ogl
         }
 
         glBindTextureUnit(
-            6,
+            5,
             dynamic_cast<GLShadowRenderer*>(ShadowRenderer::getInstance())
                 ->depthMap);
-        shader->setValue("shadowMap", 6);
+        shader->setValue("shadowMap", 5);
 
         GL_Skybox* skybox = dynamic_cast<GL_Skybox*>(Skybox::getInstance());
         bool haveSkybox = skybox && skybox->is_loaded();
@@ -681,43 +888,41 @@ namespace raphEngine::graphics::ogl
 
         if (haveSkybox)
         {
-            glBindTextureUnit(7, skybox->get_irradiance_map());
-            shader->setValue("irradianceMap", 7);
+            glBindTextureUnit(6, skybox->get_irradiance_map());
+            shader->setValue("irradianceMap", 6);
             shader->setValue("ambientIntensity",
                              skybox->get_ambient_intensity());
         }
 
-        glBindTextureUnit(0, heightRingArray_);
-        shader->setValue("heightRingArray", 0);
+        glBindTextureUnit(0, heightNodeArray_);
+        shader->setValue("heightNodeArray", 0);
 
-        glBindTextureUnit(1, normalRingArray_);
-        shader->setValue("normalRingArray", 1);
+        glBindTextureUnit(1, materialGaussianAlbedoArray_);
+        shader->setValue("materialGaussianAlbedoArray", 1);
 
-        glBindTextureUnit(2, materialGaussianAlbedoArray_);
-        shader->setValue("materialGaussianAlbedoArray", 2);
+        glBindTextureUnit(2, materialAlbedoLutArray_);
+        shader->setValue("materialAlbedoLutArray", 2);
 
-        glBindTextureUnit(3, materialAlbedoLutArray_);
-        shader->setValue("materialAlbedoLutArray", 3);
+        glBindTextureUnit(3, materialNormalArray_);
+        shader->setValue("materialNormalArray", 3);
 
-        glBindTextureUnit(4, materialNormalArray_);
-        shader->setValue("materialNormalArray", 4);
+        glBindTextureUnit(4, materialOrmArray_);
+        shader->setValue("materialOrmArray", 4);
 
-        glBindTextureUnit(5, materialOrmArray_);
-        shader->setValue("materialOrmArray", 5);
+        glBindTextureUnit(7, normalNodeArray_);
+        shader->setValue("normalNodeArray", 7);
 
-        glEnable(GL_POLYGON_OFFSET_FILL);
+        const GLboolean cullWasEnabled = glIsEnabled(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
 
-        for (uint32_t i = 0; i < kRingCount; ++i)
+        for (const DrawEntry& entry : toDraw)
         {
-            const uint32_t ringIndex = kRingCount - 1 - i;
-
-            const float biasUnits =
-                -static_cast<float>((kRingCount - 1) - ringIndex);
-            glPolygonOffset(0.0f, biasUnits);
-
-            DrawRing(ringIndex, terrainShader_.get());
+            DrawNode(*entry.node, entry.layer, terrainShader_.get());
         }
 
-        glDisable(GL_POLYGON_OFFSET_FILL);
+        if (cullWasEnabled)
+        {
+            glEnable(GL_CULL_FACE);
+        }
     }
 } // namespace raphEngine::graphics::ogl

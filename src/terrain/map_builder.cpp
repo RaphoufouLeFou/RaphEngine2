@@ -12,7 +12,6 @@
 #include <vector>
 
 #include <stb_image.h>
-#include <stb_image_write.h>
 
 namespace fs = std::filesystem;
 
@@ -21,6 +20,23 @@ namespace raphEngine::terrain
     namespace
     {
         constexpr int kOverviewMaxResolution = 512;
+
+        constexpr uint32_t kOverviewFileMagic = 0x52544F56; // "RTOV"
+        constexpr uint32_t kOverviewFileVersion = 1;
+
+#pragma pack(push, 1)
+        struct OverviewFileHeader
+        {
+            uint32_t magic;
+            uint32_t version;
+            uint32_t width;
+            uint32_t height;
+        };
+#pragma pack(pop)
+
+        static_assert(sizeof(OverviewFileHeader) == 16,
+                      "OverviewFileHeader layout must stay byte-exact for "
+                      "on-disk compatibility");
 
         std::vector<uint16_t> ResampleHeightmap(const uint16_t* source,
                                                 glm::ivec2 sourceDims,
@@ -88,18 +104,38 @@ namespace raphEngine::terrain
                                     static_cast<int>(fullResolution) },
                                   { overviewRes, overviewRes });
 
-            std::vector<uint8_t> pixels(resampled.size());
-            for (size_t i = 0; i < pixels.size(); i++)
-            {
-                pixels[i] = static_cast<uint8_t>(resampled[i] >> 8);
-            }
-
-            if (stbi_write_png(outputPath.string().c_str(), overviewRes,
-                               overviewRes, 1, pixels.data(), overviewRes)
-                == 0)
+            // Raw binary, full 16-bit precision — NOT a PNG. stb_image_write
+            // only supports 8-bit PNG output; quantizing height data to 256
+            // levels across the whole elevation range is exactly what
+            // created literal flat plateaus on gently-sloped terrain (any
+            // adjacent texels that rounded to the same 8-bit value). This
+            // mirrors the same raw-uint16 approach chunk height data already
+            // uses, for the same reason.
+            std::ofstream outFile(outputPath,
+                                  std::ios::binary | std::ios::trunc);
+            if (!outFile)
             {
                 throw std::runtime_error(
-                    "BuildMapFromHeightmap: failed to write overview texture "
+                    "BuildMapFromHeightmap: failed to open overview file "
+                    + outputPath.string() + " for writing");
+            }
+
+            OverviewFileHeader header{};
+            header.magic = kOverviewFileMagic;
+            header.version = kOverviewFileVersion;
+            header.width = static_cast<uint32_t>(overviewRes);
+            header.height = static_cast<uint32_t>(overviewRes);
+
+            outFile.write(reinterpret_cast<const char*>(&header),
+                          sizeof(header));
+            outFile.write(reinterpret_cast<const char*>(resampled.data()),
+                          static_cast<std::streamsize>(resampled.size()
+                                                       * sizeof(uint16_t)));
+
+            if (!outFile)
+            {
+                throw std::runtime_error(
+                    "BuildMapFromHeightmap: write failure for overview file "
                     + outputPath.string());
             }
         }

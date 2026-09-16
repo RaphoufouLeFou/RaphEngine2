@@ -95,12 +95,13 @@ namespace raphEngine::terrain
         {
         public:
             OverviewHeightMap() = default;
-            ~OverviewHeightMap();
+            ~OverviewHeightMap() = default;
 
             OverviewHeightMap(const OverviewHeightMap&) = delete;
             OverviewHeightMap& operator=(const OverviewHeightMap&) = delete;
-            OverviewHeightMap(OverviewHeightMap&&) noexcept;
-            OverviewHeightMap& operator=(OverviewHeightMap&&) noexcept;
+            OverviewHeightMap(OverviewHeightMap&&) noexcept = default;
+            OverviewHeightMap&
+            operator=(OverviewHeightMap&&) noexcept = default;
 
             void Load(const fs::path& path);
             float SampleNormalizedHeight(glm::vec2 normalizedUV) const;
@@ -111,7 +112,9 @@ namespace raphEngine::terrain
 
         private:
             void Release();
-
+            std::vector<uint16_t> heights_;
+            int width_ = 0;
+            int height_ = 0;
             graphics::TextureLoader::RawTexture raw_{};
         };
 

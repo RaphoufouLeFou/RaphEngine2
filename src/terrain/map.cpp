@@ -41,37 +41,57 @@ namespace raphEngine::terrain
 
     fs::path Map::GetOverviewFilePath(const fs::path& rootDirectory)
     {
-        return rootDirectory / "overview.png";
+        return rootDirectory / "overview.heightmap";
     }
-
-    Map::OverviewHeightMap::~OverviewHeightMap()
+    namespace
     {
-        Release();
-    }
+        constexpr uint32_t kOverviewFileMagic = 0x52544F56; // "RTOV"
+        constexpr uint32_t kOverviewFileVersion = 1;
 
-    Map::OverviewHeightMap::OverviewHeightMap(
-        OverviewHeightMap&& other) noexcept
-        : raw_(other.raw_)
-    {
-        other.raw_ = {};
-    }
-
-    Map::OverviewHeightMap&
-    Map::OverviewHeightMap::operator=(OverviewHeightMap&& other) noexcept
-    {
-        if (this != &other)
+#pragma pack(push, 1)
+        struct OverviewFileHeader
         {
-            Release();
-            raw_ = other.raw_;
-            other.raw_ = {};
-        }
-        return *this;
-    }
-
+            uint32_t magic;
+            uint32_t version;
+            uint32_t width;
+            uint32_t height;
+        };
+#pragma pack(pop)
+    } // namespace
     void Map::OverviewHeightMap::Load(const fs::path& path)
     {
-        Release();
-        raw_ = graphics::TextureLoader::getInstance()->load_texture_raw(path);
+        std::ifstream file(path, std::ios::binary);
+        if (!file)
+        {
+            throw std::runtime_error(
+                "Map::OverviewHeightMap::Load: failed to open "
+                + path.string());
+        }
+
+        OverviewFileHeader header{};
+        file.read(reinterpret_cast<char*>(&header), sizeof(header));
+        if (!file || header.magic != kOverviewFileMagic
+            || header.version != kOverviewFileVersion)
+        {
+            throw std::runtime_error(
+                "Map::OverviewHeightMap::Load: malformed overview file "
+                + path.string());
+        }
+
+        width_ = static_cast<int>(header.width);
+        height_ = static_cast<int>(header.height);
+
+        heights_.resize(static_cast<size_t>(width_) * height_);
+        file.read(
+            reinterpret_cast<char*>(heights_.data()),
+            static_cast<std::streamsize>(heights_.size() * sizeof(uint16_t)));
+
+        if (!file)
+        {
+            throw std::runtime_error(
+                "Map::OverviewHeightMap::Load: truncated overview file "
+                + path.string());
+        }
     }
 
     void Map::OverviewHeightMap::Release()
@@ -88,14 +108,34 @@ namespace raphEngine::terrain
     {
         const glm::vec2 clamped =
             glm::clamp(normalizedUV, glm::vec2(0.0f), glm::vec2(1.0f));
-        const int x = std::min(
-            static_cast<int>(clamped.x * static_cast<float>(raw_.width)),
-            raw_.width - 1);
-        const int y = std::min(
-            static_cast<int>(clamped.y * static_cast<float>(raw_.height)),
-            raw_.height - 1);
-        const int index = (y * raw_.width + x) * raw_.nrChannels;
-        return static_cast<float>(raw_.data[index]) / 255.0f;
+
+        const glm::vec2 texelCoord = clamped
+                * glm::vec2(static_cast<float>(width_),
+                            static_cast<float>(height_))
+            - glm::vec2(0.5f);
+
+        const glm::vec2 base = glm::floor(texelCoord);
+        const glm::vec2 frac = texelCoord - base;
+
+        const int x0 = std::clamp(static_cast<int>(base.x), 0, width_ - 1);
+        const int x1 = std::clamp(static_cast<int>(base.x) + 1, 0, width_ - 1);
+        const int y0 = std::clamp(static_cast<int>(base.y), 0, height_ - 1);
+        const int y1 = std::clamp(static_cast<int>(base.y) + 1, 0, height_ - 1);
+
+        auto sampleTexel = [&](int x, int y) -> float {
+            return static_cast<float>(
+                       heights_[static_cast<size_t>(y) * width_ + x])
+                / 65535.0f;
+        };
+
+        const float h00 = sampleTexel(x0, y0);
+        const float h10 = sampleTexel(x1, y0);
+        const float h01 = sampleTexel(x0, y1);
+        const float h11 = sampleTexel(x1, y1);
+
+        const float top = glm::mix(h00, h10, frac.x);
+        const float bottom = glm::mix(h01, h11, frac.x);
+        return glm::mix(top, bottom, frac.y);
     }
 
     void Map::Load(const fs::path& p)

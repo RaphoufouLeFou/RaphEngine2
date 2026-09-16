@@ -1,4 +1,5 @@
 #include "graphics/ogl/opengl.hpp"
+#include <glm/fwd.hpp>
 #include <string>
 #include "default_shaders.hpp"
 #include "graphics/camera.hpp"
@@ -387,6 +388,7 @@ namespace raphEngine::graphics::ogl
         if (map)
         {
             map->UpdateStreaming(camPos, 2000.0f);
+            // map->UpdateStreaming(glm::vec3(0), 2000.0f);
 
             graphics::TerrainRenderer::getInstance()->render(*map);
         }

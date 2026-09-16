@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <unordered_map>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -34,58 +35,116 @@ namespace raphEngine::graphics::ogl
         void render(const terrain::Map& map) override;
 
     private:
-        struct RingState
+        struct QuadNode
         {
-            glm::vec2 snappedOrigin{ 0.0f, 0.0f };
-            bool initialized = false;
+            int level;
+            int x;
+            int y;
+            glm::vec2 origin;
+            float size;
         };
 
-        void CreateRingMeshes();
-        void CreateHeightRingArray();
-        void CreateNormalRingArray();
+        struct QuadCandidate
+        {
+            QuadNode node;
+            float distance;
+        };
+
+        struct QuadCandidateCompare
+        {
+            bool operator()(const QuadCandidate& a,
+                            const QuadCandidate& b) const
+            {
+                return a.distance > b.distance;
+            }
+        };
+
+        struct NodeKey
+        {
+            int level;
+            int x;
+            int y;
+
+            bool operator==(const NodeKey&) const = default;
+        };
+
+        struct NodeKeyHash
+        {
+            size_t operator()(const NodeKey& k) const
+            {
+                size_t h = std::hash<int>{}(k.level);
+                h ^= std::hash<int>{}(k.x) + 0x9e3779b9 + (h << 6) + (h >> 2);
+                h ^= std::hash<int>{}(k.y) + 0x9e3779b9 + (h << 6) + (h >> 2);
+                return h;
+            }
+        };
+
+        struct ResidentNode
+        {
+            uint32_t layer;
+            bool inUseThisFrame;
+        };
+
+        void CreateNodeMesh();
+        void CreateHeightNodeArray();
+        void CreateNormalNodeArray();
         void CreateMaterialTextureArrays();
         void CreateGaussianAlbedoArrays();
         unsigned int
         CreateMaterialMapArray(std::span<const char* const> paths) const;
 
-        float GetRingWorldSize(uint32_t ringIndex) const;
-        glm::vec2 ComputeSnappedOrigin(uint32_t ringIndex,
-                                       glm::vec2 cameraXY) const;
-        void UpdateRingTexture(uint32_t ringIndex, const terrain::Map& map,
-                               glm::vec2 snappedOrigin);
-        void DrawRing(uint32_t ringIndex, const Shader* shader) const;
+        QuadCandidate MakeCandidate(int level, int x, int y,
+                                    glm::vec2 cameraXY) const;
+        void BuildLeafSet(glm::vec2 cameraXY,
+                          std::vector<QuadNode>& outLeaves) const;
 
-        static constexpr uint32_t kRingCount = 12;
-        static constexpr uint32_t kRingResolution = 128;
-        static constexpr float kBaseRingWorldSize = 64.0f;
+        void RasterizeLevelGrid(const std::vector<QuadNode>& leaves,
+                                int64_t& outMinX, int64_t& outMinY,
+                                int64_t& outWidth, int64_t& outHeight) const;
+        void BalanceLeafSet(std::vector<QuadNode>& leaves) const;
+
+        void BuildNodeData(const QuadNode& node, const terrain::Map& map,
+                           uint32_t layer);
+        void DrawNode(const QuadNode& node, uint32_t layer,
+                      const Shader* shader) const;
+
+        static constexpr uint32_t kNodeResolution = 32;
+        static constexpr float kLeafWorldSize = 64.0f;
+        static constexpr int kMaxLevel = 8;
+        static constexpr float kSplitDistanceFactor = 1.5f;
+        static constexpr uint32_t kMaxActiveNodes = 2048;
 
         static constexpr float kRockPatchScale = 60.0f;
         static constexpr float kDirtPatchScale = 45.0f;
-        static constexpr float kMinNormalSampleDistance = 2.0f;
 
-        static constexpr float kFogDensity = 0.00006f;
-        static constexpr glm::vec3 kFogColor = glm::vec3(0.55f, 0.62f, 0.70f);
+        // Used for BOTH material-selection slope and the persisted shading
+        // normal — same fixed, LOD-independent world-space spacing for
+        // both, computed once per texel when a node is first built. This
+        // is what makes two nodes agree on the normal at a shared
+        // boundary: they're both calling Map::GetHeightAt at the same
+        // world positions, not reading each other's (unavailable) texture
+        // data the way the old vertex-shader neighbor-sampling did.
+        static constexpr float kFixedNormalSampleDistance = 2.0f;
 
-        unsigned int ringVertexBuffer_ = 0;
-        unsigned int solidVao_ = 0;
-        unsigned int solidEbo_ = 0;
-        uint32_t solidIndexCount_ = 0;
+        unsigned int nodeVertexBuffer_ = 0;
+        unsigned int nodeVao_ = 0;
+        unsigned int nodeEbo_ = 0;
+        uint32_t nodeIndexCount_ = 0;
 
-        unsigned int heightRingArray_ = 0;
-        unsigned int normalRingArray_ = 0;
+        // R = height (meters), G = rock weight, B = snow weight, A = dirt
+        // weight.
+        unsigned int heightNodeArray_ = 0;
+        // Fixed-spacing world-space normal — see kFixedNormalSampleDistance.
+        unsigned int normalNodeArray_ = 0;
 
         unsigned int materialGaussianAlbedoArray_ = 0;
         unsigned int materialAlbedoLutArray_ = 0;
         unsigned int materialNormalArray_ = 0;
         unsigned int materialOrmArray_ = 0;
 
-        std::vector<RingState> ringStates_;
-
-        std::vector<float> scratchHeights_;
-        std::vector<float> scratchNormalGridHeights_;
-        std::vector<glm::vec3> scratchNormalGridNormals_;
-        std::vector<glm::vec4> scratchRingData_;
-        std::vector<glm::vec3> scratchNormalData_;
+        std::unordered_map<NodeKey, ResidentNode, NodeKeyHash> residentNodes_;
+        std::vector<bool> layerInUse_;
+        mutable std::vector<int16_t> scratchLevelGrid_;
 
         std::shared_ptr<Shader> terrainShader_;
     };

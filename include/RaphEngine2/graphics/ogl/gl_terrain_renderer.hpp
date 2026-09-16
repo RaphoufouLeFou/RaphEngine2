@@ -95,13 +95,15 @@ namespace raphEngine::graphics::ogl
 
         QuadCandidate MakeCandidate(int level, int x, int y,
                                     glm::vec2 cameraXY) const;
-        void BuildLeafSet(glm::vec2 cameraXY,
+        void BuildLeafSet(glm::vec2 cameraXY, glm::vec2 worldMin,
+                          glm::vec2 worldMax,
                           std::vector<QuadNode>& outLeaves) const;
 
         void RasterizeLevelGrid(const std::vector<QuadNode>& leaves,
                                 int64_t& outMinX, int64_t& outMinY,
                                 int64_t& outWidth, int64_t& outHeight) const;
         void BalanceLeafSet(std::vector<QuadNode>& leaves) const;
+        void InvalidateAllNodes();
 
         void BuildNodeData(const QuadNode& node, const terrain::Map& map,
                            uint32_t layer);
@@ -116,14 +118,6 @@ namespace raphEngine::graphics::ogl
 
         static constexpr float kRockPatchScale = 60.0f;
         static constexpr float kDirtPatchScale = 45.0f;
-
-        // Used for BOTH material-selection slope and the persisted shading
-        // normal — same fixed, LOD-independent world-space spacing for
-        // both, computed once per texel when a node is first built. This
-        // is what makes two nodes agree on the normal at a shared
-        // boundary: they're both calling Map::GetHeightAt at the same
-        // world positions, not reading each other's (unavailable) texture
-        // data the way the old vertex-shader neighbor-sampling did.
         static constexpr float kFixedNormalSampleDistance = 2.0f;
 
         unsigned int nodeVertexBuffer_ = 0;
@@ -131,10 +125,7 @@ namespace raphEngine::graphics::ogl
         unsigned int nodeEbo_ = 0;
         uint32_t nodeIndexCount_ = 0;
 
-        // R = height (meters), G = rock weight, B = snow weight, A = dirt
-        // weight.
         unsigned int heightNodeArray_ = 0;
-        // Fixed-spacing world-space normal — see kFixedNormalSampleDistance.
         unsigned int normalNodeArray_ = 0;
 
         unsigned int materialGaussianAlbedoArray_ = 0;
@@ -145,6 +136,8 @@ namespace raphEngine::graphics::ogl
         std::unordered_map<NodeKey, ResidentNode, NodeKeyHash> residentNodes_;
         std::vector<bool> layerInUse_;
         mutable std::vector<int16_t> scratchLevelGrid_;
+
+        uint64_t lastSeenMapGeneration_ = 0;
 
         std::shared_ptr<Shader> terrainShader_;
     };

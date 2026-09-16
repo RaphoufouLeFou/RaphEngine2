@@ -2,9 +2,9 @@
 
 #include <RaphEngine2/RaphEngine2.hpp>
 #include <RaphEngine2/terrain/chunk.hpp>
-#include <RaphEngine2/graphics/texture_loader.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <span>
 #include <vector>
@@ -37,6 +37,14 @@ namespace raphEngine::terrain
         inline constexpr uint32_t kMapFileVersion = 1;
     } // namespace detail
 
+    /// Invoked by UpdateStreaming when a chunk is within streaming range
+    /// but has no file yet -- implement to generate that chunk
+    /// synchronously (on whatever thread calls UpdateStreaming) before
+    /// Map tries to load it. See NoiseChunkGenerator / ImageChunkGenerator
+    /// in map_builder.hpp for ready-made implementations.
+    using ChunkGeneratorCallback =
+        std::function<void(glm::ivec2 gridCoord, const fs::path& chunkPath)>;
+
     class RAPHENGINE_API Map
     {
     public:
@@ -48,14 +56,21 @@ namespace raphEngine::terrain
         Map(Map&&) = default;
         Map& operator=(Map&&) = default;
 
+        static Map* GetInstace();
         static void FromFile(const fs::path&);
 
         void Load(const fs::path&);
         void Save(const fs::path&);
 
-        void UpdateStreaming(glm::vec3 viewerWorldPosition,
-                             float streamingRadiusMeters,
-                             uint32_t maxLoadsPerCall = 4);
+        /// onMissingChunk, if provided, runs for any chunk that's within
+        /// streamingRadiusMeters but has no file on disk -- synchronously,
+        /// before Load() is attempted. Leaving it null preserves the
+        /// original behavior of silently skipping chunks that don't exist.
+        void
+        UpdateStreaming(glm::vec3 viewerWorldPosition,
+                        float streamingRadiusMeters,
+                        uint32_t maxLoadsPerCall = 4,
+                        const ChunkGeneratorCallback& onMissingChunk = nullptr);
 
         float GetHeightAt(glm::vec2 worldPositionXY) const;
 
@@ -63,7 +78,6 @@ namespace raphEngine::terrain
         const Chunk* GetChunkAt(glm::ivec2 gridCoord) const;
         Chunk* GetChunkContainingWorldPosition(glm::vec2 worldPositionXY);
 
-        glm::vec2 GridCoordToWorldOrigin(glm::ivec2 gridCoord) const;
         bool IsChunkResident(glm::ivec2 gridCoord) const;
         bool IsValidGridCoord(glm::ivec2 gridCoord) const noexcept;
 
@@ -81,16 +95,17 @@ namespace raphEngine::terrain
             return static_cast<float>(gridSize_ * kChunkResolution);
         }
 
+        uint64_t GetGeneration() const noexcept
+        {
+            return generation_;
+        }
+
         static fs::path GetChunkFilePath(const fs::path& rootDirectory,
                                          glm::ivec2 gridCoord);
         static fs::path GetMetaFilePath(const fs::path& rootDirectory);
         static fs::path GetOverviewFilePath(const fs::path& rootDirectory);
 
-        static Map* GetInstace();
-
     private:
-        static std::unique_ptr<Map> instance;
-
         class OverviewHeightMap
         {
         public:
@@ -107,17 +122,16 @@ namespace raphEngine::terrain
             float SampleNormalizedHeight(glm::vec2 normalizedUV) const;
             bool IsLoaded() const noexcept
             {
-                return raw_.data != nullptr;
+                return !heights_.empty();
             }
 
         private:
-            void Release();
             std::vector<uint16_t> heights_;
             int width_ = 0;
             int height_ = 0;
-            graphics::TextureLoader::RawTexture raw_{};
         };
 
+        glm::vec2 GridCoordToWorldOrigin(glm::ivec2 gridCoord) const;
         glm::ivec2 WorldToGridCoord(glm::vec2 worldPositionXY) const;
         glm::vec2 WorldToChunkLocal(glm::vec2 worldPositionXY,
                                     glm::ivec2 gridCoord) const;
@@ -130,5 +144,8 @@ namespace raphEngine::terrain
         fs::path rootDirectory_;
         glm::vec2 overviewHeightRange_{ 0.0f, 0.0f };
         uint32_t gridSize_ = 0;
+        uint64_t generation_ = 0;
+
+        static std::unique_ptr<Map> instance;
     };
 } // namespace raphEngine::terrain

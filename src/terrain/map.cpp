@@ -12,6 +12,25 @@ namespace fs = std::filesystem;
 
 namespace raphEngine::terrain
 {
+    namespace
+    {
+        constexpr uint32_t kOverviewFileMagic = 0x52544F56; // "RTOV"
+        constexpr uint32_t kOverviewFileVersion = 1;
+
+#pragma pack(push, 1)
+        struct OverviewFileHeader
+        {
+            uint32_t magic;
+            uint32_t version;
+            uint32_t width;
+            uint32_t height;
+        };
+#pragma pack(pop)
+
+        static_assert(sizeof(OverviewFileHeader) == 16,
+                      "OverviewFileHeader layout must stay byte-exact for "
+                      "on-disk compatibility");
+    } // namespace
 
     std::unique_ptr<Map> Map::instance = nullptr;
 
@@ -43,21 +62,7 @@ namespace raphEngine::terrain
     {
         return rootDirectory / "overview.heightmap";
     }
-    namespace
-    {
-        constexpr uint32_t kOverviewFileMagic = 0x52544F56; // "RTOV"
-        constexpr uint32_t kOverviewFileVersion = 1;
 
-#pragma pack(push, 1)
-        struct OverviewFileHeader
-        {
-            uint32_t magic;
-            uint32_t version;
-            uint32_t width;
-            uint32_t height;
-        };
-#pragma pack(pop)
-    } // namespace
     void Map::OverviewHeightMap::Load(const fs::path& path)
     {
         std::ifstream file(path, std::ios::binary);
@@ -91,15 +96,6 @@ namespace raphEngine::terrain
             throw std::runtime_error(
                 "Map::OverviewHeightMap::Load: truncated overview file "
                 + path.string());
-        }
-    }
-
-    void Map::OverviewHeightMap::Release()
-    {
-        if (raw_.data != nullptr)
-        {
-            graphics::TextureLoader::getInstance()->free_raw(raw_);
-            raw_ = {};
         }
     }
 
@@ -140,6 +136,8 @@ namespace raphEngine::terrain
 
     void Map::Load(const fs::path& p)
     {
+        ++generation_;
+
         rootDirectory_ = p;
         chunks_.clear();
 
@@ -203,7 +201,8 @@ namespace raphEngine::terrain
 
     void Map::UpdateStreaming(glm::vec3 viewerWorldPosition,
                               float streamingRadiusMeters,
-                              uint32_t maxLoadsPerCall)
+                              uint32_t maxLoadsPerCall,
+                              const ChunkGeneratorCallback& onMissingChunk)
     {
         constexpr float kUnloadHysteresisFactor = 1.15f;
 
@@ -241,6 +240,12 @@ namespace raphEngine::terrain
 
                     const fs::path chunkPath =
                         GetChunkFilePath(rootDirectory_, coord);
+
+                    if (!fs::exists(chunkPath) && onMissingChunk)
+                    {
+                        onMissingChunk(coord, chunkPath);
+                    }
+
                     if (fs::exists(chunkPath))
                     {
                         chunk.Load(chunkPath);

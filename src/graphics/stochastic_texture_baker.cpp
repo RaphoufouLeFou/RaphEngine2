@@ -6,20 +6,15 @@
 #include <numbers>
 #include <vector>
 
+#include <tbb/parallel_for.h>
+
 namespace raphEngine::graphics
 {
     namespace
     {
-        // Deliot and Heitz 2019, Section 1.3.1: the target Gaussian is
-        // chosen to fit within [0, 1] at 8-bit precision.
         constexpr double kGaussianMean = 0.5;
         constexpr double kGaussianStdDev = 1.0 / 6.0;
 
-        // Seed approximation for the inverse error function (not in the
-        // standard library) — Giles, "Approximating the erfinv function"
-        // (GPU Computing Gems, 2010). Refined below with Newton-Raphson
-        // against std::erf, so the final result doesn't depend on this
-        // polynomial's coefficients being exact.
         double ErfInvSeed(double x)
         {
             double w = -std::log((1.0 - x) * (1.0 + x));
@@ -60,9 +55,6 @@ namespace raphEngine::graphics
             x = std::clamp(x, -0.999999, 0.999999);
             double result = ErfInvSeed(x);
 
-            // erfinv(x) is the root of erf(y) - x = 0; d/dy erf(y) =
-            // (2/sqrt(pi)) * exp(-y^2). Two iterations bring the seed to
-            // essentially full double precision regardless of its own accuracy.
             for (int i = 0; i < 2; ++i)
             {
                 const double err = std::erf(result) - x;
@@ -74,14 +66,12 @@ namespace raphEngine::graphics
             return result;
         }
 
-        // Equation 1.4.
         double GaussianCdf(double x, double mean, double stdDev)
         {
             return 0.5
                 * (1.0 + std::erf((x - mean) / (stdDev * std::sqrt(2.0))));
         }
 
-        // Equation 1.5.
         double GaussianInverseCdf(double quantile, double mean, double stdDev)
         {
             return mean
@@ -127,13 +117,13 @@ namespace raphEngine::graphics
 
         const int channelsToProcess = std::min(channels, 3);
 
-        for (int channel = 0; channel < channelsToProcess; ++channel)
-        {
+        // Each channel's sort + Gaussianize + LUT build only reads
+        // `pixels` and writes to its own channel slot of `result` -- fully
+        // independent across channels, safe to run concurrently.
+        tbb::parallel_for(0, channelsToProcess, [&](int channel) {
             const std::vector<uint32_t> pixelIndexByRank =
                 SortPixelsByChannel(pixels, width, height, channels, channel);
 
-            // T (Listing 1.8): replace each pixel's value with the Gaussian
-            // quantile matching its rank in the sorted list.
             for (size_t rank = 0; rank < pixelCount; ++rank)
             {
                 const uint32_t pixelIndex = pixelIndexByRank[rank];
@@ -147,9 +137,6 @@ namespace raphEngine::graphics
                     static_cast<uint8_t>(clamped * 255.0 + 0.5);
             }
 
-            // T^-1 (Listing 1.9): for each LUT texel, find the Gaussian's
-            // quantile at that position and fetch the input value at the
-            // same quantile in the sorted list.
             for (int lutIndex = 0; lutIndex < lutResolution; ++lutIndex)
             {
                 const double gaussianPosition =
@@ -168,11 +155,8 @@ namespace raphEngine::graphics
                                   + channel] =
                     pixels[pixelIndex * channels + channel];
             }
-        }
+        });
 
-        // Alpha (or any channel beyond RGB) passes through unmodified —
-        // it isn't part of the tiling appearance being blended, and
-        // Gaussianizing an opacity/mask channel would just corrupt it.
         for (int channel = channelsToProcess; channel < channels; ++channel)
         {
             for (size_t i = 0; i < pixelCount; ++i)

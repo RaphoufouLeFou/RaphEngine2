@@ -18,6 +18,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <tbb/parallel_for.h>
+
 #include <RaphEngine2/component/camera_component.hpp>
 #include <RaphEngine2/default_shaders.hpp>
 #include <RaphEngine2/graphics/ogl/gl_shader.hpp>
@@ -47,8 +49,6 @@ namespace raphEngine::graphics::ogl
 
         constexpr int kAlbedoLutResolution = 256;
 
-        // index 0=grass, 1=rock, 2=snow, 3=dirt — must match the kMaterial*
-        // constants in terrain_quad_fs.glsl.
         constexpr std::array<TerrainMaterialDefinition, 4> kMaterials = { {
             { "assets/textures/terrain/forrest_ground_01_diff_4k.jpg",
               "assets/textures/terrain/forrest_ground_01_nor_gl_4k.jpg",
@@ -111,34 +111,12 @@ namespace raphEngine::graphics::ogl
         glDeleteBuffers(1, &nodeVertexBuffer_);
     }
 
-    void GLTerrainRenderer::CreateNormalNodeArray()
-    {
-        const GLsizei texSize = static_cast<GLsizei>(kNodeResolution + 1);
-
-        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &normalNodeArray_);
-        glTextureStorage3D(normalNodeArray_, 1, GL_RGB16F, texSize, texSize,
-                           static_cast<GLsizei>(kMaxActiveNodes));
-
-        // LINEAR, sampled via texture() (not texelFetch) in the fragment
-        // shader — smooth bilinear shading normal, decoupled from the
-        // node's own vertex density.
-        glTextureParameteri(normalNodeArray_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(normalNodeArray_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(normalNodeArray_, GL_TEXTURE_WRAP_S,
-                            GL_CLAMP_TO_EDGE);
-        glTextureParameteri(normalNodeArray_, GL_TEXTURE_WRAP_T,
-                            GL_CLAMP_TO_EDGE);
-    }
-
     void GLTerrainRenderer::CreateNodeMesh()
     {
         const uint32_t N = kNodeResolution;
         const uint32_t rowStride = N + 1;
         const uint32_t topVertexCount = rowStride * rowStride;
 
-        // xy = aLocalPos (used for height sampling — always the true,
-        // un-shifted edge position), zw = outward skirt direction, (0,0)
-        // for top-surface vertices.
         std::vector<glm::vec4> vertices;
         vertices.reserve(topVertexCount + 4 * rowStride);
 
@@ -182,12 +160,6 @@ namespace raphEngine::graphics::ogl
             }
         }
 
-        // Face winding here isn't guaranteed consistent from every viewing
-        // side (a vertical curtain doesn't have a natural "top-down CCW"
-        // convention the way the flat surface does) — GL_CULL_FACE is
-        // disabled for the whole terrain draw in render() specifically so
-        // this never matters, rather than trying to get 4 different edge
-        // orientations individually correct.
         auto addSkirtStrip = [&](auto topIndexFn, uint32_t skirtStart) {
             for (uint32_t j = 0; j < N; ++j)
             {
@@ -247,6 +219,22 @@ namespace raphEngine::graphics::ogl
                             GL_CLAMP_TO_EDGE);
 
         layerInUse_.assign(kMaxActiveNodes, false);
+    }
+
+    void GLTerrainRenderer::CreateNormalNodeArray()
+    {
+        const GLsizei texSize = static_cast<GLsizei>(kNodeResolution + 1);
+
+        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &normalNodeArray_);
+        glTextureStorage3D(normalNodeArray_, 1, GL_RGB16F, texSize, texSize,
+                           static_cast<GLsizei>(kMaxActiveNodes));
+
+        glTextureParameteri(normalNodeArray_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(normalNodeArray_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(normalNodeArray_, GL_TEXTURE_WRAP_S,
+                            GL_CLAMP_TO_EDGE);
+        glTextureParameteri(normalNodeArray_, GL_TEXTURE_WRAP_T,
+                            GL_CLAMP_TO_EDGE);
     }
 
     unsigned int GLTerrainRenderer::CreateMaterialMapArray(
@@ -339,8 +327,8 @@ namespace raphEngine::graphics::ogl
         int arrayHeight = 0;
         int arrayChannels = 0;
 
-        std::vector<graphics::StochasticTextureData> stochasticData;
-        stochasticData.reserve(kMaterials.size());
+        std::vector<graphics::TextureLoader::RawTexture> rawTextures;
+        rawTextures.reserve(kMaterials.size());
 
         for (const TerrainMaterialDefinition& material : kMaterials)
         {
@@ -348,13 +336,15 @@ namespace raphEngine::graphics::ogl
                 loader->load_texture_raw(material.albedoPath);
             if (raw.data == nullptr)
             {
+                for (auto& r : rawTextures)
+                    loader->free_raw(r);
                 throw std::runtime_error(
                     std::string("GLTerrainRenderer: failed to load terrain "
                                 "albedo texture ")
                     + material.albedoPath);
             }
 
-            if (stochasticData.empty())
+            if (rawTextures.empty())
             {
                 arrayWidth = raw.width;
                 arrayHeight = raw.height;
@@ -364,14 +354,27 @@ namespace raphEngine::graphics::ogl
                      || raw.nrChannels != arrayChannels)
             {
                 loader->free_raw(raw);
+                for (auto& r : rawTextures)
+                    loader->free_raw(r);
                 throw std::runtime_error(
                     "GLTerrainRenderer: all terrain albedo textures must share "
                     "resolution and channel count");
             }
 
-            stochasticData.push_back(graphics::ComputeStochasticTextureData(
-                raw.data, raw.width, raw.height, raw.nrChannels,
-                kAlbedoLutResolution));
+            rawTextures.push_back(raw);
+        }
+
+        std::vector<graphics::StochasticTextureData> stochasticData(
+            rawTextures.size());
+        tbb::parallel_for(size_t(0), rawTextures.size(), [&](size_t i) {
+            stochasticData[i] = graphics::ComputeStochasticTextureData(
+                rawTextures[i].data, rawTextures[i].width,
+                rawTextures[i].height, rawTextures[i].nrChannels,
+                kAlbedoLutResolution);
+        });
+
+        for (auto& raw : rawTextures)
+        {
             loader->free_raw(raw);
         }
 
@@ -607,7 +610,8 @@ namespace raphEngine::graphics::ogl
         }
     }
 
-    void GLTerrainRenderer::BuildLeafSet(glm::vec2 cameraXY,
+    void GLTerrainRenderer::BuildLeafSet(glm::vec2 cameraXY, glm::vec2 worldMin,
+                                         glm::vec2 worldMax,
                                          std::vector<QuadNode>& outLeaves) const
     {
         outLeaves.clear();
@@ -639,6 +643,18 @@ namespace raphEngine::graphics::ogl
             QuadCandidate candidate = frontier.top();
             frontier.pop();
 
+            const glm::vec2 nodeMin = candidate.node.origin;
+            const glm::vec2 nodeMax =
+                candidate.node.origin + glm::vec2(candidate.node.size);
+            const bool fullyOutside = nodeMax.x <= worldMin.x
+                || nodeMin.x >= worldMax.x || nodeMax.y <= worldMin.y
+                || nodeMin.y >= worldMax.y;
+
+            if (fullyOutside)
+            {
+                continue;
+            }
+
             const bool tooDeep = candidate.node.level >= kMaxLevel;
             const bool farEnough = candidate.distance
                 >= candidate.node.size * kSplitDistanceFactor;
@@ -666,13 +682,21 @@ namespace raphEngine::graphics::ogl
         BalanceLeafSet(outLeaves);
     }
 
+    void GLTerrainRenderer::InvalidateAllNodes()
+    {
+        for (const auto& [key, resident] : residentNodes_)
+        {
+            layerInUse_[resident.layer] = false;
+        }
+        residentNodes_.clear();
+    }
+
     void GLTerrainRenderer::BuildNodeData(const QuadNode& node,
                                           const terrain::Map& map,
                                           uint32_t layer)
     {
         const uint32_t texSize = kNodeResolution + 1;
         const float texelSize = node.size / static_cast<float>(kNodeResolution);
-
         const float slopeSampleDist = kFixedNormalSampleDistance;
 
         std::vector<glm::vec4> data(static_cast<size_t>(texSize) * texSize);
@@ -763,14 +787,25 @@ namespace raphEngine::graphics::ogl
             return;
         }
 
+        const uint64_t currentGeneration = map.GetGeneration();
+        if (currentGeneration != lastSeenMapGeneration_)
+        {
+            lastSeenMapGeneration_ = currentGeneration;
+            InvalidateAllNodes();
+        }
+
         Camera* cam = Camera::get_active_camera();
         cam->calculate_matrices();
 
         const glm::vec3 cameraPos = cam->get_position();
         const glm::vec2 cameraXY(cameraPos.x, cameraPos.y);
 
+        const float worldSize = map.GetWorldSizeMeters();
+        const glm::vec2 worldMin(worldSize * -0.5f);
+        const glm::vec2 worldMax(worldSize * 0.5f);
+
         std::vector<QuadNode> leaves;
-        BuildLeafSet(cameraXY, leaves);
+        BuildLeafSet(cameraXY, worldMin, worldMax, leaves);
 
         for (auto& slot : residentNodes_)
         {

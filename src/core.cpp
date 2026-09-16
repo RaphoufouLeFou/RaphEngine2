@@ -19,6 +19,8 @@
 
 #include "imgui.h"
 #include "terrain/map.hpp"
+#include "terrain/noise.hpp"
+#include "terrain/noise_editor.hpp"
 
 namespace raphEngine
 {
@@ -98,6 +100,20 @@ namespace raphEngine
         static double fps_avr = 0;
         static int avr_count = 0;
 
+        terrain::FractalNoiseParams noiseParams;
+        constexpr float height = 4000.0f;
+        constexpr float sizeInMeters = 16000.0f;
+        const fs::path outputDirectory = "assets/chunks/";
+
+        raphEngine::terrain::NoiseChunkGenerator chunkGenerator(noiseParams,
+                                                                height);
+
+        // Startup, instead of BuildMapFromNoise:
+        raphEngine::terrain::BuildMapShellFromNoise(noiseParams, sizeInMeters,
+                                                    height, outputDirectory);
+
+        terrain::Map::FromFile(outputDirectory);
+
         while (1)
         {
             double start = Time::GetTime();
@@ -125,6 +141,16 @@ namespace raphEngine
 
             execute_updates();
             execute_components_updates();
+
+            if (Core::is_editor_mode())
+            {
+                terrain::DrawNoiseEditorWindow(
+                    noiseParams, 2000, 800, "assets/chunks/", &chunkGenerator);
+            }
+
+            terrain::Map::GetInstace()->UpdateStreaming(
+                component::CameraComponent::get_active_camera()->get_position(),
+                2000.0f, /*maxLoadsPerCall=*/4, chunkGenerator);
 
             renderer.GetRmlUiRenderer().Update();
             renderer.Render();

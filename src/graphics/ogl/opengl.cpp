@@ -387,7 +387,7 @@ namespace raphEngine::graphics::ogl
 
         if (map)
         {
-            map->UpdateStreaming(camPos, 2000.0f);
+            // map->UpdateStreaming(camPos, 2000.0f);
             // map->UpdateStreaming(glm::vec3(0), 2000.0f);
 
             graphics::TerrainRenderer::getInstance()->render(*map);

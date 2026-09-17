@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 namespace raphEngine::terrain::detail
 {
     inline constexpr uint32_t kChunkFileMagic = 0x52544348;
-    inline constexpr uint32_t kChunkFileVersion = 1;
+    inline constexpr uint32_t kChunkFileVersion = 2;
 
 #pragma pack(push, 1)
     struct ChunkFileHeader
@@ -36,13 +36,15 @@ namespace raphEngine::terrain::detail
                   "compatibility");
 
     std::vector<glm::ivec2> ComputeMipLevelDims(uint32_t baseResolution);
-    void FlipHeightRowsInPlace(uint16_t* heights, uint32_t width,
-                               uint32_t height);
 
     std::vector<std::vector<HeightRange>>
     BuildMipPyramid(const uint16_t* baseHeights, uint32_t baseResolution);
 
+    void FlipHeightRowsInPlace(uint16_t* heights, uint32_t width,
+                               uint32_t height);
+
     void WriteChunkFile(const fs::path& outputPath, glm::ivec2 gridCoord,
                         ChunkSource source, glm::vec2 worldHeightRange,
-                        const uint16_t* heights);
+                        const uint16_t* heights,
+                        const MaterialWeights* materialWeights);
 } // namespace raphEngine::terrain::detail

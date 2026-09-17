@@ -259,6 +259,9 @@ namespace raphEngine::terrain
             expectedSize += static_cast<size_t>(dim.x)
                 * static_cast<size_t>(dim.y) * sizeof(HeightRange);
         }
+        const size_t materialBytes = static_cast<size_t>(kChunkResolution)
+            * kChunkResolution * sizeof(MaterialWeights);
+        expectedSize += materialBytes;
 
         if (mappedFile->Size() != expectedSize)
         {
@@ -285,6 +288,11 @@ namespace raphEngine::terrain
                 reinterpret_cast<const HeightRange*>(cursor), levelCount);
             cursor += levelCount * sizeof(HeightRange);
         }
+
+        m_baseMaterialWeights = std::span<const MaterialWeights>(
+            reinterpret_cast<const MaterialWeights*>(cursor),
+            static_cast<size_t>(kChunkResolution) * kChunkResolution);
+        cursor += materialBytes;
 
         m_gridCoord = { header.gridCoordX, header.gridCoordY };
         m_worldHeightRange = { header.worldHeightMin, header.worldHeightMax };
@@ -502,6 +510,7 @@ namespace raphEngine::terrain
     {
         m_mappedFile.reset();
         m_baseHeights = {};
+        m_baseMaterialWeights = {};
         m_mipPyramid.clear();
         m_mergedHeights.clear();
         m_mergedPaintMask.clear();
@@ -529,6 +538,13 @@ namespace raphEngine::terrain
         }
 
         return m_baseHeights[texel.y * kChunkResolution + texel.x];
+    }
+
+    MaterialWeights Chunk::SampleRawMaterialWeights(glm::ivec2 texel) const
+    {
+        texel = glm::clamp(texel, glm::ivec2(0),
+                           glm::ivec2(static_cast<int>(kChunkResolution) - 1));
+        return m_baseMaterialWeights[texel.y * kChunkResolution + texel.x];
     }
 
     uint32_t Chunk::ComputeTileId(glm::ivec2 texel) const
@@ -588,6 +604,36 @@ namespace raphEngine::terrain
     HeightRange Chunk::GetChunkHeightRange() const
     {
         return m_dirtyHeightRange;
+    }
+
+    glm::vec3 Chunk::GetMaterialWeightsAt(glm::vec2 localPosition) const
+    {
+        const glm::vec2 maxCoord(static_cast<float>(kChunkResolution - 1));
+        const glm::vec2 clamped =
+            glm::clamp(localPosition, glm::vec2(0.0f), maxCoord);
+
+        const glm::ivec2 texel0(clamped);
+        const glm::ivec2 texel1 =
+            glm::min(texel0 + glm::ivec2(1, 1),
+                     glm::ivec2(static_cast<int>(kChunkResolution) - 1));
+        const glm::vec2 frac = clamped - glm::vec2(texel0);
+
+        auto toVec3 = [](const MaterialWeights& w) {
+            return glm::vec3(w.rock, w.snow, w.dirt) / 255.0f;
+        };
+
+        const glm::vec3 w00 =
+            toVec3(SampleRawMaterialWeights({ texel0.x, texel0.y }));
+        const glm::vec3 w10 =
+            toVec3(SampleRawMaterialWeights({ texel1.x, texel0.y }));
+        const glm::vec3 w01 =
+            toVec3(SampleRawMaterialWeights({ texel0.x, texel1.y }));
+        const glm::vec3 w11 =
+            toVec3(SampleRawMaterialWeights({ texel1.x, texel1.y }));
+
+        const glm::vec3 top = glm::mix(w00, w10, frac.x);
+        const glm::vec3 bottom = glm::mix(w01, w11, frac.x);
+        return glm::mix(top, bottom, frac.y);
     }
 
     void Chunk::PaintHeight(glm::ivec2 texel, float worldHeight)
@@ -724,6 +770,15 @@ namespace raphEngine::terrain
         }
 
         return m_mergedPaintMask;
+    }
+
+    uint8_t Chunk::SamplePaintIndexAt(glm::vec2 localPosition) const
+    {
+        const glm::ivec2 texel =
+            glm::clamp(glm::ivec2(glm::round(localPosition)), glm::ivec2(0),
+                       glm::ivec2(static_cast<int>(kChunkResolution) - 1));
+        const std::span<const uint8_t> paintData = GetPaintDataForUpload();
+        return paintData[texel.y * kChunkResolution + texel.x];
     }
 
     void Chunk::Touch()

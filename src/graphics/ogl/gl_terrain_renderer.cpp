@@ -63,39 +63,25 @@ namespace raphEngine::graphics::ogl
               "assets/textures/terrain/forest_ground_05_nor_gl_4k.jpg",
               "assets/textures/terrain/forest_ground_05_arm_4k.jpg", 2.0f },
         } };
-
-        float MacroHash(glm::vec2 p)
-        {
-            p = 50.0f * glm::fract(p * 0.3183099f + glm::vec2(0.71f, 0.113f));
-            return glm::fract(p.x * p.y * (p.x + p.y));
-        }
-
-        float MacroNoise(glm::vec2 p)
-        {
-            glm::vec2 i = glm::floor(p);
-            glm::vec2 f = glm::fract(p);
-            glm::vec2 u = f * f * (3.0f - 2.0f * f);
-
-            float a = MacroHash(i);
-            float b = MacroHash(i + glm::vec2(1.0f, 0.0f));
-            float c = MacroHash(i + glm::vec2(0.0f, 1.0f));
-            float d = MacroHash(i + glm::vec2(1.0f, 1.0f));
-
-            return glm::mix(glm::mix(a, b, u.x), glm::mix(c, d, u.x), u.y);
-        }
     } // namespace
 
     GLTerrainRenderer::GLTerrainRenderer()
     {
         CreateNodeMesh();
+        CreateInstanceBuffer();
         CreateHeightNodeArray();
         CreateNormalNodeArray();
+        CreatePaintNodeArray();
         CreateMaterialTextureArrays();
 
         terrainShader_ = Shader::loadShader(
             ShaderStages{ .vertex = terrain_quad_vs_shader,
                           .fragment = terrain_quad_fs_shader });
         terrainShader_->bindUniformBlock("LightSpaceMatrices", 0);
+
+        terrainShadowShader_ = Shader::loadShader(
+            ShaderStages{ .vertex = terrain_shadow_vs_shader,
+                          .fragment = terrain_shadow_fs_shader });
     }
 
     GLTerrainRenderer::~GLTerrainRenderer()
@@ -104,8 +90,10 @@ namespace raphEngine::graphics::ogl
         glDeleteTextures(1, &materialNormalArray_);
         glDeleteTextures(1, &materialAlbedoLutArray_);
         glDeleteTextures(1, &materialGaussianAlbedoArray_);
+        glDeleteTextures(1, &paintNodeArray_);
         glDeleteTextures(1, &normalNodeArray_);
         glDeleteTextures(1, &heightNodeArray_);
+        glDeleteBuffers(1, &nodeInstanceBuffer_);
         glDeleteBuffers(1, &nodeEbo_);
         glDeleteVertexArrays(1, &nodeVao_);
         glDeleteBuffers(1, &nodeVertexBuffer_);
@@ -203,6 +191,22 @@ namespace raphEngine::graphics::ogl
         glVertexArrayAttribBinding(nodeVao_, 0, 0);
     }
 
+    void GLTerrainRenderer::CreateInstanceBuffer()
+    {
+        glCreateBuffers(1, &nodeInstanceBuffer_);
+        glNamedBufferStorage(
+            nodeInstanceBuffer_,
+            static_cast<GLsizeiptr>(kMaxActiveNodes * sizeof(glm::vec4)),
+            nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+        glVertexArrayVertexBuffer(nodeVao_, 1, nodeInstanceBuffer_, 0,
+                                  sizeof(glm::vec4));
+        glVertexArrayBindingDivisor(nodeVao_, 1, 1);
+        glEnableVertexArrayAttrib(nodeVao_, 1);
+        glVertexArrayAttribFormat(nodeVao_, 1, 4, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(nodeVao_, 1, 1);
+    }
+
     void GLTerrainRenderer::CreateHeightNodeArray()
     {
         const GLsizei texSize = static_cast<GLsizei>(kNodeResolution + 1);
@@ -234,6 +238,22 @@ namespace raphEngine::graphics::ogl
         glTextureParameteri(normalNodeArray_, GL_TEXTURE_WRAP_S,
                             GL_CLAMP_TO_EDGE);
         glTextureParameteri(normalNodeArray_, GL_TEXTURE_WRAP_T,
+                            GL_CLAMP_TO_EDGE);
+    }
+
+    void GLTerrainRenderer::CreatePaintNodeArray()
+    {
+        const GLsizei texSize = static_cast<GLsizei>(kNodeResolution + 1);
+
+        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &paintNodeArray_);
+        glTextureStorage3D(paintNodeArray_, 1, GL_R8UI, texSize, texSize,
+                           static_cast<GLsizei>(kMaxActiveNodes));
+
+        glTextureParameteri(paintNodeArray_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(paintNodeArray_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(paintNodeArray_, GL_TEXTURE_WRAP_S,
+                            GL_CLAMP_TO_EDGE);
+        glTextureParameteri(paintNodeArray_, GL_TEXTURE_WRAP_T,
                             GL_CLAMP_TO_EDGE);
     }
 
@@ -697,10 +717,70 @@ namespace raphEngine::graphics::ogl
     {
         const uint32_t texSize = kNodeResolution + 1;
         const float texelSize = node.size / static_cast<float>(kNodeResolution);
-        const float slopeSampleDist = kFixedNormalSampleDistance;
+
+        const float gridStep = std::max(kFixedNormalSampleDistance, texelSize);
+        constexpr int kGridMargin = 1;
+        const int gridCount = static_cast<int>(std::ceil(node.size / gridStep))
+            + 1 + kGridMargin * 2;
+        const glm::vec2 gridOrigin =
+            node.origin - glm::vec2(gridStep * static_cast<float>(kGridMargin));
+
+        std::vector<float> gridHeights(static_cast<size_t>(gridCount)
+                                       * gridCount);
+        for (int gy = 0; gy < gridCount; ++gy)
+        {
+            for (int gx = 0; gx < gridCount; ++gx)
+            {
+                const glm::vec2 worldXY = gridOrigin
+                    + glm::vec2(static_cast<float>(gx), static_cast<float>(gy))
+                        * gridStep;
+                gridHeights[gy * gridCount + gx] = map.GetHeightAt(worldXY);
+            }
+        }
+
+        std::vector<glm::vec3> gridNormals(gridHeights.size());
+        for (int gy = 0; gy < gridCount; ++gy)
+        {
+            for (int gx = 0; gx < gridCount; ++gx)
+            {
+                const int xL = std::max(gx - 1, 0);
+                const int xR = std::min(gx + 1, gridCount - 1);
+                const int yD = std::max(gy - 1, 0);
+                const int yU = std::min(gy + 1, gridCount - 1);
+
+                const float hL = gridHeights[gy * gridCount + xL];
+                const float hR = gridHeights[gy * gridCount + xR];
+                const float hD = gridHeights[yD * gridCount + gx];
+                const float hU = gridHeights[yU * gridCount + gx];
+
+                gridNormals[gy * gridCount + gx] = glm::normalize(
+                    glm::vec3(hL - hR, hD - hU, 2.0f * gridStep));
+            }
+        }
+
+        auto sampleGrid = [&](glm::vec2 worldXY,
+                              const auto& gridValues) -> auto {
+            const glm::vec2 coordF = (worldXY - gridOrigin) / gridStep;
+            const int gx = std::clamp(static_cast<int>(std::floor(coordF.x)), 0,
+                                      gridCount - 2);
+            const int gy = std::clamp(static_cast<int>(std::floor(coordF.y)), 0,
+                                      gridCount - 2);
+            const glm::vec2 frac = coordF
+                - glm::vec2(static_cast<float>(gx), static_cast<float>(gy));
+
+            const auto& v00 = gridValues[gy * gridCount + gx];
+            const auto& v10 = gridValues[gy * gridCount + gx + 1];
+            const auto& v01 = gridValues[(gy + 1) * gridCount + gx];
+            const auto& v11 = gridValues[(gy + 1) * gridCount + gx + 1];
+
+            return glm::mix(glm::mix(v00, v10, frac.x),
+                            glm::mix(v01, v11, frac.x), frac.y);
+        };
 
         std::vector<glm::vec4> data(static_cast<size_t>(texSize) * texSize);
         std::vector<glm::vec3> normals(static_cast<size_t>(texSize) * texSize);
+        std::vector<uint8_t> paintIndices(static_cast<size_t>(texSize)
+                                          * texSize);
 
         for (uint32_t ty = 0; ty < texSize; ++ty)
         {
@@ -709,48 +789,17 @@ namespace raphEngine::graphics::ogl
                 const glm::vec2 worldXY = node.origin
                     + glm::vec2(static_cast<float>(tx), static_cast<float>(ty))
                         * texelSize;
-                const float h = map.GetHeightAt(worldXY);
 
-                const float mL =
-                    map.GetHeightAt(worldXY - glm::vec2(slopeSampleDist, 0.0f));
-                const float mR =
-                    map.GetHeightAt(worldXY + glm::vec2(slopeSampleDist, 0.0f));
-                const float mD =
-                    map.GetHeightAt(worldXY - glm::vec2(0.0f, slopeSampleDist));
-                const float mU =
-                    map.GetHeightAt(worldXY + glm::vec2(0.0f, slopeSampleDist));
-                const glm::vec3 fixedNormal = glm::normalize(
-                    glm::vec3(mL - mR, mD - mU, 2.0f * slopeSampleDist));
-                const float slope = 1.0f - fixedNormal.z;
+                const float h = sampleGrid(worldXY, gridHeights);
+                const glm::vec3 fixedNormal =
+                    glm::normalize(sampleGrid(worldXY, gridNormals));
 
-                const float jitter =
-                    MacroNoise(worldXY / 24.0f + glm::vec2(5.2f, 9.8f)) - 0.5f;
-
-                const float rockByNoise =
-                    glm::smoothstep(0.6f, 0.85f,
-                                    MacroNoise(worldXY / kRockPatchScale
-                                               + glm::vec2(37.1f, 58.9f)));
-                const float rockBySlope =
-                    glm::smoothstep(0.5f + jitter * 0.1f, 0.85f, slope);
-                const float rockWeight = std::max(rockBySlope, rockByNoise);
-
-                const float snowRetention =
-                    1.0f - glm::smoothstep(0.5f, 0.9f, slope);
-                const float snowByHeight = glm::smoothstep(
-                    200.0f + jitter * 30.0f, 320.0f + jitter * 30.0f, h);
-                const float snowWeight =
-                    snowByHeight * snowRetention * (1.0f - rockWeight * 0.3f);
-
-                const float dirtByNoise =
-                    glm::smoothstep(0.55f + jitter * 0.1f, 0.8f,
-                                    MacroNoise(worldXY / kDirtPatchScale
-                                               + glm::vec2(91.7f, 12.3f)));
-                const float dirtWeight =
-                    dirtByNoise * (1.0f - rockWeight) * (1.0f - snowWeight);
+                const glm::vec3 autoWeights = map.GetMaterialWeightsAt(worldXY);
 
                 data[ty * texSize + tx] =
-                    glm::vec4(h, rockWeight, snowWeight, dirtWeight);
+                    glm::vec4(h, autoWeights.x, autoWeights.y, autoWeights.z);
                 normals[ty * texSize + tx] = fixedNormal;
+                paintIndices[ty * texSize + tx] = map.GetPaintIndexAt(worldXY);
             }
         }
 
@@ -763,20 +812,11 @@ namespace raphEngine::graphics::ogl
             normalNodeArray_, 0, 0, 0, static_cast<GLint>(layer),
             static_cast<GLsizei>(texSize), static_cast<GLsizei>(texSize), 1,
             GL_RGB, GL_FLOAT, glm::value_ptr(normals[0]));
-    }
 
-    void GLTerrainRenderer::DrawNode(const QuadNode& node, uint32_t layer,
-                                     const Shader* shaderBase) const
-    {
-        const GlShader* shader = dynamic_cast<const GlShader*>(shaderBase);
-
-        shader->setValue("nodeOrigin", node.origin);
-        shader->setValue("nodeWorldSize", node.size);
-        shader->setValue("nodeLayer", static_cast<int>(layer));
-
-        glBindVertexArray(nodeVao_);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(nodeIndexCount_),
-                       GL_UNSIGNED_INT, 0);
+        glTextureSubImage3D(paintNodeArray_, 0, 0, 0, static_cast<GLint>(layer),
+                            static_cast<GLsizei>(texSize),
+                            static_cast<GLsizei>(texSize), 1, GL_RED_INTEGER,
+                            GL_UNSIGNED_BYTE, paintIndices.data());
     }
 
     void GLTerrainRenderer::render(const terrain::Map& map)
@@ -820,6 +860,9 @@ namespace raphEngine::graphics::ogl
         std::vector<DrawEntry> toDraw;
         toDraw.reserve(leaves.size());
 
+        std::vector<const QuadNode*> needsAllocation;
+        needsAllocation.reserve(leaves.size());
+
         for (const QuadNode& node : leaves)
         {
             const NodeKey key{ node.level, node.x, node.y };
@@ -828,9 +871,28 @@ namespace raphEngine::graphics::ogl
             {
                 it->second.inUseThisFrame = true;
                 toDraw.push_back({ &node, it->second.layer });
-                continue;
             }
+            else
+            {
+                needsAllocation.push_back(&node);
+            }
+        }
 
+        for (auto it = residentNodes_.begin(); it != residentNodes_.end();)
+        {
+            if (!it->second.inUseThisFrame)
+            {
+                layerInUse_[it->second.layer] = false;
+                it = residentNodes_.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        for (const QuadNode* nodePtr : needsAllocation)
+        {
             uint32_t freeLayer = kMaxActiveNodes;
             for (uint32_t l = 0; l < layerInUse_.size(); ++l)
             {
@@ -848,24 +910,14 @@ namespace raphEngine::graphics::ogl
                 continue;
             }
 
+            const NodeKey key{ nodePtr->level, nodePtr->x, nodePtr->y };
             layerInUse_[freeLayer] = true;
-            BuildNodeData(node, map, freeLayer);
+            BuildNodeData(*nodePtr, map, freeLayer);
             residentNodes_[key] = ResidentNode{ freeLayer, true };
-            toDraw.push_back({ &node, freeLayer });
+            toDraw.push_back({ nodePtr, freeLayer });
         }
 
-        for (auto it = residentNodes_.begin(); it != residentNodes_.end();)
-        {
-            if (!it->second.inUseThisFrame)
-            {
-                layerInUse_[it->second.layer] = false;
-                it = residentNodes_.erase(it);
-            }
-            else
-            {
-                ++it;
-            }
-        }
+        currentInstanceCount_ = toDraw.size();
 
         const GlShader* shader =
             dynamic_cast<const GlShader*>(terrainShader_.get());
@@ -947,13 +999,75 @@ namespace raphEngine::graphics::ogl
         glBindTextureUnit(7, normalNodeArray_);
         shader->setValue("normalNodeArray", 7);
 
+        glBindTextureUnit(8, paintNodeArray_);
+        shader->setValue("paintNodeArray", 8);
+
         const GLboolean cullWasEnabled = glIsEnabled(GL_CULL_FACE);
         glDisable(GL_CULL_FACE);
 
-        for (const DrawEntry& entry : toDraw)
+        if (currentInstanceCount_ > 0)
         {
-            DrawNode(*entry.node, entry.layer, terrainShader_.get());
+            std::vector<glm::vec4> instanceData;
+            instanceData.reserve(toDraw.size());
+            for (const DrawEntry& entry : toDraw)
+            {
+                instanceData.emplace_back(
+                    entry.node->origin.x, entry.node->origin.y,
+                    entry.node->size, static_cast<float>(entry.layer));
+            }
+
+            glNamedBufferSubData(nodeInstanceBuffer_, 0,
+                                 static_cast<GLsizeiptr>(instanceData.size()
+                                                         * sizeof(glm::vec4)),
+                                 instanceData.data());
+
+            glBindVertexArray(nodeVao_);
+            glDrawElementsInstanced(
+                GL_TRIANGLES, static_cast<GLsizei>(nodeIndexCount_),
+                GL_UNSIGNED_INT, 0, static_cast<GLsizei>(instanceData.size()));
         }
+
+        if (cullWasEnabled)
+        {
+            glEnable(GL_CULL_FACE);
+        }
+    }
+
+    bool
+    GLTerrainRenderer::CastsShadowOnCascade(size_t /*cascadeLayer*/,
+                                            size_t totalCascadeLayers) const
+    {
+        return totalCascadeLayers > 0;
+    }
+
+    void GLTerrainRenderer::RenderShadow(size_t cascadeLayer) const
+    {
+        if (currentInstanceCount_ == 0)
+        {
+            return;
+        }
+
+        const GlShader* shader =
+            dynamic_cast<const GlShader*>(terrainShadowShader_.get());
+        shader->use();
+
+        GLShadowRenderer::invalidate_active_shadow_shader();
+
+        shader->setValue(
+            "lightSpaceMatrix",
+            GLShadowRenderer::get_cascade_light_matrix(cascadeLayer));
+        shader->setValue("nodeTexelCount", static_cast<float>(kNodeResolution));
+
+        glBindTextureUnit(0, heightNodeArray_);
+        shader->setValue("heightNodeArray", 0);
+
+        const GLboolean cullWasEnabled = glIsEnabled(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
+
+        glBindVertexArray(nodeVao_);
+        glDrawElementsInstanced(
+            GL_TRIANGLES, static_cast<GLsizei>(nodeIndexCount_),
+            GL_UNSIGNED_INT, 0, static_cast<GLsizei>(currentInstanceCount_));
 
         if (cullWasEnabled)
         {

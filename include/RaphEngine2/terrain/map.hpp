@@ -37,11 +37,6 @@ namespace raphEngine::terrain
         inline constexpr uint32_t kMapFileVersion = 1;
     } // namespace detail
 
-    /// Invoked by UpdateStreaming when a chunk is within streaming range
-    /// but has no file yet -- implement to generate that chunk
-    /// synchronously (on whatever thread calls UpdateStreaming) before
-    /// Map tries to load it. See NoiseChunkGenerator / ImageChunkGenerator
-    /// in map_builder.hpp for ready-made implementations.
     using ChunkGeneratorCallback =
         std::function<void(glm::ivec2 gridCoord, const fs::path& chunkPath)>;
 
@@ -62,10 +57,6 @@ namespace raphEngine::terrain
         void Load(const fs::path&);
         void Save(const fs::path&);
 
-        /// onMissingChunk, if provided, runs for any chunk that's within
-        /// streamingRadiusMeters but has no file on disk -- synchronously,
-        /// before Load() is attempted. Leaving it null preserves the
-        /// original behavior of silently skipping chunks that don't exist.
         void
         UpdateStreaming(glm::vec3 viewerWorldPosition,
                         float streamingRadiusMeters,
@@ -73,6 +64,17 @@ namespace raphEngine::terrain
                         const ChunkGeneratorCallback& onMissingChunk = nullptr);
 
         float GetHeightAt(glm::vec2 worldPositionXY) const;
+
+        // Real per-chunk weights when resident, falling back to the coarse
+        // overview material map otherwise -- the same fallback pattern
+        // GetHeightAt already used, now applied to material too. Previously
+        // this fell back to a hard-coded glm::vec3(0.0f), i.e. pure grass
+        // with zero rock/snow/dirt variation regardless of actual slope or
+        // elevation, which is what produced flat, washed-out terrain
+        // outside the chunk streaming radius.
+        glm::vec3 GetMaterialWeightsAt(glm::vec2 worldPositionXY) const;
+
+        uint8_t GetPaintIndexAt(glm::vec2 worldPositionXY) const;
 
         Chunk* GetChunkAt(glm::ivec2 gridCoord);
         const Chunk* GetChunkAt(glm::ivec2 gridCoord) const;
@@ -104,6 +106,8 @@ namespace raphEngine::terrain
                                          glm::ivec2 gridCoord);
         static fs::path GetMetaFilePath(const fs::path& rootDirectory);
         static fs::path GetOverviewFilePath(const fs::path& rootDirectory);
+        static fs::path
+        GetOverviewMaterialFilePath(const fs::path& rootDirectory);
 
     private:
         class OverviewHeightMap
@@ -131,15 +135,45 @@ namespace raphEngine::terrain
             int height_ = 0;
         };
 
+        // Coarse, overview-resolution automatic material weights, mirroring
+        // OverviewHeightMap in structure and role. Reuses MaterialWeights
+        // directly rather than a separate parallel type.
+        class OverviewMaterialMap
+        {
+        public:
+            OverviewMaterialMap() = default;
+            ~OverviewMaterialMap() = default;
+
+            OverviewMaterialMap(const OverviewMaterialMap&) = delete;
+            OverviewMaterialMap& operator=(const OverviewMaterialMap&) = delete;
+            OverviewMaterialMap(OverviewMaterialMap&&) noexcept = default;
+            OverviewMaterialMap&
+            operator=(OverviewMaterialMap&&) noexcept = default;
+
+            void Load(const fs::path& path);
+            glm::vec3 SampleNormalizedWeights(glm::vec2 normalizedUV) const;
+            bool IsLoaded() const noexcept
+            {
+                return !weights_.empty();
+            }
+
+        private:
+            std::vector<MaterialWeights> weights_;
+            int width_ = 0;
+            int height_ = 0;
+        };
+
         glm::vec2 GridCoordToWorldOrigin(glm::ivec2 gridCoord) const;
         glm::ivec2 WorldToGridCoord(glm::vec2 worldPositionXY) const;
         glm::vec2 WorldToChunkLocal(glm::vec2 worldPositionXY,
                                     glm::ivec2 gridCoord) const;
         size_t GetChunkIndex(glm::ivec2 gridCoord) const noexcept;
         float SampleOverviewHeightAt(glm::vec2 worldPositionXY) const;
+        glm::vec3 SampleOverviewMaterialAt(glm::vec2 worldPositionXY) const;
 
         std::vector<Chunk> chunks_;
         OverviewHeightMap overviewHeightMap_;
+        OverviewMaterialMap overviewMaterialMap_;
 
         fs::path rootDirectory_;
         glm::vec2 overviewHeightRange_{ 0.0f, 0.0f };

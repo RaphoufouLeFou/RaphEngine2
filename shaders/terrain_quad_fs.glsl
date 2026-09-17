@@ -3,23 +3,24 @@
 in VS_OUT
 {
     vec3 worldPos;
+    flat vec2 nodeOrigin;
+    flat float nodeWorldSize;
+    flat int nodeLayer;
 }
 fs_in;
 
 out vec4 FragColor;
 
 uniform sampler2DArray heightNodeArray;
+uniform sampler2DArray normalNodeArray;
+uniform usampler2DArray paintNodeArray;
 uniform sampler2DArray materialGaussianAlbedoArray;
 uniform sampler2DArray materialAlbedoLutArray;
 uniform sampler2DArray materialNormalArray;
 uniform sampler2DArray materialOrmArray; // R = AO, G = roughness, B = metallic
-uniform sampler2DArray normalNodeArray;
-
 uniform float materialTileSize[4];
 
-uniform vec2 nodeOrigin;
-uniform float nodeWorldSize;
-uniform int nodeLayer;
+uniform float nodeTexelCount;
 
 uniform sampler2DArrayShadow shadowMap;
 uniform samplerCube irradianceMap;
@@ -48,6 +49,22 @@ const uint kMaterialSnow = 2u;
 const uint kMaterialDirt = 3u;
 const float kWeightEpsilon = 0.01;
 
+// Normal-offset shadow bias, in meters. Compact mesh geometry rarely
+// triggers self-shadowing acne badly enough to need this on top of the
+// polygon-offset bias already applied during the depth-cast pass -- but
+// terrain's continuous, high-curvature surface, especially at slopes
+// nearly edge-on to the light, is close to a worst case for shadow-map
+// self-occlusion. Only became visible once terrain started casting into
+// near cascades (previously only far, low-texel-density cascades ever
+// held terrain depth, which hid this). Starting values, not measured --
+// worth tuning against how it actually looks.
+const float kBaseNormalBias =
+    0.05; // minimum offset, even facing the light directly
+const float kSlopeNormalBias =
+    0.35; // additional offset at a fully grazing angle
+const float kCascadeBiasGrowth =
+    1.5; // growth per farther cascade layer (coarser texels need more)
+
 float GetCascadeLayer(float depthViewSpace)
 {
     for (int i = 0; i < cascadeCount; i++)
@@ -58,11 +75,18 @@ float GetCascadeLayer(float depthViewSpace)
     return float(cascadeCount);
 }
 
-float SampleShadow(vec3 fragPosWorldSpace, int layer)
+float SampleShadow(vec3 fragPosWorldSpace, vec3 N, int layer)
 {
+    float NdotL = max(dot(N, normalize(lightDir)), 0.0);
+    float slopeScale = clamp(1.0 - NdotL, 0.0, 1.0);
+    float cascadeScale = 1.0 + float(layer) * kCascadeBiasGrowth;
+    float normalBias =
+        (kBaseNormalBias + kSlopeNormalBias * slopeScale) * cascadeScale;
+
+    vec3 biasedPos = fragPosWorldSpace + N * normalBias;
+
     float shadow = 0;
-    vec4 fragPosLightSpace =
-        lightSpaceMatrices[layer] * vec4(fragPosWorldSpace, 1.0);
+    vec4 fragPosLightSpace = lightSpaceMatrices[layer] * vec4(biasedPos, 1.0);
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
 
@@ -94,7 +118,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 N)
     if (layer == -1)
         layer = cascadeCount;
 
-    float shadow = SampleShadow(fragPosWorldSpace, layer);
+    float shadow = SampleShadow(fragPosWorldSpace, N, layer);
     float blendRange = 0.15;
     if (layer < cascadeCount)
     {
@@ -104,7 +128,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 N)
         if (distToEdge < fadeThreshold)
         {
             float transition = 1.0 - (distToEdge / fadeThreshold);
-            float shadowNext = SampleShadow(fragPosWorldSpace, layer + 1);
+            float shadowNext = SampleShadow(fragPosWorldSpace, N, layer + 1);
             shadow = mix(shadow, shadowNext, transition);
         }
     }
@@ -276,11 +300,35 @@ MaterialSample SampleMaterial(uint materialIndex, vec2 tiledUV, vec2 duvdx,
 
 void main()
 {
+    vec2 nodeOrigin = fs_in.nodeOrigin;
+    float nodeWorldSize = fs_in.nodeWorldSize;
+    int nodeLayer = fs_in.nodeLayer;
+
     vec2 nodeUV = (fs_in.worldPos.xy - nodeOrigin) / nodeWorldSize;
     vec4 nodeSample = texture(heightNodeArray, vec3(nodeUV, float(nodeLayer)));
-    float rockWeight = nodeSample.g;
-    float snowWeight = nodeSample.b;
-    float dirtWeight = nodeSample.a;
+
+    ivec2 paintTexel = clamp(ivec2(nodeUV * nodeTexelCount), ivec2(0),
+                             ivec2(int(nodeTexelCount)));
+    uint paintIndex =
+        texelFetch(paintNodeArray, ivec3(paintTexel, nodeLayer), 0).r;
+
+    float rockWeight;
+    float snowWeight;
+    float dirtWeight;
+
+    if (paintIndex == 0u)
+    {
+        rockWeight = nodeSample.g;
+        snowWeight = nodeSample.b;
+        dirtWeight = nodeSample.a;
+    }
+    else
+    {
+        uint paintedMaterial = paintIndex - 1u;
+        rockWeight = (paintedMaterial == kMaterialRock) ? 1.0 : 0.0;
+        dirtWeight = (paintedMaterial == kMaterialDirt) ? 1.0 : 0.0;
+        snowWeight = (paintedMaterial == kMaterialSnow) ? 1.0 : 0.0;
+    }
 
     vec3 Ngeo =
         normalize(texture(normalNodeArray, vec3(nodeUV, float(nodeLayer))).rgb);
@@ -351,7 +399,7 @@ void main()
     vec3 Lo = vec3(0.0);
     if (lightIntensity > 0.0)
     {
-        vec3 L = normalize(-lightDir);
+        vec3 L = normalize(lightDir);
         vec3 H = normalize(V + L);
         float NdotL = max(dot(N, L), 0.0);
 
@@ -382,9 +430,6 @@ void main()
     {
         ambient = albedo * ao * 0.03;
     }
-
-    const float kShadowAmbientDarkening = 0.4;
-    ambient *= mix(1.0, 1.0 - kShadowAmbientDarkening, shadow);
 
     vec3 color = Lo + ambient;
 

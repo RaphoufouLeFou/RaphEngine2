@@ -27,6 +27,13 @@ namespace raphEngine::terrain
         uint16_t max;
     };
 
+    struct MaterialWeights
+    {
+        uint8_t rock = 0;
+        uint8_t snow = 0;
+        uint8_t dirt = 0;
+    };
+
     struct EditTile
     {
         std::array<uint16_t, kEditTileResolution * kEditTileResolution> heights;
@@ -61,15 +68,8 @@ namespace raphEngine::terrain
         Chunk(Chunk&&) noexcept;
         Chunk& operator=(Chunk&&) noexcept;
 
-        /// Memory-maps the baked chunk file at `path` and, if present, loads
-        /// sibling sparse .edits and .paint overlay files. Throws on I/O or
-        /// format failure.
         void Load(const fs::path&);
-
-        /// Writes the sparse .edits and .paint overlays; a chunk with
-        /// neither writes nothing.
         void Save(const fs::path&);
-
         void Unload();
 
         float GetHeightAt(glm::vec2 localPosition) const;
@@ -82,11 +82,12 @@ namespace raphEngine::terrain
         void PaintHeight(glm::ivec2 texel, float worldHeight);
         std::span<const uint16_t> GetHeightDataForUpload() const;
 
-        /// materialIndex 0 means "use automatic height/slope selection"; any
-        /// other value N selects palette layer (N - 1) in the renderer's
-        /// material array, overriding the automatic blend at that texel.
+        glm::vec3 GetMaterialWeightsAt(glm::vec2 localPosition) const;
+
         void PaintTexture(glm::ivec2 texel, uint8_t materialIndex);
         std::span<const uint8_t> GetPaintDataForUpload() const;
+
+        uint8_t SamplePaintIndexAt(glm::vec2 localPosition) const;
 
         glm::ivec2 GetGridCoord() const noexcept
         {
@@ -110,10 +111,6 @@ namespace raphEngine::terrain
             return m_dirty;
         }
 
-        /// Increments on any edit (PaintHeight/PaintTexture) that changes
-        /// GPU-visible data. A renderer can compare this against the value
-        /// it last uploaded to decide whether a resident chunk needs
-        /// re-uploading, without re-uploading every chunk every frame.
         uint64_t GetGpuDataVersion() const noexcept
         {
             return m_gpuDataVersion;
@@ -127,6 +124,7 @@ namespace raphEngine::terrain
 
     private:
         uint16_t SampleRawHeight(glm::ivec2 texel) const;
+        MaterialWeights SampleRawMaterialWeights(glm::ivec2 texel) const;
         uint32_t ComputeTileId(glm::ivec2 texel) const;
 
         float ToWorldHeight(uint16_t rawHeight) const;
@@ -136,6 +134,7 @@ namespace raphEngine::terrain
         std::unique_ptr<MappedFile> m_mappedFile;
 
         std::span<const uint16_t> m_baseHeights;
+        std::span<const MaterialWeights> m_baseMaterialWeights;
         std::vector<std::span<const HeightRange>> m_mipPyramid;
         std::unordered_map<uint32_t, EditTile> m_editTiles;
         std::unordered_map<uint32_t, PaintTile> m_paintTiles;

@@ -1,3 +1,8 @@
+Terrain:
+    Frustom culling
+    Raycast
+    Shadows
+    
 add prefab instancing
 Sound settings
 Light color

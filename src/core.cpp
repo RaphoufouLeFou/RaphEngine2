@@ -112,7 +112,7 @@ namespace raphEngine
         raphEngine::terrain::BuildMapShellFromNoise(noiseParams, sizeInMeters,
                                                     height, outputDirectory);
 
-        terrain::Map::FromFile(outputDirectory);
+        // terrain::Map::FromFile(outputDirectory);
 
         while (1)
         {
@@ -142,7 +142,7 @@ namespace raphEngine
             execute_updates();
             execute_components_updates();
 
-            if (Core::is_editor_mode())
+            if (Core::is_editor_mode() && false)
             {
                 terrain::DrawNoiseEditorWindow(
                     noiseParams, 2000, 800, "assets/chunks/", &chunkGenerator);
@@ -150,7 +150,7 @@ namespace raphEngine
 
             terrain::Map::GetInstace()->UpdateStreaming(
                 component::CameraComponent::get_active_camera()->get_position(),
-                2000.0f, /*maxLoadsPerCall=*/4, chunkGenerator);
+                5000.0f, /*maxLoadsPerCall=*/4, chunkGenerator);
 
             renderer.GetRmlUiRenderer().Update();
             renderer.Render();

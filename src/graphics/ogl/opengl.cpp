@@ -5,6 +5,7 @@
 #include "graphics/camera.hpp"
 #include "graphics/debug.hpp"
 #include "graphics/frustum.hpp"
+#include "graphics/ogl/gl_terrain_renderer.hpp"
 #include "graphics/ogl/gl_texture_loader.hpp"
 #include "graphics/outline_renderer.hpp"
 #include "graphics/skybox.hpp"
@@ -256,6 +257,12 @@ namespace raphEngine::graphics::ogl
         }
         cam->calculate_matrices();
 
+        // Moved up from its original spot (just before the terrain color
+        // render() call, further down) so the shadow pass below can also
+        // reach it -- terrain's shadow cast is gated on a map actually
+        // being loaded, same as its color render already was.
+        terrain::Map* map = terrain::Map::GetInstace();
+
         float max_render_distance = cam->get_farPlane();
 
         glm::vec3 camPos = cam->get_position();
@@ -345,6 +352,20 @@ namespace raphEngine::graphics::ogl
         (void)total_meshes;
 #endif
 
+        // GLTerrainRenderer::RenderShadow draws whatever node selection the
+        // PREVIOUS frame's terrain color render() call already uploaded to
+        // its GPU instance buffer -- terrain's own render() runs further
+        // down this function, after the shadow pass, so this frame's fresh
+        // selection isn't ready yet at this point. Terrain's LOD selection
+        // changes gradually, so a one-frame lag here isn't perceptible.
+        // dynamic_cast mirrors the exact pattern already used below for
+        // GLMeshRenderer -- reaching GL-specific behavior through the
+        // engine-agnostic singleton.
+        GLTerrainRenderer* terrainRenderer = map
+            ? dynamic_cast<GLTerrainRenderer*>(
+                  graphics::TerrainRenderer::getInstance())
+            : nullptr;
+
         if (do_shadows)
         {
             for (size_t layer = 0; layer < cascade_count; layer++)
@@ -368,6 +389,13 @@ namespace raphEngine::graphics::ogl
 
                 for (const Renderable* object : shadow_unbatched)
                     object->render_shadow();
+
+                if (terrainRenderer
+                    && terrainRenderer->CastsShadowOnCascade(layer,
+                                                             cascade_count))
+                {
+                    terrainRenderer->RenderShadow(layer);
+                }
             }
         }
         GLShadowRenderer::cleanup_shadows();
@@ -382,8 +410,6 @@ namespace raphEngine::graphics::ogl
         glViewport(0, 0, viewport_res_x, viewport_res_y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
                 | GL_STENCIL_BUFFER_BIT);
-
-        terrain::Map* map = terrain::Map::GetInstace();
 
         if (map)
         {

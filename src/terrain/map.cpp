@@ -7,6 +7,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include "logger/logger.hpp"
 
 namespace fs = std::filesystem;
 
@@ -17,8 +18,19 @@ namespace raphEngine::terrain
         constexpr uint32_t kOverviewFileMagic = 0x52544F56; // "RTOV"
         constexpr uint32_t kOverviewFileVersion = 1;
 
+        constexpr uint32_t kOverviewMaterialFileMagic = 0x52544F4D; // "RTOM"
+        constexpr uint32_t kOverviewMaterialFileVersion = 1;
+
 #pragma pack(push, 1)
         struct OverviewFileHeader
+        {
+            uint32_t magic;
+            uint32_t version;
+            uint32_t width;
+            uint32_t height;
+        };
+
+        struct OverviewMaterialFileHeader
         {
             uint32_t magic;
             uint32_t version;
@@ -30,6 +42,9 @@ namespace raphEngine::terrain
         static_assert(sizeof(OverviewFileHeader) == 16,
                       "OverviewFileHeader layout must stay byte-exact for "
                       "on-disk compatibility");
+        static_assert(sizeof(OverviewMaterialFileHeader) == 16,
+                      "OverviewMaterialFileHeader layout must stay byte-exact "
+                      "for on-disk compatibility");
     } // namespace
 
     std::unique_ptr<Map> Map::instance = nullptr;
@@ -61,6 +76,11 @@ namespace raphEngine::terrain
     fs::path Map::GetOverviewFilePath(const fs::path& rootDirectory)
     {
         return rootDirectory / "overview.heightmap";
+    }
+
+    fs::path Map::GetOverviewMaterialFilePath(const fs::path& rootDirectory)
+    {
+        return rootDirectory / "overview.materials";
     }
 
     void Map::OverviewHeightMap::Load(const fs::path& path)
@@ -134,8 +154,80 @@ namespace raphEngine::terrain
         return glm::mix(top, bottom, frac.y);
     }
 
+    void Map::OverviewMaterialMap::Load(const fs::path& path)
+    {
+        std::ifstream file(path, std::ios::binary);
+        if (!file)
+        {
+            throw std::runtime_error(
+                "Map::OverviewMaterialMap::Load: failed to open "
+                + path.string());
+        }
+
+        OverviewMaterialFileHeader header{};
+        file.read(reinterpret_cast<char*>(&header), sizeof(header));
+        if (!file || header.magic != kOverviewMaterialFileMagic
+            || header.version != kOverviewMaterialFileVersion)
+        {
+            throw std::runtime_error("Map::OverviewMaterialMap::Load: "
+                                     "malformed overview material file "
+                                     + path.string());
+        }
+
+        width_ = static_cast<int>(header.width);
+        height_ = static_cast<int>(header.height);
+
+        weights_.resize(static_cast<size_t>(width_) * height_);
+        file.read(reinterpret_cast<char*>(weights_.data()),
+                  static_cast<std::streamsize>(weights_.size()
+                                               * sizeof(MaterialWeights)));
+
+        if (!file)
+        {
+            throw std::runtime_error("Map::OverviewMaterialMap::Load: "
+                                     "truncated overview material file "
+                                     + path.string());
+        }
+    }
+
+    glm::vec3 Map::OverviewMaterialMap::SampleNormalizedWeights(
+        glm::vec2 normalizedUV) const
+    {
+        const glm::vec2 clamped =
+            glm::clamp(normalizedUV, glm::vec2(0.0f), glm::vec2(1.0f));
+
+        const glm::vec2 texelCoord = clamped
+                * glm::vec2(static_cast<float>(width_),
+                            static_cast<float>(height_))
+            - glm::vec2(0.5f);
+
+        const glm::vec2 base = glm::floor(texelCoord);
+        const glm::vec2 frac = texelCoord - base;
+
+        const int x0 = std::clamp(static_cast<int>(base.x), 0, width_ - 1);
+        const int x1 = std::clamp(static_cast<int>(base.x) + 1, 0, width_ - 1);
+        const int y0 = std::clamp(static_cast<int>(base.y), 0, height_ - 1);
+        const int y1 = std::clamp(static_cast<int>(base.y) + 1, 0, height_ - 1);
+
+        auto sampleTexel = [&](int x, int y) -> glm::vec3 {
+            const MaterialWeights& w =
+                weights_[static_cast<size_t>(y) * width_ + x];
+            return glm::vec3(w.rock, w.snow, w.dirt) / 255.0f;
+        };
+
+        const glm::vec3 w00 = sampleTexel(x0, y0);
+        const glm::vec3 w10 = sampleTexel(x1, y0);
+        const glm::vec3 w01 = sampleTexel(x0, y1);
+        const glm::vec3 w11 = sampleTexel(x1, y1);
+
+        const glm::vec3 top = glm::mix(w00, w10, frac.x);
+        const glm::vec3 bottom = glm::mix(w01, w11, frac.x);
+        return glm::mix(top, bottom, frac.y);
+    }
+
     void Map::Load(const fs::path& p)
     {
+        Logger::LogDebug("Loading map from ", p);
         ++generation_;
 
         rootDirectory_ = p;
@@ -173,6 +265,7 @@ namespace raphEngine::terrain
         overviewHeightRange_ = { header.overviewHeightMin,
                                  header.overviewHeightMax };
         overviewHeightMap_.Load(GetOverviewFilePath(p));
+        overviewMaterialMap_.Load(GetOverviewMaterialFilePath(p));
 
         chunks_.resize(static_cast<size_t>(gridSize_) * gridSize_);
         for (uint32_t y = 0; y < gridSize_; y++)
@@ -277,6 +370,31 @@ namespace raphEngine::terrain
         return SampleOverviewHeightAt(worldPositionXY);
     }
 
+    glm::vec3 Map::GetMaterialWeightsAt(glm::vec2 worldPositionXY) const
+    {
+        const glm::ivec2 coord = WorldToGridCoord(worldPositionXY);
+        if (IsValidGridCoord(coord) && IsChunkResident(coord))
+        {
+            const glm::vec2 localPos =
+                WorldToChunkLocal(worldPositionXY, coord);
+            return chunks_[GetChunkIndex(coord)].GetMaterialWeightsAt(localPos);
+        }
+
+        return SampleOverviewMaterialAt(worldPositionXY);
+    }
+
+    uint8_t Map::GetPaintIndexAt(glm::vec2 worldPositionXY) const
+    {
+        const glm::ivec2 coord = WorldToGridCoord(worldPositionXY);
+        if (!IsValidGridCoord(coord) || !IsChunkResident(coord))
+        {
+            return 0;
+        }
+
+        const glm::vec2 localPos = WorldToChunkLocal(worldPositionXY, coord);
+        return chunks_[GetChunkIndex(coord)].SamplePaintIndexAt(localPos);
+    }
+
     glm::vec2 Map::GridCoordToWorldOrigin(glm::ivec2 gridCoord) const
     {
         const float halfWorldSize = GetWorldSizeMeters() * 0.5f;
@@ -305,6 +423,14 @@ namespace raphEngine::terrain
             (worldPositionXY + glm::vec2(halfWorldSize)) / GetWorldSizeMeters();
         const float t = overviewHeightMap_.SampleNormalizedHeight(normalized);
         return glm::mix(overviewHeightRange_.x, overviewHeightRange_.y, t);
+    }
+
+    glm::vec3 Map::SampleOverviewMaterialAt(glm::vec2 worldPositionXY) const
+    {
+        const float halfWorldSize = GetWorldSizeMeters() * 0.5f;
+        const glm::vec2 normalized =
+            (worldPositionXY + glm::vec2(halfWorldSize)) / GetWorldSizeMeters();
+        return overviewMaterialMap_.SampleNormalizedWeights(normalized);
     }
 
     Chunk* Map::GetChunkAt(glm::ivec2 gridCoord)

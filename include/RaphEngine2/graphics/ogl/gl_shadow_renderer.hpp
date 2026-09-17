@@ -51,6 +51,11 @@ namespace raphEngine::graphics
         static void
         draw_shadow_instances(const PreparedInstancedShadowBatch& batch);
 
+        static void invalidate_active_shadow_shader()
+        {
+            current_active_shadow_shader_ = nullptr;
+        }
+
         static unsigned int depthMap;
 
     private:

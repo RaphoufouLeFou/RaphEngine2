@@ -2,22 +2,9 @@
 
 layout(location = 0) in vec4 aVertex;
 layout(location = 1) in vec4 aInstanceData;
-
 uniform sampler2DArray heightNodeArray;
-
 uniform float nodeTexelCount;
-
-uniform mat4 view;
-uniform mat4 projection;
-
-out VS_OUT
-{
-    vec3 worldPos;
-    flat vec2 nodeOrigin;
-    flat float nodeWorldSize;
-    flat int nodeLayer;
-}
-vs_out;
+uniform mat4 lightSpaceMatrix;
 
 const float kSkirtOutwardTexels = 0.5;
 const float kSkirtAngleDegrees = 12.5;
@@ -49,12 +36,5 @@ void main()
         nodeOrigin + localPos * nodeWorldSize + skirtDir * outwardOffset;
     float worldHeight = height - (isSkirt ? dropAmount : 0.0);
 
-    vec3 worldPos = vec3(worldXY, worldHeight);
-
-    vs_out.worldPos = worldPos;
-    vs_out.nodeOrigin = nodeOrigin;
-    vs_out.nodeWorldSize = nodeWorldSize;
-    vs_out.nodeLayer = nodeLayer;
-
-    gl_Position = projection * view * vec4(worldPos, 1.0);
+    gl_Position = lightSpaceMatrix * vec4(worldXY, worldHeight, 1.0);
 }

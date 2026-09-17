@@ -1,6 +1,7 @@
 #include <RaphEngine2/RaphEngine2.hpp>
 #include <RaphEngine2/terrain/heightmap_importer.hpp>
 #include <RaphEngine2/terrain/chunk_format.hpp>
+#include <RaphEngine2/terrain/material_generator.hpp>
 
 #include <stdexcept>
 
@@ -41,9 +42,32 @@ namespace raphEngine::terrain
 
         try
         {
+            // Same fixed seed BuildMapFromHeightmap/ImageChunkGenerator use
+            // for single-image import -- there's no natural noise seed to
+            // derive one from here, unlike the procedural-noise path.
+            constexpr uint32_t kDefaultImageMaterialSeed = 918273645u;
+            const MaterialGenerator materialGenerator(kDefaultImageMaterialSeed,
+                                                      worldHeightRange);
+
+            std::vector<float> heightsMeters(
+                static_cast<size_t>(kChunkResolution) * kChunkResolution);
+            for (size_t i = 0; i < heightsMeters.size(); ++i)
+            {
+                heightsMeters[i] =
+                    glm::mix(worldHeightRange.x, worldHeightRange.y,
+                             static_cast<float>(pixels[i]) / 65535.0f);
+            }
+
+            const glm::vec2 worldOrigin(
+                static_cast<float>(gridCoord.x) * (kChunkResolution - 1),
+                static_cast<float>(gridCoord.y) * (kChunkResolution - 1));
+            const std::vector<MaterialWeights> materialWeights =
+                materialGenerator.ComputeChunkWeights(
+                    heightsMeters, kChunkResolution, worldOrigin);
+
             detail::WriteChunkFile(outputChunkPath, gridCoord,
                                    ChunkSource::Imported, worldHeightRange,
-                                   pixels);
+                                   pixels, materialWeights.data());
         }
         catch (...)
         {

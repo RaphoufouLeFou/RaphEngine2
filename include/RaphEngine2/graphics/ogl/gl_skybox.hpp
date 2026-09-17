@@ -82,6 +82,6 @@ namespace raphEngine::graphics::ogl
         float exposure_ = 0.5f;
         float ambient_intensity_ = 1.f;
         float reflection_exposure_ = exposure_ * 2;
-        float ibl_radiance_clamp_ = 10.0f;
+        float ibl_radiance_clamp_ = 5.0f;
     };
 } // namespace raphEngine::graphics::ogl

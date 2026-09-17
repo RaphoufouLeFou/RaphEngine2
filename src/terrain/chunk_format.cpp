@@ -136,7 +136,8 @@ namespace raphEngine::terrain::detail
 
     void WriteChunkFile(const fs::path& outputPath, glm::ivec2 gridCoord,
                         ChunkSource source, glm::vec2 worldHeightRange,
-                        const uint16_t* heights)
+                        const uint16_t* heights,
+                        const MaterialWeights* materialWeights)
     {
         const std::vector<std::vector<HeightRange>> mipLevels =
             BuildMipPyramid(heights, kChunkResolution);
@@ -170,6 +171,10 @@ namespace raphEngine::terrain::detail
                           static_cast<std::streamsize>(level.size()
                                                        * sizeof(HeightRange)));
         }
+
+        outFile.write(reinterpret_cast<const char*>(materialWeights),
+                      static_cast<std::streamsize>(kChunkResolution)
+                          * kChunkResolution * sizeof(MaterialWeights));
 
         if (!outFile)
         {

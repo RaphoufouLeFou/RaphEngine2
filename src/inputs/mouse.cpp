@@ -6,7 +6,7 @@ namespace raphEngine::inputs
 {
     bool Mouse::IsMouseButtonPressed(MouseButton button)
     {
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             if (!graphics::GraphicApi::viewport_focused)
                 return false;
@@ -23,8 +23,13 @@ namespace raphEngine::inputs
 
     double Mouse::GetMouseScroll()
     {
-        // TODO: get the mouse scroll
-        return 0;
+        if (Core::is_editor_mode_on())
+        {
+            if (!graphics::GraphicApi::viewport_focused)
+                return 0.0;
+        }
+
+        return graphics::GraphicApi::get_api()->GetMouseScroll();
     }
 
     void Mouse::SetMousePosition(double x, double y)

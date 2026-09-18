@@ -299,10 +299,10 @@ namespace raphEngine
         const auto& tris = collider.get_collider_mesh();
 
         return std::transform_reduce(
-#if defined(__GLIBCXX__) || defined(_MSC_VER)
-            std::execution::par, 
-#endif
-	    tris.begin(), tris.end(), RayHit{},
+#    if defined(__GLIBCXX__) || defined(_MSC_VER)
+            std::execution::par,
+#    endif
+            tris.begin(), tris.end(), RayHit{},
             [](const RayHit& a, const RayHit& b) { return a.t < b.t ? a : b; },
             [&](const Utils::Triangle& tri) -> RayHit {
                 glm::vec3 hitPoint;
@@ -585,7 +585,7 @@ namespace raphEngine
             return false;
 
         glm::vec2 screenPos = inputs::Mouse::GetMousePos();
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             screenPos.x -= graphics::GraphicApi::viewport_pos_x;
             screenPos.y -= graphics::GraphicApi::viewport_pos_y;

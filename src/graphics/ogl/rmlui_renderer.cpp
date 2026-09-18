@@ -111,7 +111,7 @@ namespace raphEngine::graphics::ogl
 
     bool RmlUiRenderer::IsInputEnabled() const
     {
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
             return GraphicApi::viewport_focused;
         else
             return true;

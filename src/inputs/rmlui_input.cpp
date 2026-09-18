@@ -29,7 +29,7 @@ namespace raphEngine::inputs
         if (!r || !r->GetContext() || !r->IsInputEnabled())
             return;
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             x -= graphics::GraphicApi::viewport_pos_x;
             y -= graphics::GraphicApi::viewport_pos_y;

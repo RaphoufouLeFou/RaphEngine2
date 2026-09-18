@@ -21,6 +21,7 @@ namespace raphEngine::graphics::ogl
         void SetCursorPos(double x, double y) const override;
         bool GetMouseButtonPressed(int button) const override;
         void SetMouseVisibility(bool visible) const override;
+        double GetMouseScroll() const override;
         bool IsWindowFocused() const override;
         void RequestQuit() const override;
         void ShowStartupScreen() const override;
@@ -29,6 +30,8 @@ namespace raphEngine::graphics::ogl
         {
             return rmlui_renderer_;
         }
+
+        void ResetMouseScroll();
 
         void ResizeViewportFramebuffer(int width, int height) override;
         void* GetViewportTexture() const override
@@ -40,6 +43,9 @@ namespace raphEngine::graphics::ogl
 
     private:
         void CreateViewportFramebuffer(int width, int height);
+
+        static void ScrollCallback(GLFWwindow* window, double xoffset,
+                                   double yoffset);
 
         // Multisampled target we actually render into
         unsigned int viewport_fbo_ms_ = 0;

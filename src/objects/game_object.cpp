@@ -25,7 +25,8 @@
 
 namespace raphEngine::objects
 {
-    REFLECT_ROOT_IMPL(GameObject, name_, id_, uuid_, is_active, raycast_layer_)
+    REFLECT_ROOT_IMPL(GameObject, name_, id_, uuid_, is_active, raycast_layer_,
+                      is_scene_persistant)
 
     void GameObject::greed()
     {

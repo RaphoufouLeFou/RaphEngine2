@@ -25,6 +25,7 @@ namespace raphEngine::graphics
 
         virtual glm::vec2 GetCursorPos() const = 0;
         virtual void SetCursorPos(double x, double y) const = 0;
+        virtual double GetMouseScroll() const = 0;
         virtual bool GetMouseButtonPressed(int button) const = 0;
         virtual void SetMouseVisibility(bool visible) const = 0;
         virtual bool IsWindowFocused() const = 0;

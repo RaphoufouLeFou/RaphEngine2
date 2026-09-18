@@ -26,11 +26,29 @@ namespace raphEngine
 {
     graphics::ogl::OpenGL renderer{};
     static double current_fps_ = 60.0;
-    bool Core::editor_mode_ = false;
+    EditorMode Core::editor_mode_ = EditorMode::RUNNING;
 
-    bool Core::is_editor_mode()
+    bool Core::is_full_editor()
     {
-        return editor_mode_;
+        return editor_mode_ == EditorMode::EDITOR;
+    }
+    bool Core::is_full_running()
+    {
+        return editor_mode_ == EditorMode::RUNNING;
+    }
+    bool Core::is_editor_mode_on()
+    {
+        return editor_mode_ == EditorMode::EDITOR
+            || editor_mode_ == EditorMode::EDITOR_RUNNING;
+    }
+    bool Core::is_running_mode_on()
+    {
+        return editor_mode_ == EditorMode::RUNNING
+            || editor_mode_ == EditorMode::EDITOR_RUNNING;
+    }
+    bool Core::is_editor_running_mode()
+    {
+        return editor_mode_ == EditorMode::EDITOR_RUNNING;
     }
 
     graphics::GraphicApi* Core::getRenderer()
@@ -43,7 +61,7 @@ namespace raphEngine
         return current_fps_;
     }
 
-    int Core::Launch(const std::string& project_file, bool editor_mode)
+    int Core::Launch(const std::string& project_file, EditorMode editor_mode)
     {
         editor_mode_ = editor_mode;
         if (!Project::parse_project_file(project_file))
@@ -54,7 +72,7 @@ namespace raphEngine
         Core::Init(Project::name);
         SceneManager::load_scene(Project::main_scene_path);
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             Editor::Init();
         }
@@ -74,7 +92,7 @@ namespace raphEngine
         Settings::Register<GraphicsSettings>();
         Settings::Load("settings.json");
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             IMGUI_CHECKVERSION();
             ImGui::CreateContext();
@@ -119,7 +137,7 @@ namespace raphEngine
             double start = Time::GetTime();
             renderer.StartFrame();
 
-            if (Core::is_editor_mode())
+            if (Core::is_editor_mode_on())
             {
                 Editor::Update();
             }
@@ -151,7 +169,7 @@ namespace raphEngine
             execute_updates();
             execute_components_updates();
 
-            if (Core::is_editor_mode() && false)
+            if (Core::is_editor_mode_on() && false)
             {
                 terrain::DrawNoiseEditorWindow(
                     noiseParams, 2000, 800, "assets/chunks/", &chunkGenerator);
@@ -164,7 +182,7 @@ namespace raphEngine
             renderer.GetRmlUiRenderer().Update();
             renderer.Render();
 
-            if (Core::is_editor_mode())
+            if (Core::is_editor_mode_on())
             {
                 ImGui::Render();
             }
@@ -182,7 +200,7 @@ namespace raphEngine
         Settings::Save("settings.json");
         Logger::LogDebug("exiting now!");
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             ImGui::DestroyContext();
         }
@@ -196,7 +214,7 @@ namespace raphEngine
             Camera::get_active_camera()->CamUpdate();
         }
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             editor::Layout::Update();
             ImGui::Begin("Inspector");
@@ -206,18 +224,18 @@ namespace raphEngine
         {
             for (auto& go : SceneManager::get_active_scene()->get_objects())
             {
-                if (!Core::is_editor_mode() && go->is_active)
+                if (Core::is_running_mode_on() && go->is_active)
                     go->pre_update();
 
-                if (Core::is_editor_mode())
+                if (Core::is_editor_mode_on())
                 {
                     go->ImGui_update();
                 }
 
-                if (!Core::is_editor_mode() && go->is_active)
+                if (Core::is_running_mode_on() && go->is_active)
                     go->Update();
             }
-            if (Core::is_editor_mode())
+            if (Core::is_editor_mode_on())
             {
                 ImGui::End();
             }

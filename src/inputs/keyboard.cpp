@@ -6,7 +6,7 @@ namespace raphEngine::inputs
 {
     bool Key::IsKeyPressed(KeyCode key)
     {
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             if (!graphics::GraphicApi::viewport_focused)
                 return false;

@@ -1,6 +1,7 @@
 #include <RaphEngine2/editor/editor.hpp>
 #include <memory>
 
+#include "core.hpp"
 #include "editor/editor_camera.hpp"
 #include "editor/prefab_tab.hpp"
 #include "graphics/graphic_api.hpp"
@@ -13,7 +14,10 @@ namespace raphEngine
     std::unique_ptr<EditorCamera> editor_camera;
     void Editor::Init()
     {
-        editor_camera = std::make_unique<EditorCamera>();
+        if (Core::is_full_editor())
+        {
+            editor_camera = std::make_unique<EditorCamera>();
+        }
         editor::PrefabTab::Init();
     }
 

@@ -45,7 +45,7 @@ namespace raphEngine::graphics::ogl
         if (RmlUiRenderer::instance_)
             RmlUiRenderer::instance_->Resize(width, height);
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             GraphicApi::window_res_x = width;
             GraphicApi::window_res_y = height;
@@ -53,6 +53,9 @@ namespace raphEngine::graphics::ogl
     }
 
     GLFWwindow* window;
+
+    double scroll_offset = 0.0;
+    GLFWscrollfun previous_scroll_callback = nullptr;
 
     void SetHints()
     {
@@ -173,6 +176,9 @@ namespace raphEngine::graphics::ogl
             exit(EXIT_FAILURE);
         }
 
+        previous_scroll_callback =
+            glfwSetScrollCallback(window, ScrollCallback);
+
         int x, y;
         glfwGetWindowSize(window, &x, &y);
         viewport_res_x = x;
@@ -209,6 +215,7 @@ namespace raphEngine::graphics::ogl
         glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
         // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+        ResetMouseScroll();
         glfwPollEvents();
         // glfwSetCursorPos(window, ResX / 2, ResY / 2);
 
@@ -228,7 +235,7 @@ namespace raphEngine::graphics::ogl
 
         GLShadowRenderer::generate_shadows_buffer();
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             ImGui_ImplGlfw_InitForOpenGL(window, true);
             ImGui_ImplOpenGL3_Init();
@@ -240,7 +247,7 @@ namespace raphEngine::graphics::ogl
 
     void OpenGL::StartFrame()
     {
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -257,10 +264,6 @@ namespace raphEngine::graphics::ogl
         }
         cam->calculate_matrices();
 
-        // Moved up from its original spot (just before the terrain color
-        // render() call, further down) so the shadow pass below can also
-        // reach it -- terrain's shadow cast is gated on a map actually
-        // being loaded, same as its color render already was.
         terrain::Map* map = terrain::Map::GetInstace();
 
         float max_render_distance = cam->get_farPlane();
@@ -403,7 +406,7 @@ namespace raphEngine::graphics::ogl
         dynamic_cast<GLMeshRenderer*>(GLMeshRenderer::getInstance())
             ->invalidate_active_shader();
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             glBindFramebuffer(GL_FRAMEBUFFER, viewport_fbo_ms_);
         }
@@ -438,7 +441,7 @@ namespace raphEngine::graphics::ogl
 
         rmlui_renderer_.Render();
 
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_ms_);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, viewport_fbo_resolve_);
@@ -451,7 +454,7 @@ namespace raphEngine::graphics::ogl
 
     bool OpenGL::Refresh()
     {
-        if (Core::is_editor_mode())
+        if (Core::is_editor_mode_on())
         {
             glViewport(0, 0, viewport_res_x, viewport_res_y);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -469,7 +472,7 @@ namespace raphEngine::graphics::ogl
         if (!stay_open)
         {
             rmlui_renderer_.Shutdown();
-            if (Core::is_editor_mode())
+            if (Core::is_editor_mode_on())
             {
                 ImGui_ImplOpenGL3_Shutdown();
                 ImGui_ImplGlfw_Shutdown();
@@ -578,6 +581,25 @@ namespace raphEngine::graphics::ogl
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         else
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    }
+
+    void OpenGL::ScrollCallback(GLFWwindow* window, double xoffset,
+                                double yoffset)
+    {
+        scroll_offset += yoffset;
+
+        if (previous_scroll_callback)
+            previous_scroll_callback(window, xoffset, yoffset);
+    }
+
+    double OpenGL::GetMouseScroll() const
+    {
+        return scroll_offset;
+    }
+
+    void OpenGL::ResetMouseScroll()
+    {
+        scroll_offset = 0.0;
     }
 
     bool OpenGL::IsWindowFocused() const

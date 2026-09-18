@@ -69,8 +69,25 @@ namespace raphEngine::graphics::ogl
 
     GLTerrainRenderer::GLTerrainRenderer()
     {
+        GLint maxArrayLayers = 0;
+        glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxArrayLayers);
+        if (static_cast<GLint>(kMaxActiveNodes) > maxArrayLayers)
+        {
+            Logger::LogError(
+                "GLTerrainRenderer: kMaxActiveNodes (", kMaxActiveNodes,
+                ") exceeds this GPU's GL_MAX_ARRAY_TEXTURE_LAYERS (",
+                maxArrayLayers, ")");
+        }
+        else
+        {
+            Logger::LogDebug(
+                "GLTerrainRenderer: GL_MAX_ARRAY_TEXTURE_LAYERS = ",
+                maxArrayLayers);
+        }
+
         CreateNodeMesh();
         CreateInstanceBuffer();
+        CreateEdgeFlagsBuffer();
         CreateHeightNodeArray();
         CreateNormalNodeArray();
         CreatePaintNodeArray();
@@ -96,6 +113,7 @@ namespace raphEngine::graphics::ogl
         glDeleteTextures(1, &normalNodeArray_);
         glDeleteTextures(1, &heightNodeArray_);
         glDeleteBuffers(1, &nodeInstanceBuffer_);
+        glDeleteBuffers(1, &nodeEdgeFlagsBuffer_);
         glDeleteBuffers(1, &nodeEbo_);
         glDeleteVertexArrays(1, &nodeVao_);
         glDeleteBuffers(1, &nodeVertexBuffer_);
@@ -207,6 +225,22 @@ namespace raphEngine::graphics::ogl
         glEnableVertexArrayAttrib(nodeVao_, 1);
         glVertexArrayAttribFormat(nodeVao_, 1, 4, GL_FLOAT, GL_FALSE, 0);
         glVertexArrayAttribBinding(nodeVao_, 1, 1);
+    }
+
+    void GLTerrainRenderer::CreateEdgeFlagsBuffer()
+    {
+        glCreateBuffers(1, &nodeEdgeFlagsBuffer_);
+        glNamedBufferStorage(
+            nodeEdgeFlagsBuffer_,
+            static_cast<GLsizeiptr>(kMaxActiveNodes * sizeof(glm::vec4)),
+            nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+        glVertexArrayVertexBuffer(nodeVao_, 2, nodeEdgeFlagsBuffer_, 0,
+                                  sizeof(glm::vec4));
+        glVertexArrayBindingDivisor(nodeVao_, 2, 1);
+        glEnableVertexArrayAttrib(nodeVao_, 2);
+        glVertexArrayAttribFormat(nodeVao_, 2, 4, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(nodeVao_, 2, 2);
     }
 
     void GLTerrainRenderer::CreateHeightNodeArray()
@@ -1025,23 +1059,51 @@ namespace raphEngine::graphics::ogl
         shader->setValue("paintNodeArray", 8);
 
         const GLboolean cullWasEnabled = glIsEnabled(GL_CULL_FACE);
-        glDisable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
 
         if (currentInstanceCount_ > 0)
         {
+            constexpr float kWorldEdgeEpsilon = 0.5f;
+
             std::vector<glm::vec4> instanceData;
+            std::vector<glm::vec4> edgeFlagsData;
             instanceData.reserve(toDraw.size());
+            edgeFlagsData.reserve(toDraw.size());
+
             for (const DrawEntry& entry : toDraw)
             {
                 instanceData.emplace_back(
                     entry.node->origin.x, entry.node->origin.y,
                     entry.node->size, static_cast<float>(entry.layer));
+
+                const float leftEdge =
+                    (entry.node->origin.x <= worldMin.x + kWorldEdgeEpsilon)
+                    ? 1.0f
+                    : 0.0f;
+                const float rightEdge = (entry.node->origin.x + entry.node->size
+                                         >= worldMax.x - kWorldEdgeEpsilon)
+                    ? 1.0f
+                    : 0.0f;
+                const float bottomEdge =
+                    (entry.node->origin.y <= worldMin.y + kWorldEdgeEpsilon)
+                    ? 1.0f
+                    : 0.0f;
+                const float topEdge = (entry.node->origin.y + entry.node->size
+                                       >= worldMax.y - kWorldEdgeEpsilon)
+                    ? 1.0f
+                    : 0.0f;
+                edgeFlagsData.emplace_back(leftEdge, rightEdge, bottomEdge,
+                                           topEdge);
             }
 
             glNamedBufferSubData(nodeInstanceBuffer_, 0,
                                  static_cast<GLsizeiptr>(instanceData.size()
                                                          * sizeof(glm::vec4)),
                                  instanceData.data());
+            glNamedBufferSubData(nodeEdgeFlagsBuffer_, 0,
+                                 static_cast<GLsizeiptr>(edgeFlagsData.size()
+                                                         * sizeof(glm::vec4)),
+                                 edgeFlagsData.data());
 
             glBindVertexArray(nodeVao_);
             glDrawElementsInstanced(

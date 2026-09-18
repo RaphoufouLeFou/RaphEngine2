@@ -91,6 +91,7 @@ namespace raphEngine::graphics::ogl
 
         void CreateNodeMesh();
         void CreateInstanceBuffer();
+        void CreateEdgeFlagsBuffer();
         void CreateHeightNodeArray();
         void CreateNormalNodeArray();
         void CreatePaintNodeArray();
@@ -119,7 +120,7 @@ namespace raphEngine::graphics::ogl
         static constexpr float kLeafWorldSize = 64.0f;
         static constexpr int kMaxLevel = 8;
         static constexpr float kSplitDistanceFactor = 3.5f;
-        static constexpr uint32_t kMaxActiveNodes = 2048 * 4;
+        static constexpr uint32_t kMaxActiveNodes = 2048;
 
         static constexpr float kFixedNormalSampleDistance = 2.0f;
 
@@ -133,6 +134,7 @@ namespace raphEngine::graphics::ogl
         uint32_t nodeIndexCount_ = 0;
 
         unsigned int nodeInstanceBuffer_ = 0;
+        unsigned int nodeEdgeFlagsBuffer_ = 0;
         size_t currentInstanceCount_ = 0;
 
         float currentSkirtDropMeters_ = 0.0f;

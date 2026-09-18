@@ -28,13 +28,13 @@ As of today, the engine handle :
 - Object outline
 - Prefabs
 - Sound system
+- Handle big terrains
 
 And more little things.
 
 ## In the TODO list (Not in order)
 
 - Spot and point lights
-- Handle big terrains
 - Vegetation
 - Smooth lod transitions
 - Particle system

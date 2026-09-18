@@ -252,7 +252,7 @@ namespace raphEngine::graphics::ogl
         Camera* cam = Camera::get_active_camera();
         if (!cam)
         {
-            Logger::LogError("Cant render with no active camera!");
+            // Logger::LogError("Cant render with no active camera!");
             return;
         }
         cam->calculate_matrices();

@@ -24,6 +24,7 @@ namespace raphEngine
         void SetElementVisible(const std::string& element_id, bool visible);
         void OnClick(const std::string& element_id,
                      std::function<void()> callback);
+        void SetInnerRML(const std::string& element_id, const std::string& rml);
 
     private:
         friend class UI;

@@ -125,9 +125,18 @@ namespace raphEngine
             }
 
             Camera* c = component::CameraComponent::get_active_camera();
-            Audio::SetListenerPosition(c->get_position());
-            Audio::SetListenerDirection(
-                Utils::GetForwardFromRotation(c->get_rotation()));
+            if (c)
+            {
+                Audio::SetListenerPosition(c->get_position());
+                Audio::SetListenerDirection(
+                    Utils::GetForwardFromRotation(c->get_rotation()));
+            }
+            else
+            {
+                Audio::SetListenerPosition(glm::vec3(0));
+                Audio::SetListenerDirection(
+                    Utils::GetForwardFromRotation(glm::vec3(0)));
+            }
 
             fps_avr += 1.0f / Time::deltaTime;
             avr_count++;

@@ -90,4 +90,12 @@ namespace raphEngine
         el->AddEventListener("click",
                              new FunctionEventListener(std::move(callback)));
     }
+
+    void UIDocument::SetInnerRML(const std::string& element_id,
+                                 const std::string& rml)
+    {
+        auto* doc = static_cast<Rml::ElementDocument*>(native_document_);
+        if (auto* element = doc->GetElementById(element_id))
+            element->SetInnerRML(rml);
+    }
 } // namespace raphEngine

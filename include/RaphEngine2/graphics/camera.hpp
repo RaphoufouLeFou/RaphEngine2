@@ -11,6 +11,7 @@ namespace raphEngine
     public:
         Camera()
         {}
+        ~Camera();
 
         void calculate_matrices();
         virtual const glm::vec3& get_position() const = 0;

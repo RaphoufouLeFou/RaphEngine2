@@ -18,6 +18,14 @@ namespace raphEngine
 
     Camera* Camera::active_camera = nullptr;
 
+    Camera::~Camera()
+    {
+        if (active_camera == this)
+        {
+            active_camera = nullptr;
+        }
+    }
+
     void Camera::calculate_matrices()
     {
         projection_matrix_ = glm::perspective(

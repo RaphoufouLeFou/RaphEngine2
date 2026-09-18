@@ -54,7 +54,7 @@ if(WIN32)
 elseif(ANDROID)
     target_compile_options(RaphEngine2 PRIVATE -pedantic -fPIC -O3)
 else()
-    target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -fPIC -mavx2 -mfma -O3)
+    target_compile_options(RaphEngine2 PRIVATE -Wall -Wextra -Werror -pedantic -fPIC -mavx2 -mfma -O3 -g)
 endif()
 
 

@@ -2,12 +2,12 @@ Terrain:
     Frustom culling
     Raycast
     Remove shadows on skirts
+    smooth errotion output on low working res
     Fix outer skirt
     Fix Shadow color
     Invert z for depth buffer
     Reducde light far plane
     
-fix scene swaping crash
 add prefab instancing
 Sound settings
 Light color

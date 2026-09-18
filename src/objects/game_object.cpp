@@ -248,6 +248,11 @@ namespace raphEngine::objects
         return uuid_;
     }
 
+    void GameObject::set_uuid(const std::string& uuid)
+    {
+        uuid_ = uuid;
+    }
+
     objects::Transform& GameObject::get_transform()
     {
         return transform_;

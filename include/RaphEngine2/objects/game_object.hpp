@@ -51,6 +51,7 @@ namespace raphEngine::objects
         const std::string& get_name() const;
         objects::Transform& get_transform();
         const std::string& get_uuid();
+        void set_uuid(const std::string&);
         bool is_persistant() const;
 
         template <Comp T, class... Args>

@@ -111,6 +111,7 @@ namespace raphEngine::editor
         auto type_name = j.at("__object_type").get<std::string>();
         auto obj = reflection::Factory<objects::GameObject>::create(type_name);
         obj->fromJson(j);
+        obj->set_uuid(Utils::get_uuid());
 
         if (j.contains("parent_uuid"))
         {
@@ -134,6 +135,8 @@ namespace raphEngine::editor
         nlohmann::json j = object->toJson();
         j["__object_type"] =
             reflection::Factory<objects::GameObject>::nameOf(*object);
+
+        j["uuid_"] = "";
 
         const auto& name = object->get_name();
         fs::path p = prefab_folder / (name + ".prefab");

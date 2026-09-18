@@ -105,6 +105,7 @@ namespace raphEngine::objects
             ImGui::InputText("Name", &name_);
             ImGui::InputInt("RayCast layer", &raycast_layer_);
             ImGui::Checkbox("Has started", &has_started);
+            ImGui::Checkbox("Is Scene Persistant", &is_scene_persistant);
             int id_const = id_;
             ImGui::InputInt("Id", &id_const);
             ImGui::LabelText("UUID", "%s", uuid_.c_str());
@@ -198,6 +199,11 @@ namespace raphEngine::objects
             }
         }
         return nullptr;
+    }
+
+    bool GameObject::is_persistant() const
+    {
+        return is_scene_persistant;
     }
 
     void GameObject::remove_component(size_t index)

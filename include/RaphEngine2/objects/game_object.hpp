@@ -51,6 +51,7 @@ namespace raphEngine::objects
         const std::string& get_name() const;
         objects::Transform& get_transform();
         const std::string& get_uuid();
+        bool is_persistant() const;
 
         template <Comp T, class... Args>
         T* add_component(Args&&... args);
@@ -94,6 +95,7 @@ namespace raphEngine::objects
     protected:
         friend raphEngine::Core;
 
+        bool is_scene_persistant = false;
         bool is_active = true;
         std::string name_ = "UnNamed";
         objects::Transform transform_;

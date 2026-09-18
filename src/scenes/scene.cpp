@@ -1,7 +1,9 @@
 #include <RaphEngine2/scenes/scene.hpp>
 #include <cstring>
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <filesystem>
+#include <vector>
 #include "graphics/skybox.hpp"
 #include "imgui.h"
 #include "logger/logger.hpp"
@@ -9,6 +11,8 @@
 
 namespace raphEngine
 {
+
+    static std::vector<std::unique_ptr<objects::GameObject>> persistant_objects;
 
     bool Scene::remove_gameobject(objects::GameObject* obj)
     {
@@ -35,6 +39,18 @@ namespace raphEngine
         return objects_;
     }
 
+    bool is_in_persistant_list(const std::string& uuid)
+    {
+        for (const auto& obj : persistant_objects)
+        {
+            if (Utils::compare_uuid(obj->get_uuid(), uuid))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     Scene::Scene(fs::path path)
     {
         // objects::Transform::root_childs.clear();
@@ -48,11 +64,25 @@ namespace raphEngine
         {
             valid_ = parse_file(path);
         }
+
+        for (auto& obj : persistant_objects)
+        {
+            objects_.push_back(std::move(obj));
+        }
+
+        persistant_objects.clear();
     }
 
     Scene::~Scene()
     {
         destructing_ = true;
+        for (auto& go : objects_)
+        {
+            if (go->is_persistant())
+            {
+                persistant_objects.push_back(std::move(go));
+            }
+        }
         // objects::Transform::root_childs.clear();
     }
 
@@ -111,8 +141,15 @@ namespace raphEngine
             {
                 try
                 {
+                    auto obj_uuid = objJson.at("uuid_").get<std::string>();
+                    if (is_in_persistant_list(obj_uuid))
+                    {
+                        continue;
+                    }
+
                     auto type_name =
                         objJson.at("__object_type").get<std::string>();
+
                     auto obj = reflection::Factory<objects::GameObject>::create(
                         type_name);
                     if (!obj)

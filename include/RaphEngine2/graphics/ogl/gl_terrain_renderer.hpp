@@ -35,19 +35,6 @@ namespace raphEngine::graphics::ogl
         void render(const terrain::Map& map) override;
 
         void RenderShadow(size_t cascadeLayer) const;
-
-        // Terrain self-shadowing (a ridge or slope blocking light onto
-        // nearby ground) is a real effect at ANY camera distance -- a
-        // near cascade needs terrain depth just as much as a far one
-        // does, because cascade selection for RECEIVING a shadow is
-        // based on camera-to-fragment view depth, not on how far the
-        // shadowing terrain feature is from the light. An earlier
-        // version restricted casting to only the farthest cascades on
-        // the (false) assumption that terrain shadows only matter far
-        // from the camera; that produced shadows visibly vanishing the
-        // moment the camera got close to a slope, since the nearby
-        // ground then sampled a near cascade terrain had never written
-        // depth into. Now always true when shadows are enabled at all.
         bool CastsShadowOnCascade(size_t cascadeLayer,
                                   size_t totalCascadeLayers) const;
 
@@ -131,10 +118,14 @@ namespace raphEngine::graphics::ogl
         static constexpr uint32_t kNodeResolution = 32;
         static constexpr float kLeafWorldSize = 64.0f;
         static constexpr int kMaxLevel = 8;
-        static constexpr float kSplitDistanceFactor = 5.5f;
-        static constexpr uint32_t kMaxActiveNodes = 2048;
+        static constexpr float kSplitDistanceFactor = 3.5f;
+        static constexpr uint32_t kMaxActiveNodes = 2048 * 4;
 
         static constexpr float kFixedNormalSampleDistance = 2.0f;
+
+        static constexpr float kSkirtDropFraction = 0.0005f;
+        static constexpr float kMinSkirtDropMeters = 0.02f;
+        static constexpr float kSkirtAngleDegrees = 70.0f;
 
         unsigned int nodeVertexBuffer_ = 0;
         unsigned int nodeVao_ = 0;
@@ -143,6 +134,11 @@ namespace raphEngine::graphics::ogl
 
         unsigned int nodeInstanceBuffer_ = 0;
         size_t currentInstanceCount_ = 0;
+
+        float currentSkirtDropMeters_ = 0.0f;
+        float currentSkirtOutwardMeters_ = 0.0f;
+
+        static constexpr uint32_t kTerrainShadowCascadeCount = 3;
 
         unsigned int heightNodeArray_ = 0;
         unsigned int normalNodeArray_ = 0;

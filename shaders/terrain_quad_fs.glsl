@@ -17,15 +17,20 @@ uniform usampler2DArray paintNodeArray;
 uniform sampler2DArray materialGaussianAlbedoArray;
 uniform sampler2DArray materialAlbedoLutArray;
 uniform sampler2DArray materialNormalArray;
-uniform sampler2DArray materialOrmArray; // R = AO, G = roughness, B = metallic
+uniform sampler2DArray materialOrmArray;
 uniform float materialTileSize[4];
 
 uniform float nodeTexelCount;
 
 uniform sampler2DArrayShadow shadowMap;
 uniform samplerCube irradianceMap;
+uniform samplerCube skyboxEnvironmentMap;
 uniform bool haveSkybox;
 uniform float ambientIntensity;
+uniform float skyboxExposure;
+
+uniform float fogDensity;
+uniform vec3 fogFallbackColor;
 
 uniform vec3 viewPos;
 uniform vec3 lightDir;
@@ -49,21 +54,9 @@ const uint kMaterialSnow = 2u;
 const uint kMaterialDirt = 3u;
 const float kWeightEpsilon = 0.01;
 
-// Normal-offset shadow bias, in meters. Compact mesh geometry rarely
-// triggers self-shadowing acne badly enough to need this on top of the
-// polygon-offset bias already applied during the depth-cast pass -- but
-// terrain's continuous, high-curvature surface, especially at slopes
-// nearly edge-on to the light, is close to a worst case for shadow-map
-// self-occlusion. Only became visible once terrain started casting into
-// near cascades (previously only far, low-texel-density cascades ever
-// held terrain depth, which hid this). Starting values, not measured --
-// worth tuning against how it actually looks.
-const float kBaseNormalBias =
-    0.05; // minimum offset, even facing the light directly
-const float kSlopeNormalBias =
-    0.35; // additional offset at a fully grazing angle
-const float kCascadeBiasGrowth =
-    1.5; // growth per farther cascade layer (coarser texels need more)
+const float kBaseNormalBias = 0.05;
+const float kSlopeNormalBias = 0.35;
+const float kCascadeBiasGrowth = 1.5;
 
 float GetCascadeLayer(float depthViewSpace)
 {
@@ -298,6 +291,17 @@ MaterialSample SampleMaterial(uint materialIndex, vec2 tiledUV, vec2 duvdx,
     return result;
 }
 
+vec3 SampleFogColor(vec3 viewDir)
+{
+    if (haveSkybox)
+    {
+        vec3 hdrColor = texture(skyboxEnvironmentMap, viewDir).rgb;
+        vec3 mapped = vec3(1.0) - exp(-hdrColor * skyboxExposure);
+        return pow(mapped, vec3(1.0 / 2.2));
+    }
+    return fogFallbackColor;
+}
+
 void main()
 {
     vec2 nodeOrigin = fs_in.nodeOrigin;
@@ -431,10 +435,19 @@ void main()
         ambient = albedo * ao * 0.03;
     }
 
+    const float kShadowAmbientDarkening = 0.4;
+    ambient *= mix(1.0, 1.0 - kShadowAmbientDarkening, shadow);
+
     vec3 color = Lo + ambient;
 
     color = ACESFilm(color);
     color = pow(color, vec3(1.0 / 2.2));
+
+    vec3 fogViewDir = -V;
+    vec3 fogColorAtThisPoint = SampleFogColor(fogViewDir);
+    float fogDistance = length(viewPos - fs_in.worldPos);
+    float fogFactor = clamp(exp(-pow(fogDistance * fogDensity, 2.0)), 0.0, 1.0);
+    color = mix(fogColorAtThisPoint, color, fogFactor);
 
     FragColor = vec4(color, 1.0);
 }

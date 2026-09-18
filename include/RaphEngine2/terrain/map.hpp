@@ -64,16 +64,7 @@ namespace raphEngine::terrain
                         const ChunkGeneratorCallback& onMissingChunk = nullptr);
 
         float GetHeightAt(glm::vec2 worldPositionXY) const;
-
-        // Real per-chunk weights when resident, falling back to the coarse
-        // overview material map otherwise -- the same fallback pattern
-        // GetHeightAt already used, now applied to material too. Previously
-        // this fell back to a hard-coded glm::vec3(0.0f), i.e. pure grass
-        // with zero rock/snow/dirt variation regardless of actual slope or
-        // elevation, which is what produced flat, washed-out terrain
-        // outside the chunk streaming radius.
         glm::vec3 GetMaterialWeightsAt(glm::vec2 worldPositionXY) const;
-
         uint8_t GetPaintIndexAt(glm::vec2 worldPositionXY) const;
 
         Chunk* GetChunkAt(glm::ivec2 gridCoord);
@@ -95,6 +86,11 @@ namespace raphEngine::terrain
         float GetWorldSizeMeters() const noexcept
         {
             return static_cast<float>(gridSize_ * kChunkResolution);
+        }
+
+        glm::vec2 GetHeightRange() const noexcept
+        {
+            return overviewHeightRange_;
         }
 
         uint64_t GetGeneration() const noexcept
@@ -135,9 +131,6 @@ namespace raphEngine::terrain
             int height_ = 0;
         };
 
-        // Coarse, overview-resolution automatic material weights, mirroring
-        // OverviewHeightMap in structure and role. Reuses MaterialWeights
-        // directly rather than a separate parallel type.
         class OverviewMaterialMap
         {
         public:

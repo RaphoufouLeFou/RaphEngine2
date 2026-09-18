@@ -1302,13 +1302,13 @@ out vec4 FragColor;
 
 in VS_OUT
 {
-    vec3 FragPos; // world space
+    vec3 FragPos;
     vec2 TexCoords;
-    vec3 FragNormal; // world space
-    vec3 TangentLightDir; // tangent space
-    vec3 TangentViewPos; // tangent space
-    vec3 TangentFragPos; // tangent space
-    mat3 TBN; // tangent -> world
+    vec3 FragNormal;
+    vec3 TangentLightDir;
+    vec3 TangentViewPos;
+    vec3 TangentFragPos;
+    mat3 TBN;
 }
 fs_in;
 
@@ -1324,13 +1324,18 @@ uniform sampler2DArrayShadow shadowMap;
 
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
+uniform samplerCube skyboxEnvironmentMap;
 uniform sampler2D brdfLUT;
 uniform bool haveSkybox;
 uniform float maxPrefilterLod;
 uniform float ambientIntensity;
 uniform float reflectionExposure;
+uniform float skyboxExposure;
 
-uniform vec3 lightDir; // world space
+uniform float fogDensity;
+uniform vec3 fogFallbackColor;
+
+uniform vec3 lightDir;
 uniform vec3 lightColor;
 uniform float lightIntensity;
 uniform vec3 viewPos;
@@ -1489,6 +1494,17 @@ vec3 ACESFilm(vec3 x)
     return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
+vec3 SampleFogColor(vec3 viewDir)
+{
+    if (haveSkybox)
+    {
+        vec3 hdrColor = texture(skyboxEnvironmentMap, viewDir).rgb;
+        vec3 mapped = vec3(1.0) - exp(-hdrColor * skyboxExposure);
+        return pow(mapped, vec3(1.0 / 2.2));
+    }
+    return fogFallbackColor;
+}
+
 void main()
 {
     vec2 uv = fs_in.TexCoords;
@@ -1595,8 +1611,15 @@ void main()
     vec3 color = Lo + ambient + emissive;
 
     color *= reflectionExposure;
+
     color = ACESFilm(color);
     color = pow(color, vec3(1.0 / 2.2));
+
+    vec3 fogViewDir = -V;
+    vec3 fogColorAtThisPoint = SampleFogColor(fogViewDir);
+    float fogDistance = length(viewPos - fs_in.FragPos);
+    float fogFactor = clamp(exp(-pow(fogDistance * fogDensity, 2.0)), 0.0, 1.0);
+    color = mix(fogColorAtThisPoint, color, fogFactor);
 
     FragColor = vec4(color, 1.0);
 }
@@ -1675,15 +1698,20 @@ uniform usampler2DArray paintNodeArray;
 uniform sampler2DArray materialGaussianAlbedoArray;
 uniform sampler2DArray materialAlbedoLutArray;
 uniform sampler2DArray materialNormalArray;
-uniform sampler2DArray materialOrmArray; // R = AO, G = roughness, B = metallic
+uniform sampler2DArray materialOrmArray;
 uniform float materialTileSize[4];
 
 uniform float nodeTexelCount;
 
 uniform sampler2DArrayShadow shadowMap;
 uniform samplerCube irradianceMap;
+uniform samplerCube skyboxEnvironmentMap;
 uniform bool haveSkybox;
 uniform float ambientIntensity;
+uniform float skyboxExposure;
+
+uniform float fogDensity;
+uniform vec3 fogFallbackColor;
 
 uniform vec3 viewPos;
 uniform vec3 lightDir;
@@ -1707,21 +1735,9 @@ const uint kMaterialSnow = 2u;
 const uint kMaterialDirt = 3u;
 const float kWeightEpsilon = 0.01;
 
-// Normal-offset shadow bias, in meters. Compact mesh geometry rarely
-// triggers self-shadowing acne badly enough to need this on top of the
-// polygon-offset bias already applied during the depth-cast pass -- but
-// terrain's continuous, high-curvature surface, especially at slopes
-// nearly edge-on to the light, is close to a worst case for shadow-map
-// self-occlusion. Only became visible once terrain started casting into
-// near cascades (previously only far, low-texel-density cascades ever
-// held terrain depth, which hid this). Starting values, not measured --
-// worth tuning against how it actually looks.
-const float kBaseNormalBias =
-    0.05; // minimum offset, even facing the light directly
-const float kSlopeNormalBias =
-    0.35; // additional offset at a fully grazing angle
-const float kCascadeBiasGrowth =
-    1.5; // growth per farther cascade layer (coarser texels need more)
+const float kBaseNormalBias = 0.05;
+const float kSlopeNormalBias = 0.35;
+const float kCascadeBiasGrowth = 1.5;
 
 float GetCascadeLayer(float depthViewSpace)
 {
@@ -1956,6 +1972,17 @@ MaterialSample SampleMaterial(uint materialIndex, vec2 tiledUV, vec2 duvdx,
     return result;
 }
 
+vec3 SampleFogColor(vec3 viewDir)
+{
+    if (haveSkybox)
+    {
+        vec3 hdrColor = texture(skyboxEnvironmentMap, viewDir).rgb;
+        vec3 mapped = vec3(1.0) - exp(-hdrColor * skyboxExposure);
+        return pow(mapped, vec3(1.0 / 2.2));
+    }
+    return fogFallbackColor;
+}
+
 void main()
 {
     vec2 nodeOrigin = fs_in.nodeOrigin;
@@ -2089,10 +2116,19 @@ void main()
         ambient = albedo * ao * 0.03;
     }
 
+    const float kShadowAmbientDarkening = 0.4;
+    ambient *= mix(1.0, 1.0 - kShadowAmbientDarkening, shadow);
+
     vec3 color = Lo + ambient;
 
     color = ACESFilm(color);
     color = pow(color, vec3(1.0 / 2.2));
+
+    vec3 fogViewDir = -V;
+    vec3 fogColorAtThisPoint = SampleFogColor(fogViewDir);
+    float fogDistance = length(viewPos - fs_in.worldPos);
+    float fogFactor = clamp(exp(-pow(fogDistance * fogDensity, 2.0)), 0.0, 1.0);
+    color = mix(fogColorAtThisPoint, color, fogFactor);
 
     FragColor = vec4(color, 1.0);
 }
@@ -2383,6 +2419,8 @@ layout(location = 1) in vec4 aInstanceData;
 uniform sampler2DArray heightNodeArray;
 
 uniform float nodeTexelCount;
+uniform float skirtDropMeters;
+uniform float skirtOutwardMeters;
 
 uniform mat4 view;
 uniform mat4 projection;
@@ -2395,9 +2433,6 @@ out VS_OUT
     flat int nodeLayer;
 }
 vs_out;
-
-const float kSkirtOutwardTexels = 0.5;
-const float kSkirtAngleDegrees = 12.5;
 
 float SampleHeight(ivec2 texel, int layer)
 {
@@ -2417,10 +2452,9 @@ void main()
     ivec2 texel = ivec2(round(localPos * nodeTexelCount));
     float height = SampleHeight(texel, nodeLayer);
 
-    float texelSize = nodeWorldSize / nodeTexelCount;
     bool isSkirt = dot(skirtDir, skirtDir) > 0.5;
-    float outwardOffset = kSkirtOutwardTexels * texelSize;
-    float dropAmount = outwardOffset / tan(radians(kSkirtAngleDegrees));
+    float outwardOffset = skirtOutwardMeters;
+    float dropAmount = skirtDropMeters;
 
     vec2 worldXY =
         nodeOrigin + localPos * nodeWorldSize + skirtDir * outwardOffset;
@@ -2477,12 +2511,12 @@ inline const char* terrain_shadow_vs_shader = R"(
 
 layout(location = 0) in vec4 aVertex;
 layout(location = 1) in vec4 aInstanceData;
+
 uniform sampler2DArray heightNodeArray;
 uniform float nodeTexelCount;
+uniform float skirtDropMeters;
+uniform float skirtOutwardMeters;
 uniform mat4 lightSpaceMatrix;
-
-const float kSkirtOutwardTexels = 0.5;
-const float kSkirtAngleDegrees = 12.5;
 
 float SampleHeight(ivec2 texel, int layer)
 {
@@ -2502,10 +2536,9 @@ void main()
     ivec2 texel = ivec2(round(localPos * nodeTexelCount));
     float height = SampleHeight(texel, nodeLayer);
 
-    float texelSize = nodeWorldSize / nodeTexelCount;
     bool isSkirt = dot(skirtDir, skirtDir) > 0.5;
-    float outwardOffset = kSkirtOutwardTexels * texelSize;
-    float dropAmount = outwardOffset / tan(radians(kSkirtAngleDegrees));
+    float outwardOffset = skirtOutwardMeters;
+    float dropAmount = skirtDropMeters;
 
     vec2 worldXY =
         nodeOrigin + localPos * nodeWorldSize + skirtDir * outwardOffset;

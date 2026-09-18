@@ -2,12 +2,12 @@
 
 layout(location = 0) in vec4 aVertex;
 layout(location = 1) in vec4 aInstanceData;
+
 uniform sampler2DArray heightNodeArray;
 uniform float nodeTexelCount;
+uniform float skirtDropMeters;
+uniform float skirtOutwardMeters;
 uniform mat4 lightSpaceMatrix;
-
-const float kSkirtOutwardTexels = 0.5;
-const float kSkirtAngleDegrees = 12.5;
 
 float SampleHeight(ivec2 texel, int layer)
 {
@@ -27,10 +27,9 @@ void main()
     ivec2 texel = ivec2(round(localPos * nodeTexelCount));
     float height = SampleHeight(texel, nodeLayer);
 
-    float texelSize = nodeWorldSize / nodeTexelCount;
     bool isSkirt = dot(skirtDir, skirtDir) > 0.5;
-    float outwardOffset = kSkirtOutwardTexels * texelSize;
-    float dropAmount = outwardOffset / tan(radians(kSkirtAngleDegrees));
+    float outwardOffset = skirtOutwardMeters;
+    float dropAmount = skirtDropMeters;
 
     vec2 worldXY =
         nodeOrigin + localPos * nodeWorldSize + skirtDir * outwardOffset;

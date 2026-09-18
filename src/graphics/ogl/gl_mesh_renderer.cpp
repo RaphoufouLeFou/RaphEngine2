@@ -24,6 +24,7 @@
 #include "utils.hpp"
 #include <RaphEngine2/settings/settings.hpp>
 #include <RaphEngine2/logger/logger.hpp>
+#include <RaphEngine2/graphics/fog_settings.hpp>
 #include <RaphEngine2/graphics/shadow_renderer.hpp>
 #include <RaphEngine2/default_shaders.hpp>
 #include <RaphEngine2/resources/model_resource.hpp>
@@ -65,6 +66,10 @@ namespace raphEngine::graphics
         }
 
         sh->setValue("viewPos", cam->get_position());
+
+        sh->setValue("fogDensity", graphics::FogSettings::density);
+        sh->setValue("fogFallbackColor", graphics::FogSettings::fallbackColor);
+
         sh->setValue("farPlane", cam->get_farPlane());
 
         sh->setValue("cascadeCount",
@@ -116,6 +121,11 @@ namespace raphEngine::graphics
             sh->setValue("ambientIntensity", skybox->get_ambient_intensity());
             sh->setValue("reflectionExposure",
                          skybox->get_reflection_exposure());
+
+            glActiveTexture(GL_TEXTURE12);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->get_environment_map());
+            sh->setValue("skyboxEnvironmentMap", 12);
+            sh->setValue("skyboxExposure", skybox->get_exposure());
         }
     }
 

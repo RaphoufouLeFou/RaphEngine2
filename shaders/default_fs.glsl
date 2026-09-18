@@ -4,13 +4,13 @@ out vec4 FragColor;
 
 in VS_OUT
 {
-    vec3 FragPos; // world space
+    vec3 FragPos;
     vec2 TexCoords;
-    vec3 FragNormal; // world space
-    vec3 TangentLightDir; // tangent space
-    vec3 TangentViewPos; // tangent space
-    vec3 TangentFragPos; // tangent space
-    mat3 TBN; // tangent -> world
+    vec3 FragNormal;
+    vec3 TangentLightDir;
+    vec3 TangentViewPos;
+    vec3 TangentFragPos;
+    mat3 TBN;
 }
 fs_in;
 
@@ -26,13 +26,18 @@ uniform sampler2DArrayShadow shadowMap;
 
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
+uniform samplerCube skyboxEnvironmentMap;
 uniform sampler2D brdfLUT;
 uniform bool haveSkybox;
 uniform float maxPrefilterLod;
 uniform float ambientIntensity;
 uniform float reflectionExposure;
+uniform float skyboxExposure;
 
-uniform vec3 lightDir; // world space
+uniform float fogDensity;
+uniform vec3 fogFallbackColor;
+
+uniform vec3 lightDir;
 uniform vec3 lightColor;
 uniform float lightIntensity;
 uniform vec3 viewPos;
@@ -191,6 +196,17 @@ vec3 ACESFilm(vec3 x)
     return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
+vec3 SampleFogColor(vec3 viewDir)
+{
+    if (haveSkybox)
+    {
+        vec3 hdrColor = texture(skyboxEnvironmentMap, viewDir).rgb;
+        vec3 mapped = vec3(1.0) - exp(-hdrColor * skyboxExposure);
+        return pow(mapped, vec3(1.0 / 2.2));
+    }
+    return fogFallbackColor;
+}
+
 void main()
 {
     vec2 uv = fs_in.TexCoords;
@@ -297,8 +313,15 @@ void main()
     vec3 color = Lo + ambient + emissive;
 
     color *= reflectionExposure;
+
     color = ACESFilm(color);
     color = pow(color, vec3(1.0 / 2.2));
+
+    vec3 fogViewDir = -V;
+    vec3 fogColorAtThisPoint = SampleFogColor(fogViewDir);
+    float fogDistance = length(viewPos - fs_in.FragPos);
+    float fogFactor = clamp(exp(-pow(fogDistance * fogDensity, 2.0)), 0.0, 1.0);
+    color = mix(fogColorAtThisPoint, color, fogFactor);
 
     FragColor = vec4(color, 1.0);
 }

@@ -31,6 +31,11 @@ namespace raphEngine::graphics::ogl
             return brdf_lut_;
         }
 
+        float get_exposure() const
+        {
+            return exposure_;
+        }
+
         void set_ambient_intensity(float a)
         {
             ambient_intensity_ = a;

@@ -21,9 +21,11 @@
 #include <tbb/parallel_for.h>
 
 #include <RaphEngine2/component/camera_component.hpp>
+
 #include <RaphEngine2/default_shaders.hpp>
 #include <RaphEngine2/graphics/ogl/gl_shader.hpp>
 #include <RaphEngine2/graphics/shader.hpp>
+#include <RaphEngine2/graphics/fog_settings.hpp>
 #include <RaphEngine2/graphics/shadow_renderer.hpp>
 #include <RaphEngine2/graphics/skybox.hpp>
 #include <RaphEngine2/graphics/stochastic_texture_baker.hpp>
@@ -844,6 +846,16 @@ namespace raphEngine::graphics::ogl
         const glm::vec2 worldMin(worldSize * -0.5f);
         const glm::vec2 worldMax(worldSize * 0.5f);
 
+        const glm::vec2 heightRange = map.GetHeightRange();
+        currentSkirtDropMeters_ =
+            std::max((heightRange.y - heightRange.x) * kSkirtDropFraction,
+                     kMinSkirtDropMeters);
+        const float clampedSkirtAngle =
+            std::clamp(kSkirtAngleDegrees, 5.0f, 85.0f);
+
+        currentSkirtOutwardMeters_ =
+            currentSkirtDropMeters_ / std::tan(glm::radians(clampedSkirtAngle));
+
         std::vector<QuadNode> leaves;
         BuildLeafSet(cameraXY, worldMin, worldMax, leaves);
 
@@ -927,6 +939,8 @@ namespace raphEngine::graphics::ogl
         shader->setValue("view", cam->get_view_matrix_());
         shader->setValue("viewPos", cameraPos);
         shader->setValue("nodeTexelCount", static_cast<float>(kNodeResolution));
+        shader->setValue("skirtDropMeters", currentSkirtDropMeters_);
+        shader->setValue("skirtOutwardMeters", currentSkirtOutwardMeters_);
 
         for (size_t i = 0; i < kMaterials.size(); ++i)
         {
@@ -979,7 +993,15 @@ namespace raphEngine::graphics::ogl
             shader->setValue("irradianceMap", 6);
             shader->setValue("ambientIntensity",
                              skybox->get_ambient_intensity());
+
+            glBindTextureUnit(9, skybox->get_environment_map());
+            shader->setValue("skyboxEnvironmentMap", 9);
+            shader->setValue("skyboxExposure", skybox->get_exposure());
         }
+
+        shader->setValue("fogDensity", graphics::FogSettings::density);
+        shader->setValue("fogFallbackColor",
+                         graphics::FogSettings::fallbackColor);
 
         glBindTextureUnit(0, heightNodeArray_);
         shader->setValue("heightNodeArray", 0);
@@ -1057,6 +1079,8 @@ namespace raphEngine::graphics::ogl
             "lightSpaceMatrix",
             GLShadowRenderer::get_cascade_light_matrix(cascadeLayer));
         shader->setValue("nodeTexelCount", static_cast<float>(kNodeResolution));
+        shader->setValue("skirtDropMeters", currentSkirtDropMeters_);
+        shader->setValue("skirtOutwardMeters", currentSkirtOutwardMeters_);
 
         glBindTextureUnit(0, heightNodeArray_);
         shader->setValue("heightNodeArray", 0);

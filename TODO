@@ -1,7 +1,9 @@
 Terrain:
     Frustom culling
     Raycast
-    Shadows
+    Remove shadows on skirts
+    Invert z for depth buffer
+    Reducde light far plane
     
 add prefab instancing
 Sound settings

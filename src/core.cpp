@@ -147,11 +147,11 @@ namespace raphEngine
                 terrain::DrawNoiseEditorWindow(
                     noiseParams, 2000, 800, "assets/chunks/", &chunkGenerator);
             }
-
-            terrain::Map::GetInstace()->UpdateStreaming(
-                component::CameraComponent::get_active_camera()->get_position(),
-                5000.0f, /*maxLoadsPerCall=*/4, chunkGenerator);
-
+            /*
+                        terrain::Map::GetInstace()->UpdateStreaming(
+                            component::CameraComponent::get_active_camera()->get_position(),
+                            5000.0f, 4, chunkGenerator);
+            */
             renderer.GetRmlUiRenderer().Update();
             renderer.Render();
 

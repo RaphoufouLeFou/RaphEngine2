@@ -42,13 +42,14 @@ namespace raphEngine::graphics::ogl
         GraphicApi::viewport_res_x = width;
         GraphicApi::viewport_res_y = height;
 
-        if (RmlUiRenderer::instance_)
-            RmlUiRenderer::instance_->Resize(width, height);
-
         if (Core::is_editor_mode_on())
         {
             GraphicApi::window_res_x = width;
             GraphicApi::window_res_y = height;
+        }
+        else if (RmlUiRenderer::instance_)
+        {
+            RmlUiRenderer::instance_->Resize(width, height);
         }
     }
 
@@ -355,15 +356,6 @@ namespace raphEngine::graphics::ogl
         (void)total_meshes;
 #endif
 
-        // GLTerrainRenderer::RenderShadow draws whatever node selection the
-        // PREVIOUS frame's terrain color render() call already uploaded to
-        // its GPU instance buffer -- terrain's own render() runs further
-        // down this function, after the shadow pass, so this frame's fresh
-        // selection isn't ready yet at this point. Terrain's LOD selection
-        // changes gradually, so a one-frame lag here isn't perceptible.
-        // dynamic_cast mirrors the exact pattern already used below for
-        // GLMeshRenderer -- reaching GL-specific behavior through the
-        // engine-agnostic singleton.
         GLTerrainRenderer* terrainRenderer = map
             ? dynamic_cast<GLTerrainRenderer*>(
                   graphics::TerrainRenderer::getInstance())
@@ -439,16 +431,37 @@ namespace raphEngine::graphics::ogl
 
         OutlineRenderer::getInstance()->render(outlined_meshes);
 
-        rmlui_renderer_.Render();
-
         if (Core::is_editor_mode_on())
         {
+            glDisable(GL_SCISSOR_TEST);
+
             glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_ms_);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, viewport_fbo_resolve_);
             glBlitFramebuffer(0, 0, viewport_width_, viewport_height_, 0, 0,
                               viewport_width_, viewport_height_,
                               GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, viewport_fbo_resolve_);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+            glBlitFramebuffer(0, 0, viewport_width_, viewport_height_, 0, 0,
+                              viewport_width_, viewport_height_,
+                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            rmlui_renderer_.Render();
+
+            glDisable(GL_SCISSOR_TEST);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, viewport_fbo_resolve_);
+            glBlitFramebuffer(0, 0, viewport_width_, viewport_height_, 0, 0,
+                              viewport_width_, viewport_height_,
+                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+        else
+        {
+            rmlui_renderer_.Render();
         }
     }
 
@@ -489,6 +502,9 @@ namespace raphEngine::graphics::ogl
 
         viewport_width_ = width;
         viewport_height_ = height;
+
+        if (RmlUiRenderer::instance_)
+            RmlUiRenderer::instance_->Resize(width, height);
 
         GraphicApi::viewport_res_x = width;
         GraphicApi::viewport_res_y = height;

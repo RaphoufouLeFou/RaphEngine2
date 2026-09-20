@@ -47,6 +47,8 @@ namespace raphEngine::graphics::ogl
 
         Rml::Debugger::Initialise(context_);
         // Rml::Debugger::SetVisible(true);
+
+        Resize(width, height);
     }
 
     void RmlUiRenderer::Shutdown()

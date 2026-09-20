@@ -78,6 +78,7 @@ namespace raphEngine
         }
 
         Core::Run();
+        Logger::LogDebug("Running stopping");
 
         Project::store_project_file();
 
@@ -170,12 +171,23 @@ namespace raphEngine
             execute_updates();
             execute_components_updates();
 
+            // load the scenes after the updates so that the object can finish
+            // there Update() before destroing them
+
+            bool success = SceneManager::load_scene_internal();
+            if (!success)
+            {
+                Logger::LogError("Failed to load the new scene");
+            }
+
             if (Core::is_full_editor() && false)
             {
                 terrain::DrawNoiseEditorWindow(
                     noiseParams, 2000, 800, "assets/chunks/", &chunkGenerator);
             }
 
+            // re-getting it because the scene swap can remove it
+            c = component::CameraComponent::get_active_camera();
             if (terrain::Map::GetInstace() && c)
             {
                 terrain::Map::GetInstace()->UpdateStreaming(
@@ -202,6 +214,8 @@ namespace raphEngine
 
         Settings::Save("settings.json");
         Logger::LogDebug("exiting now!");
+
+        SceneManager::free_scene_internal();
 
         if (Core::is_editor_mode_on())
         {
@@ -259,6 +273,7 @@ namespace raphEngine
 
     void Core::Quit()
     {
+        Logger::LogDebug("Requesting a quit!");
         renderer.RequestQuit();
     }
 } // namespace raphEngine

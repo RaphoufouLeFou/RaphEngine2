@@ -9,7 +9,7 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(FetchContent)
 
-option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" OFF)
+option(RAPHENGINE2_ENABLE_ASAN "Build RaphEngine2 with AddressSanitizer" ON)
 
 file(GLOB RaphEngine2_SRC
      "src/*.cpp"

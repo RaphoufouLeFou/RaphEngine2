@@ -39,7 +39,7 @@ namespace raphEngine::objects
         GameObject();
         GameObject(const std::string& name);
         GameObject(const GameObject& other);
-        ~GameObject();
+        virtual ~GameObject();
 
         void greed();
 

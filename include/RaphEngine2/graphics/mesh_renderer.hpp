@@ -16,6 +16,7 @@ namespace raphEngine::graphics
     class RAPHENGINE_API MeshRenderer
     {
     public:
+        virtual ~MeshRenderer() = default;
         virtual void render(const raphEngine::objects::Mesh* mesh) const = 0;
         virtual void renderInstanced(
             const std::vector<const objects::Mesh*>& meshes) const = 0;

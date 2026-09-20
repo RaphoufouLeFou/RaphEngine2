@@ -18,6 +18,7 @@ namespace raphEngine::graphics
     class RAPHENGINE_API ShadowRenderer
     {
     public:
+        virtual ~ShadowRenderer() = default;
         virtual void
         render_shadows(const raphEngine::objects::Mesh* mesh) const = 0;
         virtual void render_shadows_instanced(

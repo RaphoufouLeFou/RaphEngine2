@@ -55,6 +55,7 @@ namespace raphEngine
     {
         // objects::Transform::root_childs.clear();
 
+        Logger::LogDebug("Loading scene at ", path);
         if (path == "")
         {
             file_path_ = "default_scene.json";
@@ -71,11 +72,13 @@ namespace raphEngine
         }
 
         persistant_objects.clear();
+
+        Logger::LogDebug("Loaded scene at ", path);
     }
 
     Scene::~Scene()
     {
-        destructing_ = true;
+        Logger::LogDebug("Cleaning scene ", file_path_);
         for (auto& go : objects_)
         {
             if (go->is_persistant())
@@ -83,6 +86,10 @@ namespace raphEngine
                 persistant_objects.push_back(std::move(go));
             }
         }
+
+        Logger::LogDebug("Moved persistants objects");
+
+        destructing_ = true;
         // objects::Transform::root_childs.clear();
     }
 

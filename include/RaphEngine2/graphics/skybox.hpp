@@ -12,6 +12,7 @@ namespace raphEngine::graphics
     class RAPHENGINE_API Skybox
     {
     public:
+        virtual ~Skybox() = default;
         virtual void set_hdr(const fs::path& hdr) = 0;
         virtual void render() = 0;
 

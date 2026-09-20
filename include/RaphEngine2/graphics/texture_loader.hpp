@@ -13,6 +13,7 @@ namespace raphEngine::graphics
     class RAPHENGINE_API TextureLoader
     {
     public:
+        virtual ~TextureLoader() = default;
         struct RawTexture
         {
             unsigned char* data;

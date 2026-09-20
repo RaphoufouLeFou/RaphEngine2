@@ -10,6 +10,8 @@ namespace raphEngine::graphics
     class RAPHENGINE_API GraphicApi
     {
     public:
+        virtual ~GraphicApi() = default;
+
         virtual void Init(const std::string& window_name) = 0;
         virtual void StartFrame() = 0;
         virtual void Render() = 0;

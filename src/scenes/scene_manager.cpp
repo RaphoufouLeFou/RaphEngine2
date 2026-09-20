@@ -1,7 +1,9 @@
 #include <RaphEngine2/scenes/scene_manager.hpp>
 #include <RaphEngine2/scenes/scene.hpp>
+#include <filesystem>
 #include <memory>
 #include "imgui.h"
+#include "logger/logger.hpp"
 #include "scenes/scene.hpp"
 
 namespace raphEngine
@@ -13,14 +15,37 @@ namespace raphEngine
         load_scene("");
     }
 
-    bool SceneManager::load_scene(fs::path path)
+    fs::path new_scene_path = "";
+    bool new_scene_requested = false;
+
+    void SceneManager::free_scene_internal()
     {
         active_scene_ = nullptr;
-        active_scene_ = std::make_unique<Scene>(path);
+    }
+
+    bool SceneManager::load_scene_internal()
+    {
+        if (!new_scene_requested)
+        {
+            return true;
+        }
+
+        new_scene_requested = false;
+        Logger::LogDebug("Destroying old scene");
+        active_scene_ = nullptr;
+        Logger::LogDebug("Destroyed old scene");
+        active_scene_ = std::make_unique<Scene>(new_scene_path);
+        Logger::LogDebug("Loaded new scene");
         if (!active_scene_)
             return false;
 
         return active_scene_->is_valid();
+    }
+
+    void SceneManager::load_scene(const fs::path& path)
+    {
+        new_scene_requested = true;
+        new_scene_path = path;
     }
 
     Scene* SceneManager::get_active_scene()

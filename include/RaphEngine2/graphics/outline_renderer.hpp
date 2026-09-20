@@ -15,6 +15,7 @@ namespace raphEngine::graphics
     class RAPHENGINE_API OutlineRenderer
     {
     public:
+        virtual ~OutlineRenderer() = default;
         virtual void
         render(const std::vector<const objects::Mesh*>& outlined_meshes) = 0;
 

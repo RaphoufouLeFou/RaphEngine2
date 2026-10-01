@@ -10,7 +10,7 @@ Terrain:
     
 add prefab instancing
 Sound settings
-Light color
+Decals
 Add Semi-shallow GameObject copies
 Ass language pack system
 fix object destruction
@@ -23,7 +23,6 @@ spot lights
 point lights
 Swap the shader from var to filename
 Function to get user folder
-Handle big terrains
 Add vegetation
 Add water planes
 Add smooth lod transitions
@@ -38,7 +37,6 @@ Implement shader clouds
 Fog
 Errors handling
 God rays ?
-Decals
 Smoke
 Assets compressions
 Glass/Transparency

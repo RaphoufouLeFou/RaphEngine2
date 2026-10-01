@@ -12,13 +12,19 @@ namespace raphEngine::terrain
     {
         constexpr float kSlopeSampleTexels = 2.0f;
         constexpr float kRockPatchScale = 60.0f;
-        constexpr float kDirtPatchScale = 45.0f;
         constexpr float kJitterScale = 24.0f;
         constexpr float kJitterFraction = 0.05f;
-        constexpr float kTreelineLowFraction = 0.35f;
-        constexpr float kTreelineHighFraction = 0.55f;
-        constexpr float kSnowLineLowFraction = 0.65f;
-        constexpr float kSnowLineHighFraction = 0.85f;
+
+        constexpr float kAlpineZoneLowFraction = 0.32f;
+        constexpr float kAlpineZoneHighFraction = 0.62f;
+
+        constexpr float kRockSlopeLow = 0.22f;
+        constexpr float kRockSlopeHigh = 0.34f;
+
+        constexpr float kDirtPatchBaseScale = 110.0f;
+        constexpr int kDirtPatchOctaves = 4;
+        constexpr float kDirtPatchPersistence = 0.5f;
+        constexpr float kDirtPatchLacunarity = 2.75f;
     } // namespace
 
     MaterialGenerator::MaterialGenerator(uint32_t patchSeed,
@@ -55,31 +61,38 @@ namespace raphEngine::terrain
             return patchNoise_.Sample(xy.x / scale, xy.y / scale) * 0.5f + 0.5f;
         };
 
+        auto dirtPatch = [&](glm::vec2 xy) -> float {
+            FractalNoiseParams params;
+            params.baseFeatureScale = kDirtPatchBaseScale;
+            params.octaves = kDirtPatchOctaves;
+            params.persistence = kDirtPatchPersistence;
+            params.lacunarity = kDirtPatchLacunarity;
+            return SampleFractalNoise(patchNoise_, xy, params) * 0.5f + 0.5f;
+        };
+
         const float jitter =
             patch(worldXY + glm::vec2(5.2f, 9.8f), kJitterScale) - 0.5f;
         const float jitterHeight = jitter * kJitterFraction;
 
+        const float alpineMask = glm::smoothstep(
+            kAlpineZoneLowFraction + jitterHeight,
+            kAlpineZoneHighFraction + jitterHeight, relativeHeight);
+
+        const float rockBySlope =
+            glm::smoothstep(kRockSlopeLow + jitter * 0.08f,
+                            kRockSlopeHigh + jitter * 0.08f, slope);
+
         const float rockByNoise = glm::smoothstep(
             0.6f, 0.85f,
             patch(worldXY + glm::vec2(37.1f, 58.9f), kRockPatchScale));
-        const float rockBySlope =
-            glm::smoothstep(0.5f + jitter * 0.1f, 0.85f, slope);
-        const float rockByTreeline = glm::smoothstep(
-            kTreelineLowFraction + jitterHeight,
-            kTreelineHighFraction + jitterHeight, relativeHeight);
-        const float rockWeight =
-            std::max({ rockBySlope, rockByNoise, rockByTreeline });
 
-        const float snowRetention = 1.0f - glm::smoothstep(0.5f, 0.9f, slope);
-        const float snowByHeight = glm::smoothstep(
-            kSnowLineLowFraction + jitterHeight,
-            kSnowLineHighFraction + jitterHeight, relativeHeight);
-        const float snowWeight =
-            snowByHeight * snowRetention * (1.0f - rockWeight * 0.3f);
+        const float rockWeight = std::max(rockBySlope, rockByNoise);
 
-        const float dirtByNoise = glm::smoothstep(
-            0.55f + jitter * 0.1f, 0.8f,
-            patch(worldXY + glm::vec2(91.7f, 12.3f), kDirtPatchScale));
+        const float snowWeight = alpineMask * (1.0f - rockBySlope);
+
+        const float dirtByNoise =
+            glm::smoothstep(0.55f + jitter * 0.1f, 0.8f,
+                            dirtPatch(worldXY + glm::vec2(91.7f, 12.3f)));
         const float dirtWeight =
             dirtByNoise * (1.0f - rockWeight) * (1.0f - snowWeight);
 
@@ -99,9 +112,6 @@ namespace raphEngine::terrain
     {
         std::vector<MaterialWeights> result(heightsMeters.size());
 
-        // Clamped nearest-texel lookup -- exact here, since worldXY always
-        // lands on an integer meter/texel boundary for this caller, unlike
-        // the continuous noise/image sampling the overview builders below use.
         auto heightAt = [&](glm::vec2 worldXY) -> float {
             const glm::vec2 local = worldXY - worldOrigin;
             const int x = std::clamp(static_cast<int>(std::lround(local.x)), 0,

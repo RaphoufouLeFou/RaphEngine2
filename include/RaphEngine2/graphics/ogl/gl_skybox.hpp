@@ -85,8 +85,8 @@ namespace raphEngine::graphics::ogl
         unsigned int skybox_vbo_ = 0;
         std::shared_ptr<Shader> skybox_shader_;
         float exposure_ = 0.5f;
-        float ambient_intensity_ = 1.f;
-        float reflection_exposure_ = exposure_ * 2;
+        float ambient_intensity_ = 0.1f;
+        float reflection_exposure_ = exposure_ * 2.0f;
         float ibl_radiance_clamp_ = 5.0f;
     };
 } // namespace raphEngine::graphics::ogl

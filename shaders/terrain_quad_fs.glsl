@@ -58,6 +58,9 @@ const float kBaseNormalBias = 0.05;
 const float kSlopeNormalBias = 0.35;
 const float kCascadeBiasGrowth = 1.5;
 
+const float kFogStartDistance = 10000.0;
+const float kFogEndDistance = 14000.0;
+
 float GetCascadeLayer(float depthViewSpace)
 {
     for (int i = 0; i < cascadeCount; i++)
@@ -446,7 +449,8 @@ void main()
     vec3 fogViewDir = -V;
     vec3 fogColorAtThisPoint = SampleFogColor(fogViewDir);
     float fogDistance = length(viewPos - fs_in.worldPos);
-    float fogFactor = clamp(exp(-pow(fogDistance * fogDensity, 2.0)), 0.0, 1.0);
+    float fogFactor =
+        1.0 - smoothstep(kFogStartDistance, kFogEndDistance, fogDistance);
     color = mix(fogColorAtThisPoint, color, fogFactor);
 
     FragColor = vec4(color, 1.0);

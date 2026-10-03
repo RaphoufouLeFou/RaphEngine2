@@ -29,6 +29,7 @@ As of today, the engine handle :
 - Prefabs
 - Sound system
 - Handle big terrains
+- Shader caching
 
 And more little things.
 

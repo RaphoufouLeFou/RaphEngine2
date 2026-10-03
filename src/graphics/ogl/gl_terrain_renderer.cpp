@@ -52,18 +52,26 @@ namespace raphEngine::graphics::ogl
         constexpr int kAlbedoLutResolution = 256;
 
         constexpr std::array<TerrainMaterialDefinition, 4> kMaterials = { {
-            { "assets/textures/terrain/forrest_ground_01_diff_4k.jpg",
-              "assets/textures/terrain/forrest_ground_01_nor_gl_4k.jpg",
-              "assets/textures/terrain/forrest_ground_01_arm_4k.jpg", 2.0f },
-            { "assets/textures/terrain/rock_face_03_diff_4k.jpg",
-              "assets/textures/terrain/rock_face_03_nor_gl_4k.jpg",
-              "assets/textures/terrain/rock_face_03_arm_4k.jpg", 2.0f },
+
+            // grass
+            { "assets/textures/terrain/rocky_terrain_02_diff_4k.jpg",
+              "assets/textures/terrain/rocky_terrain_02_nor_gl_4k.jpg",
+              "assets/textures/terrain/rocky_terrain_02_arm_4k.jpg", 10.0f },
+
+            // rocks
+            { "assets/textures/terrain/dark_rock_diff_4k.jpg",
+              "assets/textures/terrain/dark_rock_nor_gl_4k.jpg",
+              "assets/textures/terrain/dark_rock_arm_4k.jpg", 20.0f },
+
+            // snow
             { "assets/textures/terrain/snow_02_diff_4k.jpg",
               "assets/textures/terrain/snow_02_nor_gl_4k.jpg",
-              "assets/textures/terrain/snow_02_arm_4k.jpg", 2.0f },
+              "assets/textures/terrain/snow_02_arm_4k.jpg", 5.0f },
+
+            // dirt
             { "assets/textures/terrain/forest_ground_05_diff_4k.jpg",
               "assets/textures/terrain/forest_ground_05_nor_gl_4k.jpg",
-              "assets/textures/terrain/forest_ground_05_arm_4k.jpg", 2.0f },
+              "assets/textures/terrain/forest_ground_05_arm_4k.jpg", 5.0f },
         } };
     } // namespace
 
@@ -91,6 +99,7 @@ namespace raphEngine::graphics::ogl
         CreateHeightNodeArray();
         CreateNormalNodeArray();
         CreatePaintNodeArray();
+        CreateMaterialWeightNodeArray();
         CreateMaterialTextureArrays();
 
         terrainShader_ = Shader::loadShader(
@@ -109,6 +118,7 @@ namespace raphEngine::graphics::ogl
         glDeleteTextures(1, &materialNormalArray_);
         glDeleteTextures(1, &materialAlbedoLutArray_);
         glDeleteTextures(1, &materialGaussianAlbedoArray_);
+        glDeleteTextures(1, &materialWeightNodeArray_);
         glDeleteTextures(1, &paintNodeArray_);
         glDeleteTextures(1, &normalNodeArray_);
         glDeleteTextures(1, &heightNodeArray_);
@@ -290,6 +300,24 @@ namespace raphEngine::graphics::ogl
         glTextureParameteri(paintNodeArray_, GL_TEXTURE_WRAP_S,
                             GL_CLAMP_TO_EDGE);
         glTextureParameteri(paintNodeArray_, GL_TEXTURE_WRAP_T,
+                            GL_CLAMP_TO_EDGE);
+    }
+
+    void GLTerrainRenderer::CreateMaterialWeightNodeArray()
+    {
+        const GLsizei texSize = static_cast<GLsizei>(kMaterialNodeResolution);
+
+        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &materialWeightNodeArray_);
+        glTextureStorage3D(materialWeightNodeArray_, 1, GL_RGB8, texSize,
+                           texSize, static_cast<GLsizei>(kMaxActiveNodes));
+
+        glTextureParameteri(materialWeightNodeArray_, GL_TEXTURE_MIN_FILTER,
+                            GL_LINEAR);
+        glTextureParameteri(materialWeightNodeArray_, GL_TEXTURE_MAG_FILTER,
+                            GL_LINEAR);
+        glTextureParameteri(materialWeightNodeArray_, GL_TEXTURE_WRAP_S,
+                            GL_CLAMP_TO_EDGE);
+        glTextureParameteri(materialWeightNodeArray_, GL_TEXTURE_WRAP_T,
                             GL_CLAMP_TO_EDGE);
     }
 
@@ -519,6 +547,33 @@ namespace raphEngine::graphics::ogl
         return QuadCandidate{ QuadNode{ level, x, y, origin, size }, dist };
     }
 
+    GLTerrainRenderer::QuadNode
+    GLTerrainRenderer::ReconstructNodeFromKey(const NodeKey& key) const
+    {
+        const float size =
+            kLeafWorldSize * static_cast<float>(1 << (kMaxLevel - key.level));
+        const glm::vec2 origin(static_cast<float>(key.x) * size,
+                               static_cast<float>(key.y) * size);
+        return QuadNode{ key.level, key.x, key.y, origin, size };
+    }
+
+    bool GLTerrainRenderer::IsNodeCoveringChunkResident(
+        const QuadNode& node, const terrain::Map& map) const
+    {
+        const glm::vec2 nodeCenter = node.origin + glm::vec2(node.size * 0.5f);
+        const float halfWorldSize = map.GetWorldSizeMeters() * 0.5f;
+        const glm::ivec2 centerChunkCoord = glm::ivec2(
+            glm::floor((nodeCenter + glm::vec2(halfWorldSize))
+                       / static_cast<float>(terrain::kChunkResolution)));
+
+        if (!map.IsValidGridCoord(centerChunkCoord))
+        {
+            return true;
+        }
+
+        return map.IsChunkResident(centerChunkCoord);
+    }
+
     void GLTerrainRenderer::RasterizeLevelGrid(
         const std::vector<QuadNode>& leaves, int64_t& outMinX, int64_t& outMinY,
         int64_t& outWidth, int64_t& outHeight) const
@@ -694,6 +749,8 @@ namespace raphEngine::graphics::ogl
             }
         }
 
+        bool budgetTruncatedThisCall = false;
+
         while (!frontier.empty())
         {
             QuadCandidate candidate = frontier.top();
@@ -717,6 +774,11 @@ namespace raphEngine::graphics::ogl
             const bool wouldExceedBudget =
                 activeLeafCount + 3 > kMaxActiveNodes;
 
+            if (wouldExceedBudget && !tooDeep && !farEnough)
+            {
+                budgetTruncatedThisCall = true;
+            }
+
             if (tooDeep || farEnough || wouldExceedBudget)
             {
                 outLeaves.push_back(candidate.node);
@@ -735,6 +797,14 @@ namespace raphEngine::graphics::ogl
             }
         }
 
+        if (budgetTruncatedThisCall)
+        {
+            Logger::LogWarning(
+                "GLTerrainRenderer: node budget too tight during initial LOD "
+                "selection; some near-camera detail was left coarse this "
+                "frame. Consider raising kMaxActiveNodes.");
+        }
+
         BalanceLeafSet(outLeaves);
     }
 
@@ -745,6 +815,7 @@ namespace raphEngine::graphics::ogl
             layerInUse_[resident.layer] = false;
         }
         residentNodes_.clear();
+        pendingRetryNodes_.clear();
     }
 
     void GLTerrainRenderer::BuildNodeData(const QuadNode& node,
@@ -830,10 +901,7 @@ namespace raphEngine::graphics::ogl
                 const glm::vec3 fixedNormal =
                     glm::normalize(sampleGrid(worldXY, gridNormals));
 
-                const glm::vec3 autoWeights = map.GetMaterialWeightsAt(worldXY);
-
-                data[ty * texSize + tx] =
-                    glm::vec4(h, autoWeights.x, autoWeights.y, autoWeights.z);
+                data[ty * texSize + tx] = glm::vec4(h, 0.0f, 0.0f, 0.0f);
                 normals[ty * texSize + tx] = fixedNormal;
                 paintIndices[ty * texSize + tx] = map.GetPaintIndexAt(worldXY);
             }
@@ -853,6 +921,74 @@ namespace raphEngine::graphics::ogl
                             static_cast<GLsizei>(texSize),
                             static_cast<GLsizei>(texSize), 1, GL_RED_INTEGER,
                             GL_UNSIGNED_BYTE, paintIndices.data());
+
+        const uint32_t matTexSize = kMaterialNodeResolution;
+        std::vector<uint8_t> materialWeightData(static_cast<size_t>(matTexSize)
+                                                * matTexSize * 3);
+
+        tbb::parallel_for(uint32_t(0), matTexSize, [&](uint32_t ty) {
+            for (uint32_t tx = 0; tx < matTexSize; ++tx)
+            {
+                const glm::vec2 uv((static_cast<float>(tx) + 0.5f)
+                                       / static_cast<float>(matTexSize),
+                                   (static_cast<float>(ty) + 0.5f)
+                                       / static_cast<float>(matTexSize));
+                const glm::vec2 worldXY = node.origin + uv * node.size;
+                const glm::vec3 autoWeights = map.GetMaterialWeightsAt(worldXY);
+
+                const size_t idx =
+                    (static_cast<size_t>(ty) * matTexSize + tx) * 3;
+                materialWeightData[idx + 0] = static_cast<uint8_t>(
+                    glm::clamp(autoWeights.x, 0.0f, 1.0f) * 255.0f + 0.5f);
+                materialWeightData[idx + 1] = static_cast<uint8_t>(
+                    glm::clamp(autoWeights.y, 0.0f, 1.0f) * 255.0f + 0.5f);
+                materialWeightData[idx + 2] = static_cast<uint8_t>(
+                    glm::clamp(autoWeights.z, 0.0f, 1.0f) * 255.0f + 0.5f);
+            }
+        });
+
+        glTextureSubImage3D(
+            materialWeightNodeArray_, 0, 0, 0, static_cast<GLint>(layer),
+            static_cast<GLsizei>(matTexSize), static_cast<GLsizei>(matTexSize),
+            1, GL_RGB, GL_UNSIGNED_BYTE, materialWeightData.data());
+    }
+
+    void GLTerrainRenderer::ProcessPendingRetries(const terrain::Map& map)
+    {
+        if (pendingRetryNodes_.empty())
+        {
+            return;
+        }
+
+        std::vector<NodeKey> stillPending;
+        stillPending.reserve(pendingRetryNodes_.size());
+
+        for (const NodeKey& key : pendingRetryNodes_)
+        {
+            auto it = residentNodes_.find(key);
+            if (it == residentNodes_.end())
+            {
+                continue;
+            }
+
+            const QuadNode node = ReconstructNodeFromKey(key);
+
+            if (IsNodeCoveringChunkResident(node, map))
+            {
+                BuildNodeData(node, map, it->second.layer);
+                it->second.needsRetryWhenChunkLoads = false;
+                Logger::LogDebug("GLTerrainRenderer: rebuilt node (level ",
+                                 key.level, ", ", key.x, ",", key.y,
+                                 ") now that its covering chunk is "
+                                 "resident.");
+            }
+            else
+            {
+                stillPending.push_back(key);
+            }
+        }
+
+        pendingRetryNodes_ = std::move(stillPending);
     }
 
     void GLTerrainRenderer::render(const terrain::Map& map)
@@ -957,11 +1093,23 @@ namespace raphEngine::graphics::ogl
             }
 
             const NodeKey key{ nodePtr->level, nodePtr->x, nodePtr->y };
+            const bool chunkResident =
+                IsNodeCoveringChunkResident(*nodePtr, map);
+
             layerInUse_[freeLayer] = true;
             BuildNodeData(*nodePtr, map, freeLayer);
-            residentNodes_[key] = ResidentNode{ freeLayer, true };
+            residentNodes_[key] =
+                ResidentNode{ freeLayer, true, !chunkResident };
+
+            if (!chunkResident)
+            {
+                pendingRetryNodes_.push_back(key);
+            }
+
             toDraw.push_back({ nodePtr, freeLayer });
         }
+
+        ProcessPendingRetries(map);
 
         currentInstanceCount_ = toDraw.size();
 
@@ -1057,6 +1205,9 @@ namespace raphEngine::graphics::ogl
 
         glBindTextureUnit(8, paintNodeArray_);
         shader->setValue("paintNodeArray", 8);
+
+        glBindTextureUnit(10, materialWeightNodeArray_);
+        shader->setValue("materialWeightNodeArray", 10);
 
         const GLboolean cullWasEnabled = glIsEnabled(GL_CULL_FACE);
         glEnable(GL_CULL_FACE);

@@ -191,7 +191,7 @@ namespace raphEngine
             if (terrain::Map::GetInstace() && c)
             {
                 terrain::Map::GetInstace()->UpdateStreaming(
-                    c->get_position(), 5000.0f, 4, chunkGenerator);
+                    c->get_position(), 10000.0f, 8, chunkGenerator);
             }
 
             renderer.GetRmlUiRenderer().Update();

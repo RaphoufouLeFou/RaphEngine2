@@ -87,6 +87,14 @@ namespace raphEngine::graphics::ogl
         {
             uint32_t layer;
             bool inUseThisFrame;
+
+            // True when this node's last build ran before its covering
+            // chunk was resident, meaning its height/material texels came
+            // from the coarse overview fallback rather than real chunk
+            // data. Such a node is queued in pendingRetryNodes_ and gets
+            // exactly one real rebuild once its chunk actually loads --
+            // see ProcessPendingRetries.
+            bool needsRetryWhenChunkLoads;
         };
 
         void CreateNodeMesh();
@@ -95,6 +103,7 @@ namespace raphEngine::graphics::ogl
         void CreateHeightNodeArray();
         void CreateNormalNodeArray();
         void CreatePaintNodeArray();
+        void CreateMaterialWeightNodeArray();
         void CreateMaterialTextureArrays();
         void CreateGaussianAlbedoArrays();
         unsigned int
@@ -116,7 +125,30 @@ namespace raphEngine::graphics::ogl
         void BuildNodeData(const QuadNode& node, const terrain::Map& map,
                            uint32_t layer);
 
+        // True if the chunk under this node's center point is currently
+        // resident (or the node falls outside the map entirely, in which
+        // case the overview is the correct permanent source, not a stale
+        // one). Only checks the center -- exact for fine nodes smaller
+        // than a chunk, an approximation for coarser multi-chunk nodes.
+        bool IsNodeCoveringChunkResident(const QuadNode& node,
+                                         const terrain::Map& map) const;
+
+        // Reconstructs a QuadNode's origin/size deterministically from its
+        // (level, x, y) key alone, using the same formula MakeCandidate
+        // uses -- lets the retry pass rebuild a node without needing to
+        // keep its full QuadNode alive in ResidentNode.
+        QuadNode ReconstructNodeFromKey(const NodeKey& key) const;
+
+        // Re-checks every node queued in pendingRetryNodes_; any whose
+        // covering chunk has since become resident gets rebuilt once and
+        // removed from the queue. Cheap when the queue is empty (the
+        // steady-state case) and naturally throttled the rest of the time
+        // by however fast Map::UpdateStreaming itself loads chunks.
+        void ProcessPendingRetries(const terrain::Map& map);
+
         static constexpr uint32_t kNodeResolution = 32;
+        static constexpr uint32_t kMaterialNodeResolution = 128;
+
         static constexpr float kLeafWorldSize = 64.0f;
         static constexpr int kMaxLevel = 8;
         static constexpr float kSplitDistanceFactor = 3.5f;
@@ -124,9 +156,9 @@ namespace raphEngine::graphics::ogl
 
         static constexpr float kFixedNormalSampleDistance = 2.0f;
 
-        static constexpr float kSkirtDropFraction = 0.0005f;
-        static constexpr float kMinSkirtDropMeters = 0.02f;
-        static constexpr float kSkirtAngleDegrees = 70.0f;
+        static constexpr float kSkirtDropFraction = 0.005f;
+        static constexpr float kMinSkirtDropMeters = 0.2f;
+        static constexpr float kSkirtAngleDegrees = 60.0f;
 
         unsigned int nodeVertexBuffer_ = 0;
         unsigned int nodeVao_ = 0;
@@ -145,6 +177,7 @@ namespace raphEngine::graphics::ogl
         unsigned int heightNodeArray_ = 0;
         unsigned int normalNodeArray_ = 0;
         unsigned int paintNodeArray_ = 0;
+        unsigned int materialWeightNodeArray_ = 0;
 
         unsigned int materialGaussianAlbedoArray_ = 0;
         unsigned int materialAlbedoLutArray_ = 0;
@@ -154,6 +187,8 @@ namespace raphEngine::graphics::ogl
         std::unordered_map<NodeKey, ResidentNode, NodeKeyHash> residentNodes_;
         std::vector<bool> layerInUse_;
         mutable std::vector<int16_t> scratchLevelGrid_;
+
+        std::vector<NodeKey> pendingRetryNodes_;
 
         uint64_t lastSeenMapGeneration_ = 0;
 

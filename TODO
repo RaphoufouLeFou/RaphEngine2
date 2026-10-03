@@ -7,6 +7,8 @@ Terrain:
     Fix Shadow color
     Invert z for depth buffer
     Reducde light far plane
+    map generation loading screen
+    fix blury textures on lower LODs
     
 add prefab instancing
 Sound settings

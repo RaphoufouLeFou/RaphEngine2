@@ -1693,9 +1693,9 @@ fs_in;
 
 out vec4 FragColor;
 
-uniform sampler2DArray heightNodeArray;
 uniform sampler2DArray normalNodeArray;
 uniform usampler2DArray paintNodeArray;
+uniform sampler2DArray materialWeightNodeArray;
 uniform sampler2DArray materialGaussianAlbedoArray;
 uniform sampler2DArray materialAlbedoLutArray;
 uniform sampler2DArray materialNormalArray;
@@ -1948,6 +1948,7 @@ MaterialSample SampleMaterial(uint materialIndex, vec2 tiledUV, vec2 duvdx,
             * inversesqrt(grid.w1 * grid.w1 + grid.w2 * grid.w2
                           + grid.w3 * grid.w3)
         + vec3(0.5);
+    G = clamp(G, vec3(0.0), vec3(1.0));
 
     vec3 albedo;
     albedo.r = texture(materialAlbedoLutArray, vec3(G.r, 0.5, layer)).r;
@@ -1994,7 +1995,6 @@ void main()
     int nodeLayer = fs_in.nodeLayer;
 
     vec2 nodeUV = (fs_in.worldPos.xy - nodeOrigin) / nodeWorldSize;
-    vec4 nodeSample = texture(heightNodeArray, vec3(nodeUV, float(nodeLayer)));
 
     ivec2 paintTexel = clamp(ivec2(nodeUV * nodeTexelCount), ivec2(0),
                              ivec2(int(nodeTexelCount)));
@@ -2007,9 +2007,12 @@ void main()
 
     if (paintIndex == 0u)
     {
-        rockWeight = nodeSample.g;
-        snowWeight = nodeSample.b;
-        dirtWeight = nodeSample.a;
+        vec3 autoWeights =
+            texture(materialWeightNodeArray, vec3(nodeUV, float(nodeLayer)))
+                .rgb;
+        rockWeight = autoWeights.r;
+        snowWeight = autoWeights.g;
+        dirtWeight = autoWeights.b;
     }
     else
     {

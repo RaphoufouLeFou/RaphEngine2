@@ -99,7 +99,7 @@ namespace raphEngine::editor
         }
     }
 
-    void PrefabTab::load_prefab(const std::string& name)
+    objects::GameObject* PrefabTab::load_prefab(const std::string& name)
     {
         if (!prefabs_json.contains(name))
         {

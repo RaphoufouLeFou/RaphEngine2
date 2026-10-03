@@ -82,6 +82,7 @@ namespace raphEngine::objects
         void fromJson(const nlohmann::json& j);
 
         static GameObject* instanciate(const GameObject&);
+        static GameObject* instanciate(const std::string& prefabName);
 
         static GameObject* find(const std::string& name);
         static GameObject* find_uuid(const std::string& uuid);

@@ -51,10 +51,11 @@ namespace raphEngine::objects
 
     GameObject::GameObject(const GameObject& other)
     {
+        fromJson(other.toJson());
+
         id_ = Utils::get_id();
         uuid_ = Utils::get_uuid();
-        name_ = other.name_;
-        transform_ = other.transform_;
+
         transform_.parent_object = this;
         transform_.set_parent(other.transform_.get_parent());
     }
@@ -69,6 +70,11 @@ namespace raphEngine::objects
         auto res = go.get();
         SceneManager::get_active_scene()->add_gameobject(std::move(go));
         return res;
+    }
+
+    GameObject* GameObject::instanciate(const std::string& prefabName)
+    {
+        return editor::PrefabTab::load_prefab(prefabName);
     }
 
     void GameObject::destroy_internal()

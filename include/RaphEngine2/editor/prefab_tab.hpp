@@ -16,7 +16,7 @@ namespace raphEngine::editor
         static void SetPrefabsPath(const fs::path& paf);
         static const fs::path& GetPrefabsPath();
         static void save_as_prefab(const objects::GameObject* object);
-        static void load_prefab(const std::string& name);
+        static objects::GameObject* load_prefab(const std::string& name);
 
     private:
         static fs::path prefab_folder;

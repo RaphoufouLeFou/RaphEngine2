@@ -40,6 +40,9 @@ namespace raphEngine::terrain
     using ChunkGeneratorCallback =
         std::function<void(glm::ivec2 gridCoord, const fs::path& chunkPath)>;
 
+    using ChunkResidencyCallback =
+        std::function<void(glm::ivec2 gridCoord, Chunk& chunk)>;
+
     class RAPHENGINE_API Map
     {
     public:
@@ -57,11 +60,12 @@ namespace raphEngine::terrain
         void Load(const fs::path&);
         void Save(const fs::path&);
 
-        void
-        UpdateStreaming(glm::vec3 viewerWorldPosition,
-                        float streamingRadiusMeters,
-                        uint32_t maxLoadsPerCall = 4,
-                        const ChunkGeneratorCallback& onMissingChunk = nullptr);
+        void UpdateStreaming(
+            glm::vec3 viewerWorldPosition, float streamingRadiusMeters,
+            uint32_t maxLoadsPerCall = 4,
+            const ChunkGeneratorCallback& onMissingChunk = nullptr,
+            const ChunkResidencyCallback& onChunkLoaded = nullptr,
+            const ChunkResidencyCallback& onChunkUnloaded = nullptr);
 
         float GetHeightAt(glm::vec2 worldPositionXY) const;
         glm::vec3 GetMaterialWeightsAt(glm::vec2 worldPositionXY) const;
@@ -70,6 +74,11 @@ namespace raphEngine::terrain
         Chunk* GetChunkAt(glm::ivec2 gridCoord);
         const Chunk* GetChunkAt(glm::ivec2 gridCoord) const;
         Chunk* GetChunkContainingWorldPosition(glm::vec2 worldPositionXY);
+
+        glm::vec2 GetChunkWorldOrigin(glm::ivec2 gridCoord) const
+        {
+            return GridCoordToWorldOrigin(gridCoord);
+        }
 
         bool IsChunkResident(glm::ivec2 gridCoord) const;
         bool IsValidGridCoord(glm::ivec2 gridCoord) const noexcept;

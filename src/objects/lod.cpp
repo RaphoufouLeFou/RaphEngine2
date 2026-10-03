@@ -29,7 +29,7 @@ namespace raphEngine::objects
 
         Camera* cam = Camera::get_active_camera();
         const glm::vec3& campera_pos = cam->get_position();
-        float far_plane_2 = cam->get_farPlane() * cam->get_farPlane();
+        float far_plane_2 = cam->get_farPlane() * cam->get_farPlane() / 2;
 
         float distance_m = getManhattanDistance(campera_pos, object_pos);
 

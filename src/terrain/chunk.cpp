@@ -29,6 +29,12 @@ namespace raphEngine::terrain
         constexpr uint32_t kPaintOverlayMagic = 0x52545054;
         constexpr uint32_t kPaintOverlayVersion = 1;
 
+        constexpr uint32_t kVegetationOverlayMagic = 0x52544756;
+        constexpr uint32_t kVegetationOverlayVersion = 1;
+
+        constexpr uint32_t kTreeOverlayMagic = 0x52545245;
+        constexpr uint32_t kTreeOverlayVersion = 1;
+
 #pragma pack(push, 1)
         struct EditOverlayHeader
         {
@@ -43,6 +49,22 @@ namespace raphEngine::terrain
             uint32_t version;
             uint32_t tileCount;
         };
+
+        struct VegetationOverlayHeader
+        {
+            uint32_t magic;
+            uint32_t version;
+            uint32_t tileCount;
+        };
+
+        struct TreeOverlayHeader
+        {
+            uint32_t magic;
+            uint32_t version;
+            uint32_t removedCount;
+            uint32_t addedCount;
+            uint32_t nextAddedTreeId;
+        };
 #pragma pack(pop)
 
         static_assert(sizeof(EditOverlayHeader) == 12,
@@ -50,6 +72,12 @@ namespace raphEngine::terrain
                       "on-disk compatibility");
         static_assert(sizeof(PaintOverlayHeader) == 12,
                       "PaintOverlayHeader layout must stay byte-exact for "
+                      "on-disk compatibility");
+        static_assert(sizeof(VegetationOverlayHeader) == 12,
+                      "VegetationOverlayHeader layout must stay byte-exact "
+                      "for on-disk compatibility");
+        static_assert(sizeof(TreeOverlayHeader) == 20,
+                      "TreeOverlayHeader layout must stay byte-exact for "
                       "on-disk compatibility");
 
         fs::path DeriveEditsPath(const fs::path& basePath)
@@ -62,6 +90,18 @@ namespace raphEngine::terrain
         {
             return basePath.parent_path()
                 / (basePath.filename().string() + ".paint");
+        }
+
+        fs::path DeriveVegetationPath(const fs::path& basePath)
+        {
+            return basePath.parent_path()
+                / (basePath.filename().string() + ".veg");
+        }
+
+        fs::path DeriveTreesPath(const fs::path& basePath)
+        {
+            return basePath.parent_path()
+                / (basePath.filename().string() + ".trees");
         }
     } // namespace
 
@@ -200,6 +240,10 @@ namespace raphEngine::terrain
     {
         m_editTiles.clear();
         m_paintTiles.clear();
+        m_vegTiles.clear();
+        m_removedTreeIndices.clear();
+        m_addedTrees.clear();
+        m_nextAddedTreeId = 0;
         m_mergedHeights.clear();
         m_mergedPaintMask.clear();
         m_mipPyramid = {};
@@ -412,6 +456,121 @@ namespace raphEngine::terrain
             }
         }
 
+        const fs::path vegPath = DeriveVegetationPath(p);
+        if (fs::exists(vegPath))
+        {
+            std::ifstream vegFile(vegPath, std::ios::binary);
+            if (!vegFile)
+            {
+                throw std::runtime_error(
+                    "Chunk::Load: failed to open vegetation file "
+                    + vegPath.string());
+            }
+
+            VegetationOverlayHeader vegHeader{};
+            vegFile.read(reinterpret_cast<char*>(&vegHeader),
+                         sizeof(vegHeader));
+            if (!vegFile || vegHeader.magic != kVegetationOverlayMagic
+                || vegHeader.version != kVegetationOverlayVersion)
+            {
+                throw std::runtime_error(
+                    "Chunk::Load: malformed vegetation file "
+                    + vegPath.string());
+            }
+
+            if (vegHeader.tileCount > kEditTilesPerAxis * kEditTilesPerAxis)
+            {
+                throw std::runtime_error(
+                    "Chunk::Load: implausible vegetation tile count in "
+                    + vegPath.string());
+            }
+
+            for (uint32_t i = 0; i < vegHeader.tileCount; ++i)
+            {
+                uint32_t tileId = 0;
+                vegFile.read(reinterpret_cast<char*>(&tileId), sizeof(tileId));
+
+                if (tileId >= kEditTilesPerAxis * kEditTilesPerAxis)
+                {
+                    throw std::runtime_error(
+                        "Chunk::Load: invalid vegetation tile id in "
+                        + vegPath.string());
+                }
+
+                VegetationTile tile{};
+                vegFile.read(reinterpret_cast<char*>(tile.state.data()),
+                             tile.state.size());
+
+                if (!vegFile)
+                {
+                    throw std::runtime_error(
+                        "Chunk::Load: truncated vegetation file "
+                        + vegPath.string());
+                }
+
+                m_vegTiles.emplace(tileId, tile);
+            }
+        }
+
+        const fs::path treesPath = DeriveTreesPath(p);
+        if (fs::exists(treesPath))
+        {
+            std::ifstream treesFile(treesPath, std::ios::binary);
+            if (!treesFile)
+            {
+                throw std::runtime_error(
+                    "Chunk::Load: failed to open trees file "
+                    + treesPath.string());
+            }
+
+            TreeOverlayHeader treesHeader{};
+            treesFile.read(reinterpret_cast<char*>(&treesHeader),
+                           sizeof(treesHeader));
+            if (!treesFile || treesHeader.magic != kTreeOverlayMagic
+                || treesHeader.version != kTreeOverlayVersion)
+            {
+                throw std::runtime_error("Chunk::Load: malformed trees file "
+                                         + treesPath.string());
+            }
+
+            for (uint32_t i = 0; i < treesHeader.removedCount; ++i)
+            {
+                uint32_t candidateIndex = 0;
+                treesFile.read(reinterpret_cast<char*>(&candidateIndex),
+                               sizeof(candidateIndex));
+
+                if (!treesFile)
+                {
+                    throw std::runtime_error(
+                        "Chunk::Load: truncated trees file "
+                        + treesPath.string());
+                }
+
+                m_removedTreeIndices.insert(candidateIndex);
+            }
+
+            for (uint32_t i = 0; i < treesHeader.addedCount; ++i)
+            {
+                uint32_t addedTreeId = 0;
+                TreeRecord record{};
+                treesFile.read(reinterpret_cast<char*>(&addedTreeId),
+                               sizeof(addedTreeId));
+                treesFile.read(reinterpret_cast<char*>(&record),
+                               sizeof(record));
+
+                if (!treesFile)
+                {
+                    throw std::runtime_error(
+                        "Chunk::Load: truncated trees file "
+                        + treesPath.string());
+                }
+
+                m_addedTrees.emplace(addedTreeId, record);
+            }
+
+            m_nextAddedTreeId = treesHeader.nextAddedTreeId;
+        }
+
         m_mappedFile = std::move(mappedFile);
         m_state = ChunkState::Resident;
         Touch();
@@ -500,6 +659,96 @@ namespace raphEngine::terrain
             {
                 throw std::runtime_error("Chunk::Save: write failure for "
                                          + paintPath.string());
+            }
+        }
+
+        const fs::path vegPath = DeriveVegetationPath(p);
+
+        if (m_vegTiles.empty())
+        {
+            if (fs::exists(vegPath))
+            {
+                fs::remove(vegPath);
+            }
+        }
+        else
+        {
+            std::ofstream vegFile(vegPath, std::ios::binary | std::ios::trunc);
+            if (!vegFile)
+            {
+                throw std::runtime_error("Chunk::Save: failed to open "
+                                         + vegPath.string() + " for writing");
+            }
+
+            VegetationOverlayHeader header{};
+            header.magic = kVegetationOverlayMagic;
+            header.version = kVegetationOverlayVersion;
+            header.tileCount = static_cast<uint32_t>(m_vegTiles.size());
+            vegFile.write(reinterpret_cast<const char*>(&header),
+                          sizeof(header));
+
+            for (const auto& [tileId, tile] : m_vegTiles)
+            {
+                vegFile.write(reinterpret_cast<const char*>(&tileId),
+                              sizeof(tileId));
+                vegFile.write(reinterpret_cast<const char*>(tile.state.data()),
+                              tile.state.size());
+            }
+
+            if (!vegFile)
+            {
+                throw std::runtime_error("Chunk::Save: write failure for "
+                                         + vegPath.string());
+            }
+        }
+
+        const fs::path treesPath = DeriveTreesPath(p);
+
+        if (m_removedTreeIndices.empty() && m_addedTrees.empty())
+        {
+            if (fs::exists(treesPath))
+            {
+                fs::remove(treesPath);
+            }
+        }
+        else
+        {
+            std::ofstream treesFile(treesPath,
+                                    std::ios::binary | std::ios::trunc);
+            if (!treesFile)
+            {
+                throw std::runtime_error("Chunk::Save: failed to open "
+                                         + treesPath.string() + " for writing");
+            }
+
+            TreeOverlayHeader header{};
+            header.magic = kTreeOverlayMagic;
+            header.version = kTreeOverlayVersion;
+            header.removedCount =
+                static_cast<uint32_t>(m_removedTreeIndices.size());
+            header.addedCount = static_cast<uint32_t>(m_addedTrees.size());
+            header.nextAddedTreeId = m_nextAddedTreeId;
+            treesFile.write(reinterpret_cast<const char*>(&header),
+                            sizeof(header));
+
+            for (uint32_t candidateIndex : m_removedTreeIndices)
+            {
+                treesFile.write(reinterpret_cast<const char*>(&candidateIndex),
+                                sizeof(candidateIndex));
+            }
+
+            for (const auto& [addedTreeId, record] : m_addedTrees)
+            {
+                treesFile.write(reinterpret_cast<const char*>(&addedTreeId),
+                                sizeof(addedTreeId));
+                treesFile.write(reinterpret_cast<const char*>(&record),
+                                sizeof(record));
+            }
+
+            if (!treesFile)
+            {
+                throw std::runtime_error("Chunk::Save: write failure for "
+                                         + treesPath.string());
             }
         }
 
@@ -779,6 +1028,87 @@ namespace raphEngine::terrain
                        glm::ivec2(static_cast<int>(kChunkResolution) - 1));
         const std::span<const uint8_t> paintData = GetPaintDataForUpload();
         return paintData[texel.y * kChunkResolution + texel.x];
+    }
+
+    void Chunk::PaintVegetation(glm::ivec2 texel, VegetationState state)
+    {
+        texel = glm::clamp(texel, glm::ivec2(0),
+                           glm::ivec2(static_cast<int>(kChunkResolution) - 1));
+
+        const uint32_t tileId = ComputeTileId(texel);
+        auto it = m_vegTiles.find(tileId);
+        if (it == m_vegTiles.end())
+        {
+            // No base data to copy forward for this one — an untouched
+            // cell is implicitly Default, so a freshly-materialized tile
+            // just starts zeroed.
+            it = m_vegTiles.emplace(tileId, VegetationTile{}).first;
+        }
+
+        const int localX = texel.x % static_cast<int>(kEditTileResolution);
+        const int localY = texel.y % static_cast<int>(kEditTileResolution);
+        it->second.state[localY * kEditTileResolution + localX] =
+            static_cast<uint8_t>(state);
+
+        m_dirty = true;
+        ++m_gpuDataVersion;
+    }
+
+    VegetationState
+    Chunk::SampleVegetationStateAt(glm::vec2 localPosition) const
+    {
+        const glm::ivec2 texel =
+            glm::clamp(glm::ivec2(glm::round(localPosition)), glm::ivec2(0),
+                       glm::ivec2(static_cast<int>(kChunkResolution) - 1));
+
+        if (m_vegTiles.empty())
+        {
+            return VegetationState::Default;
+        }
+
+        const uint32_t tileId = ComputeTileId(texel);
+        const auto it = m_vegTiles.find(tileId);
+        if (it == m_vegTiles.end())
+        {
+            return VegetationState::Default;
+        }
+
+        const int localX = texel.x % static_cast<int>(kEditTileResolution);
+        const int localY = texel.y % static_cast<int>(kEditTileResolution);
+        return static_cast<VegetationState>(
+            it->second.state[localY * kEditTileResolution + localX]);
+    }
+
+    void Chunk::RemoveTreeCandidate(uint32_t candidateIndex)
+    {
+        m_removedTreeIndices.insert(candidateIndex);
+        m_dirty = true;
+    }
+
+    void Chunk::RestoreTreeCandidate(uint32_t candidateIndex)
+    {
+        m_removedTreeIndices.erase(candidateIndex);
+        m_dirty = true;
+    }
+
+    bool Chunk::IsTreeCandidateRemoved(uint32_t candidateIndex) const
+    {
+        return m_removedTreeIndices.find(candidateIndex)
+            != m_removedTreeIndices.end();
+    }
+
+    uint32_t Chunk::AddTree(const TreeRecord& record)
+    {
+        const uint32_t addedTreeId = m_nextAddedTreeId++;
+        m_addedTrees.emplace(addedTreeId, record);
+        m_dirty = true;
+        return addedTreeId;
+    }
+
+    void Chunk::RemoveAddedTree(uint32_t addedTreeId)
+    {
+        m_addedTrees.erase(addedTreeId);
+        m_dirty = true;
     }
 
     void Chunk::Touch()

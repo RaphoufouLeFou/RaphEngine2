@@ -105,7 +105,7 @@ namespace raphEngine::editor
         {
             Logger::LogError("Imposible to load prefab of ", name,
                              ": not found");
-            return;
+            return nullptr;
         }
         nlohmann::json j = prefabs_json[name];
         auto type_name = j.at("__object_type").get<std::string>();
@@ -126,8 +126,12 @@ namespace raphEngine::editor
             }
         }
 
+        objects::GameObject* obj_ptr = obj.get();
+
         if (SceneManager::get_active_scene())
             SceneManager::get_active_scene()->add_gameobject(std::move(obj));
+
+        return obj_ptr;
     }
 
     void PrefabTab::save_as_prefab(const objects::GameObject* object)

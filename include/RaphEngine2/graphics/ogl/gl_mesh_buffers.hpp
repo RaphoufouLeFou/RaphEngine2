@@ -11,6 +11,9 @@ namespace raphEngine::graphics
     public:
         GLMeshBuffers(raphEngine::objects::Mesh* mesh);
 
+        bool instanceDataDirty_ = true;
+        std::vector<glm::mat4> cachedWorlds_;
+
         unsigned int vao_;
         unsigned int vbo_;
         unsigned int ebo_;

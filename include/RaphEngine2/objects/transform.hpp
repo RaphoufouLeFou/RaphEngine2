@@ -28,7 +28,7 @@ namespace raphEngine::objects
         void set_scale(const glm::vec3& p);
         void scale_by(const glm::vec3& delta);
 
-        const glm::mat4 get_model_matrix();
+        const glm::mat4& get_model_matrix();
 
         bool can_have_moved = true;
         GameObject* parent_object = nullptr;

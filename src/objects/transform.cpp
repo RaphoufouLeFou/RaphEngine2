@@ -166,7 +166,7 @@ namespace raphEngine::objects
         return can_have_moved;
     }
 
-    const glm::mat4 Transform::get_model_matrix()
+    const glm::mat4& Transform::get_model_matrix()
     {
         bool this_and_parent_movement = get_can_have_moved();
         if (!this_and_parent_movement)

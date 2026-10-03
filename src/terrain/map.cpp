@@ -295,7 +295,9 @@ namespace raphEngine::terrain
     void Map::UpdateStreaming(glm::vec3 viewerWorldPosition,
                               float streamingRadiusMeters,
                               uint32_t maxLoadsPerCall,
-                              const ChunkGeneratorCallback& onMissingChunk)
+                              const ChunkGeneratorCallback& onMissingChunk,
+                              const ChunkResidencyCallback& onChunkLoaded,
+                              const ChunkResidencyCallback& onChunkUnloaded)
     {
         constexpr float kUnloadHysteresisFactor = 1.15f;
 
@@ -343,10 +345,20 @@ namespace raphEngine::terrain
                     {
                         chunk.Load(chunkPath);
                         ++loadsThisCall;
+
+                        if (onChunkLoaded)
+                        {
+                            onChunkLoaded(coord, chunk);
+                        }
                     }
                 }
                 else if (isResident && distSq > unloadRadiusSq)
                 {
+                    if (onChunkUnloaded)
+                    {
+                        onChunkUnloaded(coord, chunk);
+                    }
+
                     if (chunk.IsDirty())
                     {
                         chunk.Save(GetChunkFilePath(rootDirectory_, coord));

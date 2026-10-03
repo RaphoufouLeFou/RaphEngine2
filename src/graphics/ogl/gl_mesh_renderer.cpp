@@ -305,11 +305,20 @@ namespace raphEngine::graphics
 
         auto* buffers = const_cast<graphics::GLMeshBuffers*>(
             dynamic_cast<const graphics::GLMeshBuffers*>(first->get_buffers()));
-        buffers->UploadInstanceData(worlds);
-        /*
-                Logger::LogDebug("Drawing ", std::to_string(worlds.size()),
-                                 " meshes at the same time !");
-        */
+
+        if (buffers->instanceDataDirty_)
+        {
+            std::vector<glm::mat4> worlds;
+            worlds.reserve(meshes.size());
+            for (const objects::Mesh* m : meshes)
+                worlds.push_back(
+                    m->parent_object->get_transform().get_model_matrix()
+                    * m->get_model_matrix());
+
+            buffers->UploadInstanceData(worlds);
+            buffers->instanceDataDirty_ = false;
+        }
+
         glBindVertexArray(buffers->vao_);
         glDrawElementsInstanced(
             GL_TRIANGLES,

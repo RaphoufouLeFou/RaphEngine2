@@ -8,6 +8,7 @@
 #include <memory>
 #include <span>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -44,6 +45,32 @@ namespace raphEngine::terrain
         std::array<uint8_t, kEditTileResolution * kEditTileResolution>
             materialIndices;
     };
+
+    enum class VegetationState : uint8_t
+    {
+        Default = 0, // let the procedural density function decide
+        Cleared = 1, // player cleared vegetation here; always suppress
+        ForcedPresent = 2 // player forced vegetation here; always place
+    };
+
+    struct VegetationTile
+    {
+        std::array<uint8_t, kEditTileResolution * kEditTileResolution> state;
+    };
+
+#pragma pack(push, 1)
+    struct TreeRecord
+    {
+        glm::vec2 localPosition{ 0.0f, 0.0f };
+        float rotationY = 0.0f;
+        float scale = 1.0f;
+        uint16_t speciesId = 0;
+    };
+#pragma pack(pop)
+
+    static_assert(sizeof(TreeRecord) == 18,
+                  "TreeRecord layout must stay byte-exact for on-disk "
+                  "compatibility");
 
     enum class ChunkSource : uint8_t
     {
@@ -88,6 +115,26 @@ namespace raphEngine::terrain
         std::span<const uint8_t> GetPaintDataForUpload() const;
 
         uint8_t SamplePaintIndexAt(glm::vec2 localPosition) const;
+
+        void PaintVegetation(glm::ivec2 texel, VegetationState state);
+        VegetationState SampleVegetationStateAt(glm::vec2 localPosition) const;
+
+        void RemoveTreeCandidate(uint32_t candidateIndex);
+        void RestoreTreeCandidate(uint32_t candidateIndex);
+        bool IsTreeCandidateRemoved(uint32_t candidateIndex) const;
+        const std::unordered_set<uint32_t>&
+        GetRemovedTreeCandidates() const noexcept
+        {
+            return m_removedTreeIndices;
+        }
+
+        uint32_t AddTree(const TreeRecord& record);
+        void RemoveAddedTree(uint32_t addedTreeId);
+        const std::unordered_map<uint32_t, TreeRecord>&
+        GetAddedTrees() const noexcept
+        {
+            return m_addedTrees;
+        }
 
         glm::ivec2 GetGridCoord() const noexcept
         {
@@ -138,6 +185,11 @@ namespace raphEngine::terrain
         std::vector<std::span<const HeightRange>> m_mipPyramid;
         std::unordered_map<uint32_t, EditTile> m_editTiles;
         std::unordered_map<uint32_t, PaintTile> m_paintTiles;
+        std::unordered_map<uint32_t, VegetationTile> m_vegTiles;
+
+        std::unordered_set<uint32_t> m_removedTreeIndices;
+        std::unordered_map<uint32_t, TreeRecord> m_addedTrees;
+        uint32_t m_nextAddedTreeId = 0;
 
         mutable std::vector<uint16_t> m_mergedHeights;
         mutable std::vector<uint8_t> m_mergedPaintMask;

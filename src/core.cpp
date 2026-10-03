@@ -6,6 +6,7 @@
 #include "component/camera_component.hpp"
 #include "editor/editor.hpp"
 #include "editor/layout.hpp"
+#include "editor/prefab_tab.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/ogl/opengl.hpp"
 #include "graphics/debug.hpp"
@@ -21,6 +22,7 @@
 #include "terrain/map.hpp"
 #include "terrain/noise.hpp"
 #include "terrain/noise_editor.hpp"
+#include "terrain/vegetation.hpp"
 
 namespace raphEngine
 {
@@ -77,6 +79,7 @@ namespace raphEngine
             Editor::Init();
         }
 
+        editor::PrefabTab::Init();
         Core::Run();
         Logger::LogDebug("Running stopping");
 
@@ -87,7 +90,7 @@ namespace raphEngine
 
     void Core::Init(const std::string& title)
     {
-        Logger::ConfigureLogger("log.txt", Logger::DEBUG);
+        Logger::ConfigureLogger("log.txt", Logger::ERROR);
         Logger::LogDebug("Hello world from RaphEngine2!");
 
         Settings::Register<GraphicsSettings>();
@@ -186,16 +189,40 @@ namespace raphEngine
                     noiseParams, 2000, 800, "assets/chunks/", &chunkGenerator);
             }
 
-            // re-getting it because the scene swap can remove it
+            renderer.GetRmlUiRenderer().Update();
+            renderer.Render();
+
+            // re-getting the camera because the scene swap can remove it
             c = component::CameraComponent::get_active_camera();
             if (terrain::Map::GetInstace() && c)
             {
-                terrain::Map::GetInstace()->UpdateStreaming(
-                    c->get_position(), 10000.0f, 8, chunkGenerator);
-            }
+                static std::unique_ptr<terrain::VegetationManager>
+                    vegetationManager_;
+                static uint64_t vegetationMapGeneration_ = 0;
 
-            renderer.GetRmlUiRenderer().Update();
-            renderer.Render();
+                terrain::Map* map = terrain::Map::GetInstace();
+                if (!vegetationManager_
+                    || vegetationMapGeneration_ != map->GetGeneration())
+                {
+                    vegetationManager_ =
+                        std::make_unique<terrain::VegetationManager>(
+                            *map, terrain::TreePlacementParams{},
+                            std::vector<terrain::TreeSpecies>{
+                                { "Pine" },
+                                //{ "Birch" },
+                            });
+                    vegetationMapGeneration_ = map->GetGeneration();
+                }
+
+                map->UpdateStreaming(
+                    c->get_position(), 8000.0f, 4, chunkGenerator,
+                    [](glm::ivec2 coord, terrain::Chunk& chunk) {
+                        vegetationManager_->OnChunkLoaded(coord, chunk);
+                    },
+                    [](glm::ivec2 coord, terrain::Chunk& chunk) {
+                        vegetationManager_->OnChunkUnloaded(coord, chunk);
+                    });
+            }
 
             if (Core::is_editor_mode_on())
             {
